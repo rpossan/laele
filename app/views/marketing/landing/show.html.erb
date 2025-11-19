@@ -1,0 +1,81 @@
+<section class="grid lg:grid-cols-2 gap-12 items-center">
+  <div class="space-y-10">
+    <div class="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-1 text-xs uppercase tracking-[0.3em] text-white/60">
+      <span>Google Local Services Ads</span>
+    </div>
+    <div>
+      <h1 class="text-4xl lg:text-6xl font-semibold tracking-tight leading-tight text-white">
+        Gerencie os leads mais valiosos do Google LSA em um único painel.
+      </h1>
+      <p class="mt-6 text-lg text-white/70">
+        O Local Services Lead Manager conecta sua conta Google Ads, puxa leads em tempo real,
+        aplica filtros inteligentes de cobrança e feedback e prepara sua operação para enviar
+        respostas diretamente via API.
+      </p>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-4">
+      <%= link_to "Criar minha conta", new_user_registration_path,
+                  class: "flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-400 text-slate-950 font-semibold py-4 text-lg shadow-xl shadow-emerald-400/40" %>
+      <%= link_to "Entrar", new_user_session_path,
+                  class: "flex-1 inline-flex items-center justify-center rounded-2xl border border-white/20 text-white font-semibold py-4 text-lg" %>
+    </div>
+    <div class="grid sm:grid-cols-3 gap-4 text-sm text-white/60">
+      <div class="p-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
+        <p class="text-3xl font-semibold text-white">+3</p>
+        <p>Tipos de filtros combinados (período, cobrança e feedback)</p>
+      </div>
+      <div class="p-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
+        <p class="text-3xl font-semibold text-white">GAQL</p>
+        <p>Consultas dinâmicas sobre o recurso local_services_lead</p>
+      </div>
+      <div class="p-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
+        <p class="text-3xl font-semibold text-white">Pronto</p>
+        <p>Para ProvideLeadFeedback e conversas em etapas futuras</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 to-transparent p-6">
+      <div class="border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm text-white/60">Status atual</p>
+          <p class="text-2xl font-semibold text-white mt-1">MVP em desenvolvimento</p>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-200 text-xs font-semibold uppercase tracking-widest">Alpha</span>
+      </div>
+      <ul class="mt-6 space-y-4 text-white/80 text-sm">
+        <li class="flex gap-3">
+          <div class="h-8 w-8 rounded-full bg-emerald-400/20 flex items-center justify-center text-emerald-200">1</div>
+          <div>
+            <p class="font-semibold text-white">Autenticação com login/senha</p>
+            <p class="text-white/60">Devise configurado com Postgres e Tailwind.</p>
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <div class="h-8 w-8 rounded-full bg-emerald-400/20 flex items-center justify-center text-emerald-200">2</div>
+          <div>
+            <p class="font-semibold text-white">Conexão Google Ads OAuth</p>
+            <p class="text-white/60">Fluxo planejado para MCCs e contas individuais.</p>
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <div class="h-8 w-8 rounded-full bg-emerald-400/20 flex items-center justify-center text-emerald-200">3</div>
+          <div>
+            <p class="font-semibold text-white">Filtros e relatórios GAQL</p>
+            <p class="text-white/60">Seleção de período, charge status e feedback.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-sm text-white/80">
+      <p class="font-semibold text-white mb-2">Próximos passos</p>
+      <ul class="space-y-2 list-disc list-inside text-white/70">
+        <li>Salvar refresh tokens criptografados e selecionar customer ativo.</li>
+        <li>Renderizar tabela paginada de leads direto da Google Ads API.</li>
+        <li>Expor endpoints para conversas e ProvideLeadFeedback.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
