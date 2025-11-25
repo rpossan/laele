@@ -13,7 +13,8 @@ module GoogleAds
         config.client_secret = ENV.fetch("GOOGLE_ADS_CLIENT_SECRET")
         config.refresh_token = google_account.refresh_token
         config.login_customer_id = google_account.login_customer_id
-        config.use_proto_plus = true
+        # Note: use_proto_plus may not be available in v22
+        # config.use_proto_plus = true
       end
     rescue KeyError => e
       raise "Missing Google Ads credentials: #{e.key}"

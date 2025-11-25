@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_19_125941) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_20_193814) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -38,13 +38,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_125941) do
 
   create_table "google_accounts", force: :cascade do |t|
     t.bigint "user_id", null: false
-    t.string "login_customer_id", null: false
-    t.string "refresh_token_ciphertext", null: false
+    t.string "login_customer_id"
+    t.string "refresh_token_ciphertext"
     t.text "scopes", default: [], array: true
     t.datetime "last_synced_at"
     t.string "status", default: "active", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "refresh_token"
     t.index ["user_id", "login_customer_id"], name: "index_google_accounts_on_user_id_and_login_customer_id", unique: true
     t.index ["user_id"], name: "index_google_accounts_on_user_id"
   end

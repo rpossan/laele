@@ -1,0 +1,8 @@
+developer_token: <%= ENV["GOOGLE_ADS_DEVELOPER_TOKEN"] %>
+client_id: <%= ENV["GOOGLE_ADS_CLIENT_ID"] %>
+client_secret: <%= ENV["GOOGLE_ADS_CLIENT_SECRET"] %>
+refresh_token: 1//0hF5JWP9ivFwfCgYIARAAGBESNwF-L9IrOltRxPNEO4IhJoAEX_REtC70GjFzA31T-83Oc9P1JY6HIPEaJJoz2MM-1BY_4dtKQSU
+login_customer_id: "2574786031"
+# obrigatório
+use_proto_plus: true
+

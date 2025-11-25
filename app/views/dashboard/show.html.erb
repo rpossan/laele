@@ -28,44 +28,61 @@
   </section>
 
   <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between mb-6">
       <div>
-        <h2 class="text-xl font-semibold text-white">Contas acessíveis</h2>
-        <p class="text-sm text-white/60 mt-2">Sincronize pelo botão acima e selecione qual customer_id deseja trabalhar.</p>
+        <h2 class="text-xl font-semibold text-white">Selecionar Conta</h2>
+        <p class="text-sm text-white/60 mt-2">Escolha a conta Google Ads que deseja trabalhar.</p>
       </div>
-      <button data-action="click->customers#refresh" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-white/10 text-sm text-white/80 hover:text-white">
+      <button id="refresh-customers-btn" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-white/10 text-sm text-white/80 hover:text-white">
         Atualizar lista
       </button>
     </div>
-    <div id="customers-list" class="mt-6 grid md:grid-cols-2 gap-4">
-      <% @google_accounts.each do |account| %>
-        <% account.accessible_customers.each do |customer| %>
-          <div class="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
-            <p class="text-sm text-white/50">Customer ID</p>
-            <p class="text-xl font-semibold text-white"><%= customer.customer_id %></p>
-            <p class="text-sm text-white/60 mt-1"><%= customer.display_name || "Sem nome" %></p>
-            <div class="flex justify-between items-center mt-4">
-              <span class="text-xs uppercase tracking-widest text-white/50"><%= account.login_customer_id %></span>
-              <%= button_to "Definir como ativa",
-                            api_google_ads_customers_select_path(customer_id: customer.customer_id),
-                            method: :post,
-                            class: "text-sm text-emerald-300 hover:text-emerald-200" %>
+    
+    <% all_customers = @google_accounts.flat_map(&:accessible_customers) %>
+    <% if all_customers.any? %>
+      <div class="relative">
+        <select id="customer-select" class="w-full rounded-2xl border border-white/10 bg-slate-900/40 text-white py-4 px-6 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-400/50">
+          <option value="">Selecione uma conta...</option>
+          <% all_customers.each do |customer| %>
+            <option value="<%= customer.customer_id %>" 
+                    data-google-account-id="<%= customer.google_account_id %>"
+                    <%= 'selected' if @active_selection&.customer_id == customer.customer_id %>>
+              <%= format_customer_id(customer.customer_id) %> - <%= customer.display_name || "Sem nome" %>
+            </option>
+          <% end %>
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+          <svg class="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </div>
+      
+      <div id="selected-customer-info" class="mt-4 p-4 rounded-2xl border border-white/10 bg-slate-900/40 <%= 'hidden' unless @active_selection %>">
+        <% if @active_selection %>
+          <% selected_customer = all_customers.find { |c| c.customer_id == @active_selection.customer_id } %>
+          <% if selected_customer %>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-white/50">Conta ativa</p>
+                <p class="text-lg font-semibold text-white mt-1"><%= format_customer_id(selected_customer.customer_id) %></p>
+                <p class="text-sm text-white/60 mt-1"><%= selected_customer.display_name || "Sem nome" %></p>
+              </div>
             </div>
-          </div>
+          <% end %>
         <% end %>
-      <% end %>
-      <% if @google_accounts.flat_map(&:accessible_customers).blank? %>
-        <p class="text-white/60">Nenhuma conta encontrada. Faça o login via MCC ou conta individual para sincronizar.</p>
-      <% end %>
-    </div>
+      </div>
+    <% else %>
+      <p class="text-white/60 text-center py-8">Nenhuma conta encontrada. Faça o login via MCC ou conta individual para sincronizar.</p>
+    <% end %>
   </section>
 
-  <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <section class="rounded-3xl border border-white/10 bg-white/5 p-6" data-controller="leads" data-leads-target="container">
     <div class="flex flex-col lg:flex-row lg:items-end gap-4">
       <div class="flex-1 grid md:grid-cols-3 gap-4">
         <div>
           <label class="text-xs uppercase text-white/50">Período</label>
-          <select class="mt-2 w-full rounded-2xl bg-slate-900 border border-white/10 text-white px-3 py-2">
+          <select data-leads-target="period" class="mt-2 w-full rounded-2xl bg-slate-900 border border-white/10 text-white px-3 py-2">
             <option value="this_week">Esta semana</option>
             <option value="last_week">Semana passada</option>
             <option value="this_month">Este mês</option>
@@ -77,24 +94,28 @@
         </div>
         <div>
           <label class="text-xs uppercase text-white/50">Charge status</label>
-          <select class="mt-2 w-full rounded-2xl bg-slate-900 border border-white/10 text-white px-3 py-2">
+          <select data-leads-target="chargeStatus" class="mt-2 w-full rounded-2xl bg-slate-900 border border-white/10 text-white px-3 py-2">
             <option value="">Todos</option>
             <option value="charged">Charged</option>
             <option value="credited">Credited</option>
             <option value="in_review">In review</option>
+            <option value="rejected">Rejected</option>
             <option value="not_charged">Not charged</option>
           </select>
         </div>
         <div>
           <label class="text-xs uppercase text-white/50">Feedback</label>
-          <select class="mt-2 w-full rounded-2xl bg-slate-900 border border-white/10 text-white px-3 py-2">
+          <select data-leads-target="feedbackStatus" class="mt-2 w-full rounded-2xl bg-slate-900 border border-white/10 text-white px-3 py-2">
             <option value="">Todos</option>
             <option value="with_feedback">Com feedback</option>
             <option value="without_feedback">Sem feedback</option>
           </select>
         </div>
       </div>
-      <button class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-400 text-slate-950 font-semibold" data-action="click->leads#fetch">
+      <button type="button" 
+              id="fetch-leads-btn"
+              data-action="click->leads#fetch"
+              class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-400 text-slate-950 font-semibold">
         Atualizar tabela
       </button>
     </div>
@@ -103,16 +124,21 @@
         <thead class="text-white/60 uppercase text-xs tracking-widest border-b border-white/10">
           <tr>
             <th class="py-2 pr-4">Lead</th>
+            <th class="py-2 pr-4">Contato</th>
             <th class="py-2 pr-4">Status</th>
             <th class="py-2 pr-4">Cobrança</th>
             <th class="py-2 pr-4">Feedback</th>
             <th class="py-2 pr-4">Criado em</th>
           </tr>
         </thead>
-        <tbody id="leads-table" class="divide-y divide-white/5 text-white/70">
+        <tbody data-leads-target="tableBody" class="divide-y divide-white/5 text-white/70">
           <tr>
-            <td class="py-3 pr-4" colspan="5">
-              Conecte sua conta e clique em "Atualizar tabela" para buscar os primeiros leads.
+            <td class="py-3 pr-4" colspan="6">
+              <% if @active_selection.present? %>
+                Clique em "Atualizar tabela" para buscar os leads.
+              <% else %>
+                Conecte sua conta e selecione uma conta ativa antes de buscar leads.
+              <% end %>
             </td>
           </tr>
         </tbody>
@@ -120,4 +146,602 @@
     </div>
   </section>
 </div>
+
+<!-- Feedback Modal -->
+<div id="feedback-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+  <!-- Background overlay -->
+  <div class="fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm" onclick="closeFeedbackModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1;"></div>
+
+  <!-- Modal panel - centered popup -->
+  <div id="feedback-modal-panel" class="bg-slate-900 rounded-2xl text-left overflow-hidden shadow-2xl border border-white/10" style="position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; width: 90% !important; max-width: 32rem !important; max-height: 90vh !important; overflow-y: auto !important; z-index: 10 !important; margin: 0 !important; right: auto !important; bottom: auto !important;">
+      <div class="bg-slate-900 px-6 pt-6 pb-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold text-white" id="modal-title">Submeter Feedback</h3>
+          <button onclick="closeFeedbackModal()" class="text-white/60 hover:text-white transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <form id="feedback-form" onsubmit="handleFeedbackSubmit(event)">
+          <input type="hidden" id="feedback-lead-id" name="lead_id">
+          
+          <!-- Survey Answer -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-white/80 mb-3">Como você avalia este lead?</label>
+            <div class="space-y-2">
+              <label class="flex items-center p-3 rounded-lg border border-white/10 hover:bg-white/5 cursor-pointer transition">
+                <input type="radio" name="survey_answer" value="VERY_SATISFIED" class="mr-3 text-emerald-400 focus:ring-emerald-400" required>
+                <span class="text-white">Muito Satisfeito</span>
+              </label>
+              <label class="flex items-center p-3 rounded-lg border border-white/10 hover:bg-white/5 cursor-pointer transition">
+                <input type="radio" name="survey_answer" value="SATISFIED" class="mr-3 text-emerald-400 focus:ring-emerald-400" required>
+                <span class="text-white">Satisfeito</span>
+              </label>
+              <label class="flex items-center p-3 rounded-lg border border-white/10 hover:bg-white/5 cursor-pointer transition">
+                <input type="radio" name="survey_answer" value="DISSATISFIED" class="mr-3 text-amber-400 focus:ring-amber-400" required>
+                <span class="text-white">Insatisfeito</span>
+              </label>
+              <label class="flex items-center p-3 rounded-lg border border-white/10 hover:bg-white/5 cursor-pointer transition">
+                <input type="radio" name="survey_answer" value="VERY_DISSATISFIED" class="mr-3 text-red-400 focus:ring-red-400" required>
+                <span class="text-white">Muito Insatisfeito</span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Reason (shown conditionally) -->
+          <div id="reason-section" class="mb-6 hidden">
+            <label class="block text-sm font-medium text-white/80 mb-2" id="reason-label">Motivo</label>
+            <select id="feedback-reason" name="reason" class="w-full rounded-lg bg-slate-800 border border-white/10 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/50">
+              <option value="">Selecione um motivo (opcional)</option>
+            </select>
+          </div>
+          
+          <!-- Other Reason Comment -->
+          <div id="other-reason-section" class="mb-6 hidden">
+            <label class="block text-sm font-medium text-white/80 mb-2">Comentário adicional</label>
+            <textarea 
+              id="other-reason-comment" 
+              name="other_reason_comment" 
+              rows="3" 
+              class="w-full rounded-lg bg-slate-800 border border-white/10 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+              placeholder="Descreva o motivo (opcional)"></textarea>
+          </div>
+          
+          <!-- Actions -->
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+            <button 
+              type="button" 
+              onclick="closeFeedbackModal()" 
+              class="px-4 py-2 rounded-lg border border-white/10 text-white/80 hover:text-white hover:bg-white/5 transition">
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              id="submit-feedback-btn"
+              class="px-6 py-2 rounded-lg bg-emerald-400 text-slate-950 font-semibold hover:bg-emerald-300 transition">
+              Enviar Feedback
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Use turbo:load for Turbo Drive compatibility, fallback to DOMContentLoaded
+    const initFunction = function() {
+    // Initialize filters from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const period = urlParams.get('period');
+    const chargeStatus = urlParams.get('charge_status');
+    const feedbackStatus = urlParams.get('feedback_status');
+    
+    // Apply URL parameters to form selects
+    if (period) {
+      const periodSelect = document.querySelector('[data-leads-target="period"]');
+      if (periodSelect) {
+        periodSelect.value = period;
+      }
+    }
+    
+    if (chargeStatus) {
+      const chargeStatusSelect = document.querySelector('[data-leads-target="chargeStatus"]');
+      if (chargeStatusSelect) {
+        chargeStatusSelect.value = chargeStatus;
+      }
+    }
+    
+    if (feedbackStatus) {
+      const feedbackStatusSelect = document.querySelector('[data-leads-target="feedbackStatus"]');
+      if (feedbackStatusSelect) {
+        feedbackStatusSelect.value = feedbackStatus;
+      }
+    }
+    
+    // Customer selector functionality
+    const customerSelect = document.getElementById('customer-select');
+    const refreshBtn = document.getElementById('refresh-customers-btn');
+    
+    if (customerSelect) {
+      customerSelect.addEventListener('change', async function() {
+        const customerId = this.value;
+        const googleAccountId = this.options[this.selectedIndex].dataset.googleAccountId;
+        
+        if (!customerId) return;
+        
+        try {
+          const response = await fetch('/api/google_ads/customers/select', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+              'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ customer_id: customerId })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            // Reload page to show updated selection
+            window.location.reload();
+          } else {
+            alert(data.error || 'Erro ao selecionar conta');
+          }
+        } catch (error) {
+          console.error('Error selecting customer:', error);
+          alert('Erro ao selecionar conta');
+        }
+      });
+    }
+    
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', async function() {
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = 'Atualizando...';
+        
+        try {
+          const response = await fetch('/api/google_ads/customers/refresh', {
+            method: 'POST',
+            headers: {
+              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+              'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            // Reload page to show updated customers
+            window.location.reload();
+          } else {
+            alert(data.error || 'Erro ao atualizar contas');
+            refreshBtn.disabled = false;
+            refreshBtn.textContent = 'Atualizar lista';
+          }
+        } catch (error) {
+          console.error('Error refreshing customers:', error);
+          alert('Erro ao atualizar contas');
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = 'Atualizar lista';
+        }
+      });
+    }
+    
+    // Add direct event listener as fallback
+    const fetchButton = document.getElementById('fetch-leads-btn');
+    if (fetchButton && !fetchButton.dataset.listenerAdded) {
+      fetchButton.dataset.listenerAdded = 'true';
+      console.log('✅ Found fetch button, adding fallback listener');
+      fetchButton.addEventListener('click', function(e) {
+        console.log('🔴 FALLBACK: Direct click handler fired');
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Try to find Stimulus controller
+        const leadsSection = document.querySelector('[data-controller="leads"]');
+        if (leadsSection && window.Stimulus) {
+          const controller = window.Stimulus.getControllerForElementAndIdentifier(leadsSection, 'leads');
+          if (controller && typeof controller.fetchLeads === 'function') {
+            console.log('Calling Stimulus controller method');
+            controller.fetchLeads();
+            return;
+          }
+        }
+        
+        // Fallback: direct fetch
+        console.log('Using direct fetch fallback');
+        const period = document.querySelector('[data-leads-target="period"]')?.value || 'last_30_days';
+        const chargeStatus = document.querySelector('[data-leads-target="chargeStatus"]')?.value || '';
+        const feedbackStatus = document.querySelector('[data-leads-target="feedbackStatus"]')?.value || '';
+        
+        const params = new URLSearchParams({ period, page_size: 25 });
+        if (chargeStatus) params.append('charge_status', chargeStatus);
+        if (feedbackStatus) params.append('feedback_status', feedbackStatus);
+        
+        fetch(`/api/leads?${params.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+          },
+          credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Leads fetched:', data);
+          const tbody = document.querySelector('[data-leads-target="tableBody"]');
+          if (tbody && data.leads) {
+            if (data.leads.length === 0) {
+              tbody.innerHTML = '<tr><td class="py-3 pr-4" colspan="6">Nenhum lead encontrado para os filtros selecionados.</td></tr>';
+              return;
+            }
+            
+            tbody.innerHTML = data.leads.map(lead => {
+              const creationDate = new Date(lead.creation_date_time).toLocaleString('pt-BR');
+              const leadChargeStatus = lead.lead_charged ? 'Charged' : 
+                                 (lead.credit_state === 'CREDIT_GRANTED' ? 'Credited' : 
+                                 (lead.credit_state === 'UNDER_REVIEW' ? 'In review' : 
+                                 (lead.credit_state === 'CREDIT_INELIGIBLE' ? 'Rejected' : 'Not charged')));
+              const leadFeedbackStatus = lead.lead_feedback_submitted ? 'Com feedback' : 'Sem feedback';
+              const leadStatus = lead.lead_status ? lead.lead_status.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') : 'N/A';
+              
+              // Contact information
+              const phoneNumber = lead.phone_number || 'N/A';
+              const consumerName = lead.consumer_name || 'N/A';
+              const consumerEmail = lead.consumer_email || 'N/A';
+              
+              const statusColors = {
+                'NEW': 'bg-blue-400/20 text-blue-300',
+                'CONTACTED': 'bg-yellow-400/20 text-yellow-300',
+                'CONVERTED': 'bg-emerald-400/20 text-emerald-300',
+                'NOT_CONVERTED': 'bg-red-400/20 text-red-300'
+              };
+              const statusColor = statusColors[lead.lead_status] || 'bg-gray-400/20 text-gray-300';
+              
+              // Build query string for back navigation
+              const queryParams = new URLSearchParams();
+              if (period) queryParams.append('period', period);
+              if (chargeStatus) queryParams.append('charge_status', chargeStatus);
+              if (feedbackStatus) queryParams.append('feedback_status', feedbackStatus);
+              const queryString = queryParams.toString();
+              const leadUrl = queryString ? `/leads/${lead.id}?${queryString}` : `/leads/${lead.id}`;
+              
+              // Feedback column: show status and button if no feedback
+              const feedbackCell = lead.lead_feedback_submitted 
+                ? `<td class="py-3 pr-4 text-white/70 cursor-pointer" onclick="window.location='${leadUrl}'">${leadFeedbackStatus}</td>`
+                : `<td class="py-3 pr-4">
+                    <div class="flex items-center gap-2">
+                      <span class="text-white/70 text-sm cursor-pointer" onclick="window.location='${leadUrl}'">${leadFeedbackStatus}</span>
+                      <button 
+                        onclick="event.stopPropagation(); event.preventDefault(); console.log('Button clicked for lead:', '${lead.id}'); if (window.openFeedbackModal) { window.openFeedbackModal('${lead.id}'); } else if (window.submitFeedbackInline) { window.submitFeedbackInline('${lead.id}'); } else { console.error('Feedback functions not found'); alert('Erro: Função de feedback não encontrada'); }"
+                        class="inline-flex items-center px-3 py-1 rounded-lg bg-emerald-400/20 hover:bg-emerald-400/30 text-emerald-300 text-xs font-medium transition"
+                        title="Submeter feedback">
+                        Submeter Feedback
+                      </button>
+                    </div>
+                  </td>`;
+              
+              return `
+                <tr class="hover:bg-white/5">
+                  <td class="py-3 pr-4 cursor-pointer" onclick="window.location='${leadUrl}'">
+                    <div class="font-medium text-white">${lead.lead_type || 'N/A'}</div>
+                    <div class="text-xs text-white/50">${lead.id || 'N/A'}</div>
+                  </td>
+                  <td class="py-3 pr-4 cursor-pointer" onclick="window.location='${leadUrl}'">
+                    <div class="text-sm text-white">${consumerName}</div>
+                    <div class="text-xs text-white/70">${phoneNumber}</div>
+                    <div class="text-xs text-white/50">${consumerEmail}</div>
+                  </td>
+                  <td class="py-3 pr-4 cursor-pointer" onclick="window.location='${leadUrl}'">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColor}">
+                      ${leadStatus}
+                    </span>
+                  </td>
+                  <td class="py-3 pr-4 text-white/70 cursor-pointer" onclick="window.location='${leadUrl}'">${leadChargeStatus}</td>
+                  ${feedbackCell}
+                  <td class="py-3 pr-4 text-white/70 cursor-pointer" onclick="window.location='${leadUrl}'">${creationDate}</td>
+                </tr>
+              `;
+            }).join('');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Erro ao buscar leads: ' + error.message);
+        });
+      }, { once: false });
+    } else {
+      console.error('❌ Fetch button not found!');
+    }
+    
+    // Auto-fetch if URL has parameters (after Stimulus controller is ready)
+    // Reuse period, chargeStatus, feedbackStatus already declared above
+    if (period || chargeStatus || feedbackStatus) {
+      console.log('Auto-fetching with URL params:', { period, chargeStatus, feedbackStatus });
+      // Wait for Stimulus to be ready, then click the button to trigger fetch
+      setTimeout(() => {
+        const button = document.getElementById('fetch-leads-btn');
+        if (button) {
+          console.log('Auto-clicking fetch button');
+          button.click();
+        } else {
+          console.warn('Fetch button not found for auto-fetch');
+        }
+      }, 500);
+    }
+    };
+    
+    // Feedback modal functions
+    const dissatisfiedReasons = [
+      { value: 'SPAM', label: 'Spam' },
+      { value: 'JOB_TYPE_MISMATCH', label: 'Tipo de trabalho não corresponde' },
+      { value: 'DUPLICATE', label: 'Duplicado' },
+      { value: 'NOT_INTERESTED', label: 'Não interessado' },
+      { value: 'WRONG_PHONE_NUMBER', label: 'Número de telefone errado' },
+      { value: 'WRONG_EMAIL_ADDRESS', label: 'Email errado' },
+      { value: 'WRONG_NAME', label: 'Nome errado' },
+      { value: 'OTHER', label: 'Outro' }
+    ];
+    
+    const satisfiedReasons = [
+      { value: 'SERVICE_RELATED', label: 'Relacionado ao serviço' },
+      { value: 'BOOKED_CUSTOMER', label: 'Cliente agendado' },
+      { value: 'OTHER', label: 'Outro' }
+    ];
+    
+    window.openFeedbackModal = function(leadId) {
+      console.log('🔵 openFeedbackModal called with leadId:', leadId);
+      
+      if (!leadId) {
+        console.error('❌ Lead ID is required');
+        alert('Erro: ID do lead não fornecido');
+        return;
+      }
+      
+      const modal = document.getElementById('feedback-modal');
+      const leadIdInput = document.getElementById('feedback-lead-id');
+      const form = document.getElementById('feedback-form');
+      
+      console.log('Modal element:', modal);
+      console.log('Lead ID input:', leadIdInput);
+      console.log('Form element:', form);
+      
+      if (!modal) {
+        console.error('❌ Feedback modal element not found');
+        alert('Erro: Modal de feedback não encontrado');
+        return;
+      }
+      
+      if (!leadIdInput) {
+        console.error('❌ Lead ID input not found');
+        return;
+      }
+      
+      if (!form) {
+        console.error('❌ Feedback form not found');
+        return;
+      }
+      
+      // Set lead ID
+      leadIdInput.value = leadId;
+      console.log('✅ Lead ID set to:', leadId);
+      
+      // Reset form
+      form.reset();
+      const reasonSection = document.getElementById('reason-section');
+      const otherReasonSection = document.getElementById('other-reason-section');
+      if (reasonSection) reasonSection.classList.add('hidden');
+      if (otherReasonSection) otherReasonSection.classList.add('hidden');
+      
+      // Show modal
+      modal.classList.remove('hidden');
+      modal.style.display = 'block';
+      modal.setAttribute('aria-hidden', 'false');
+      
+      // Ensure modal panel is centered using fixed positioning
+      const modalPanel = document.getElementById('feedback-modal-panel');
+      if (modalPanel) {
+        // Force center positioning with !important equivalent
+        modalPanel.setAttribute('style', 
+          'position: fixed !important; ' +
+          'top: 50% !important; ' +
+          'left: 50% !important; ' +
+          'transform: translate(-50%, -50%) !important; ' +
+          'width: 90% !important; ' +
+          'max-width: 32rem !important; ' +
+          'max-height: 90vh !important; ' +
+          'overflow-y: auto !important; ' +
+          'z-index: 10 !important; ' +
+          'margin: 0 !important; ' +
+          'right: auto !important; ' +
+          'bottom: auto !important;'
+        );
+      }
+      
+      console.log('✅ Modal should now be visible and centered');
+      
+      // Listen for survey answer changes (remove old listeners first)
+      const surveyInputs = form.querySelectorAll('input[name="survey_answer"]');
+      surveyInputs.forEach(input => {
+        // Remove existing listeners
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        // Add new listener
+        newInput.addEventListener('change', function() {
+          updateReasonOptions(this.value);
+        });
+      });
+    };
+    
+    window.closeFeedbackModal = function() {
+      console.log('Closing feedback modal');
+      const modal = document.getElementById('feedback-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    };
+    
+    function updateReasonOptions(surveyAnswer) {
+      const reasonSection = document.getElementById('reason-section');
+      const reasonSelect = document.getElementById('feedback-reason');
+      const otherReasonSection = document.getElementById('other-reason-section');
+      const reasonLabel = document.getElementById('reason-label');
+      
+      if (!reasonSection || !reasonSelect) return;
+      
+      // Clear existing options
+      reasonSelect.innerHTML = '<option value="">Selecione um motivo (opcional)</option>';
+      
+      if (surveyAnswer === 'VERY_DISSATISFIED' || surveyAnswer === 'DISSATISFIED') {
+        reasonLabel.textContent = 'Motivo da insatisfação';
+        dissatisfiedReasons.forEach(reason => {
+          const option = document.createElement('option');
+          option.value = reason.value;
+          option.textContent = reason.label;
+          reasonSelect.appendChild(option);
+        });
+        reasonSection.classList.remove('hidden');
+      } else if (surveyAnswer === 'SATISFIED' || surveyAnswer === 'VERY_SATISFIED') {
+        reasonLabel.textContent = 'Motivo da satisfação';
+        satisfiedReasons.forEach(reason => {
+          const option = document.createElement('option');
+          option.value = reason.value;
+          option.textContent = reason.label;
+          reasonSelect.appendChild(option);
+        });
+        reasonSection.classList.remove('hidden');
+      } else {
+        reasonSection.classList.add('hidden');
+        otherReasonSection.classList.add('hidden');
+      }
+      
+      // Show other reason comment if "OTHER" is selected
+      reasonSelect.addEventListener('change', function() {
+        if (this.value === 'OTHER') {
+          otherReasonSection.classList.remove('hidden');
+        } else {
+          otherReasonSection.classList.add('hidden');
+        }
+      });
+    }
+    
+    window.handleFeedbackSubmit = function(event) {
+      event.preventDefault();
+      
+      const form = event.target;
+      const leadId = document.getElementById('feedback-lead-id').value;
+      const submitBtn = document.getElementById('submit-feedback-btn');
+      
+      const formData = new FormData(form);
+      const payload = {
+        survey_answer: formData.get('survey_answer')
+      };
+      
+      const reason = formData.get('reason');
+      if (reason) payload.reason = reason;
+      
+      const otherComment = formData.get('other_reason_comment');
+      if (otherComment) payload.other_reason_comment = otherComment;
+      
+      // Disable submit button
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enviando...';
+      
+      fetch(`/api/leads/${leadId}/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success || data.message) {
+          closeFeedbackModal();
+          alert("Feedback enviado com sucesso!");
+          // Refresh leads
+          if (window.leadsController && typeof window.leadsController.fetchLeads === 'function') {
+            window.leadsController.fetchLeads();
+          } else {
+            const button = document.getElementById('fetch-leads-btn');
+            if (button) button.click();
+          }
+        } else {
+          alert("Erro ao enviar feedback: " + (data.error || "Erro desconhecido"));
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Enviar Feedback';
+        }
+      })
+      .catch(error => {
+        console.error("Error submitting feedback:", error);
+        alert("Erro ao enviar feedback: " + error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar Feedback';
+      });
+    };
+    
+    // Function to submit feedback (for inline onclick handlers)
+    window.submitFeedbackInline = function(leadId) {
+      console.log('submitFeedbackInline called for lead:', leadId);
+      if (typeof window.openFeedbackModal === 'function') {
+        window.openFeedbackModal(leadId);
+      } else {
+        console.error('openFeedbackModal function not found');
+        alert('Erro: Modal de feedback não está disponível. Recarregue a página.');
+      }
+    };
+    
+    // Make sure openFeedbackModal is available globally
+    console.log('Feedback modal functions initialized');
+    
+    // Ensure modal is hidden on page load and prevent auto-opening
+    function ensureModalHidden() {
+      const modal = document.getElementById('feedback-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        // Remove any event listeners that might auto-open
+        const form = document.getElementById('feedback-form');
+        if (form) {
+          form.reset();
+        }
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', ensureModalHidden);
+    document.addEventListener('turbo:load', ensureModalHidden);
+    
+    // Also ensure modal is hidden immediately when script loads
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', ensureModalHidden);
+    } else {
+      ensureModalHidden();
+    }
+    
+    // Initialize on page load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initFunction);
+    } else {
+      initFunction();
+    }
+    
+    // Also listen for Turbo navigation
+    document.addEventListener('turbo:load', initFunction);
+  })();
+</script>
 

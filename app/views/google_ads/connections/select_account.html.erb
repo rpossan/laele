@@ -1,0 +1,53 @@
+<div class="space-y-6">
+  <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+    <h2 class="text-xl font-semibold text-white mb-2">Escolha a conta Google Ads</h2>
+    <p class="text-sm text-white/60 mb-6">
+      Encontramos <%= pluralize(@customer_ids.count, 'conta acessível', 'contas acessíveis') %>. 
+      Selecione qual conta deseja usar como conta principal (login_customer_id).
+    </p>
+
+    <%= form_with url: google_ads_auth_select_path, method: :post, local: true, class: "space-y-4" do |f| %>
+      <%= hidden_field_tag :google_account_id, @google_account.id %>
+      
+      <div class="space-y-3">
+        <% @customer_ids.each_with_index do |customer_id, index| %>
+          <label class="flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition cursor-pointer">
+            <%= radio_button_tag :login_customer_id, customer_id, index == 0, class: "w-5 h-5 text-emerald-400 focus:ring-emerald-400 focus:ring-2" %>
+            <div class="flex-1">
+              <div class="font-semibold text-white">
+                <%= format_customer_id(customer_id) %>
+              </div>
+              <% if @customer_names[customer_id].present? %>
+                <div class="text-sm text-white/70 mt-1">
+                  <%= @customer_names[customer_id] %>
+                </div>
+              <% end %>
+              <div class="text-xs text-white/60 mt-1">
+                <% if index == 0 %>
+                  <span class="inline-flex items-center px-2 py-1 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-medium">
+                    Recomendado
+                  </span>
+                <% end %>
+              </div>
+            </div>
+          </label>
+        <% end %>
+      </div>
+
+      <div class="flex gap-4 pt-4">
+        <%= f.submit "Confirmar seleção", class: "flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-400 text-slate-950 font-semibold py-4 px-6 hover:bg-emerald-300 transition" %>
+        <%= link_to "Cancelar", dashboard_path, class: "inline-flex items-center justify-center rounded-2xl border border-white/20 text-white font-semibold py-4 px-6 hover:bg-white/5 transition" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+    <h3 class="text-sm font-semibold text-white mb-2">Sobre a seleção</h3>
+    <ul class="text-sm text-white/60 space-y-2 list-disc list-inside">
+      <li>A conta selecionada será usada como <code class="text-emerald-300">login_customer_id</code> para todas as operações</li>
+      <li>Você pode conectar múltiplas contas Google Ads posteriormente</li>
+      <li>MCCs (Manager Accounts) geralmente aparecem primeiro na lista</li>
+    </ul>
+  </div>
+</div>
+

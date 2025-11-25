@@ -21,7 +21,16 @@ module Api
     private
 
     def permitted_filters
-      params.permit(:period, :charge_status, :feedback_status, :start_date, :end_date).to_h.symbolize_keys
+      # Permitir todos os filtros necessários
+      params.permit(
+        :period,
+        :charge_status,
+        :feedback_status,
+        :start_date,
+        :end_date,
+        :page_size,
+        :page_token
+      ).to_h.symbolize_keys
     end
   end
 end

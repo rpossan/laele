@@ -41,6 +41,7 @@ module GoogleAds
       clauses = []
       if (range = resolve_period)
         from, to = range
+        # Use date format YYYY-MM-DD HH:MM:SS for date comparisons
         clauses << "local_services_lead.creation_date_time >= \"#{format_timestamp(from)}\"" if from
         clauses << "local_services_lead.creation_date_time <= \"#{format_timestamp(to)}\"" if to
       end
@@ -54,7 +55,10 @@ module GoogleAds
       end
 
       if filters[:start_date].present? && filters[:end_date].present?
-        clauses << "local_services_lead.creation_date_time BETWEEN \"#{format_timestamp(parse_date(filters[:start_date]).beginning_of_day)}\" AND \"#{format_timestamp(parse_date(filters[:end_date]).end_of_day)}\""
+        start_date = format_timestamp(parse_date(filters[:start_date]).beginning_of_day)
+        end_date = format_timestamp(parse_date(filters[:end_date]).end_of_day)
+        clauses << "local_services_lead.creation_date_time >= \"#{start_date}\""
+        clauses << "local_services_lead.creation_date_time <= \"#{end_date}\""
       end
 
       query = BASE_SELECT.dup
@@ -79,10 +83,16 @@ module GoogleAds
       when "charged"
         "local_services_lead.lead_charged = TRUE"
       when "credited"
+        # Lead was credited (refunded)
         "local_services_lead.credit_details.credit_state = \"CREDIT_GRANTED\""
       when "in_review"
+        # Credit request is still being processed
         "local_services_lead.credit_details.credit_state = \"UNDER_REVIEW\""
+      when "rejected"
+        # Credit request was rejected (lead didn't qualify)
+        "local_services_lead.credit_details.credit_state = \"CREDIT_INELIGIBLE\""
       when "not_charged"
+        # Lead was never charged, so no credit applies
         "(local_services_lead.lead_charged = FALSE AND local_services_lead.credit_details.credit_state IS NULL)"
       end
     end
@@ -103,7 +113,10 @@ module GoogleAds
     end
 
     def format_timestamp(time)
-      time.in_time_zone.strftime("%Y %m %d %H,%M,%S")
+      # Google Ads API requires "YYYY-MM-DD HH:MM:SS" format for WHERE clauses
+      # No timezone, no "T" between date and time
+      # Example: "2025-11-20 00:00:00"
+      time.in_time_zone.strftime("%Y-%m-%d %H:%M:%S")
     end
   end
 end

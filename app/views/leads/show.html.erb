@@ -1,0 +1,98 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <%= link_to "← Voltar", @back_params.present? ? dashboard_path(@back_params) : dashboard_path, class: "text-white/60 hover:text-white" %>
+    <h1 class="text-2xl font-semibold text-white">Detalhes do Lead</h1>
+    <div></div>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <!-- Lead Info Section -->
+    <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h2 class="text-xl font-semibold text-white mb-4">Informações do Lead</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <p class="text-xs uppercase text-white/50">Lead ID</p>
+          <p class="text-lg font-medium text-white mt-1"><%= @lead.id %></p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase text-white/50">Tipo</p>
+          <p class="text-white mt-1"><%= @lead.lead_type || 'N/A' %></p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase text-white/50">Status</p>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-1 <%= status_color_class(@lead.status) %>">
+            <%= format_lead_status(@lead.status) %>
+          </span>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase text-white/50">Data de Criação</p>
+          <p class="text-white mt-1">
+            <%= @lead.created_at ? @lead.created_at.in_time_zone.strftime("%d/%m/%Y às %H:%M") : 'N/A' %>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Info Section -->
+    <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h2 class="text-xl font-semibold text-white mb-4">Informações de Contato</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <p class="text-xs uppercase text-white/50">Nome</p>
+          <p class="text-white mt-1"><%= @lead.name || 'N/A' %></p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase text-white/50">Telefone</p>
+          <p class="text-white mt-1"><%= @lead.phone || 'N/A' %></p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase text-white/50">Email</p>
+          <p class="text-white mt-1"><%= @lead.email || 'N/A' %></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charge and Feedback Info Section -->
+    <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h2 class="text-xl font-semibold text-white mb-4">Cobrança e Feedback</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <p class="text-xs uppercase text-white/50">Status de Cobrança</p>
+          <p class="text-white mt-1"><%= @lead.charge_status %></p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase text-white/50">Status de Feedback</p>
+          <p class="text-white mt-1"><%= @lead.feedback_status %></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Additional Info Section -->
+    <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h2 class="text-xl font-semibold text-white mb-4">Informações Adicionais</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <p class="text-xs uppercase text-white/50">Categoria</p>
+          <p class="text-sm text-white/70 mt-1"><%= format_category_id(@lead.category_id) %></p>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase text-white/50">Serviço</p>
+          <p class="text-sm text-white/70 mt-1"><%= format_service_id(@lead.service_id) %></p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+

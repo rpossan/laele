@@ -19,7 +19,20 @@ module GoogleAds
     def exchange_code(code)
       client = build_client
       client.code = code
-      client.fetch_access_token!
+      response = client.fetch_access_token!
+      
+      # Log for debugging - check both client and response
+      Rails.logger.info("[GoogleAds::OauthClient] Token exchange successful.")
+      Rails.logger.info("[GoogleAds::OauthClient] Client refresh_token present: #{client.refresh_token.present?}")
+      Rails.logger.info("[GoogleAds::OauthClient] Response keys: #{response.keys.inspect}") if response.is_a?(Hash)
+      Rails.logger.info("[GoogleAds::OauthClient] Response has refresh_token: #{response['refresh_token'].present?}") if response.is_a?(Hash)
+      
+      # If refresh_token is in response but not in client, set it manually
+      if response.is_a?(Hash) && response['refresh_token'].present? && client.refresh_token.blank?
+        client.refresh_token = response['refresh_token']
+        Rails.logger.info("[GoogleAds::OauthClient] Manually set refresh_token from response")
+      end
+      
       client
     rescue Signet::AuthorizationError => e
       Rails.logger.error("[GoogleAds::OauthClient] Token exchange failed: #{e.message}")
@@ -34,9 +47,9 @@ module GoogleAds
       Signet::OAuth2::Client.new(
         client_id: ENV.fetch("GOOGLE_ADS_CLIENT_ID"),
         client_secret: ENV.fetch("GOOGLE_ADS_CLIENT_SECRET"),
-        authorization_uri: "https://accounts.google.com/o/oauth2/auth",
+        authorization_uri: "https://accounts.google.com/o/oauth2/v2/auth",
         token_credential_uri: "https://oauth2.googleapis.com/token",
-        redirect_uri:,
+        redirect_uri: redirect_uri,
         scope: SCOPE,
         additional_parameters: build_additional_parameters(access_type:, prompt:)
       )
@@ -51,7 +64,7 @@ module GoogleAds
     end
 
     def default_redirect_uri
-      ENV["GOOGLE_ADS_REDIRECT_URI"].presence || google_ads_auth_callback_url
+      ENV["GOOGLE_ADS_REDIRECT_URI"]
     end
   end
 end
