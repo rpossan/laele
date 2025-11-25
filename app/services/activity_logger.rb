@@ -99,5 +99,26 @@ class ActivityLogger
       request: request
     )
   end
+
+  def self.log_bulk_lead_feedback(user:, lead_ids:, survey_answer:, reason: nil, other_reason_comment: nil, processed_count: 0, failed_count: 0, request: nil)
+    metadata = {
+      'lead_ids' => lead_ids.is_a?(Array) ? lead_ids : [lead_ids.to_s],
+      'lead_count' => lead_ids.is_a?(Array) ? lead_ids.length : 1,
+      'survey_answer' => survey_answer,
+      'reason' => reason,
+      'other_reason_comment' => other_reason_comment,
+      'processed_count' => processed_count,
+      'failed_count' => failed_count
+    }.compact
+
+    log(
+      user: user,
+      action: ActivityLog::ACTIONS[:bulk_lead_feedback],
+      resource_type: 'Lead',
+      resource_id: lead_ids.is_a?(Array) ? lead_ids.first.to_s : lead_ids.to_s,
+      metadata: metadata,
+      request: request
+    )
+  end
 end
 

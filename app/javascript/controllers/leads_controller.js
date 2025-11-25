@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["tableBody", "period", "chargeStatus", "feedbackStatus", "chargeStatusContainer", "feedbackStatusContainer", "lastSync"]
+  static targets = ["tableBody", "period", "chargeStatus", "feedbackStatus", "chargeStatusContainer", "feedbackStatusContainer", "lastSync", "bulkActionBar"]
 
   connect() {
     console.log("✅ Leads controller connected")
@@ -301,7 +301,11 @@ export default class extends Controller {
       this.renderLeads(data.leads || [], period, chargeStatusValues, feedbackStatusValues)
     } catch (error) {
       console.error("Error fetching leads:", error)
-      alert(`Erro ao buscar leads: ${error.message}`)
+      if (window.showError) {
+        window.showError(`Erro ao buscar leads: ${error.message}`)
+      } else {
+        alert(`Erro ao buscar leads: ${error.message}`)
+      }
     } finally {
       // Re-enable button
       if (button) {
@@ -337,14 +341,18 @@ export default class extends Controller {
       return
     }
 
+    // Store leads data for checkbox management
+    this.leadsData = leads
+
     if (leads.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td class="py-4 pr-4 text-sm text-slate-500" colspan="6">
+          <td class="py-4 pr-4 text-sm text-slate-500" colspan="7">
             Nenhum lead encontrado para os filtros selecionados.
           </td>
         </tr>
       `
+      this.updateBulkActionBar()
       return
     }
 
@@ -386,7 +394,15 @@ export default class extends Controller {
           </td>`
 
       return `
-        <tr class="hover:bg-slate-50 transition-colors">
+        <tr class="hover:bg-slate-50 transition-colors" data-lead-id="${lead.id}">
+          <td class="px-6 py-4 align-top">
+            <input 
+              type="checkbox" 
+              class="lead-checkbox w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" 
+              data-lead-id="${lead.id}"
+              onclick="event.stopPropagation(); if (window.leadsController) { window.leadsController.handleCheckboxChange(); }"
+            >
+          </td>
           <td class="px-6 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
             <div class="mb-2">${leadTypeTag}</div>
             <div class="text-xs text-slate-500 font-mono">${lead.id || "N/A"}</div>
@@ -409,6 +425,92 @@ export default class extends Controller {
         </tr>
       `
     }).join("")
+    
+    // Setup checkbox handlers after rendering
+    this.setupCheckboxHandlers()
+    this.updateBulkActionBar()
+  }
+  
+  setupCheckboxHandlers() {
+    // Select all checkbox handler - use onclick to avoid duplicate listeners
+    const selectAllCheckbox = document.getElementById('select-all-leads')
+    if (selectAllCheckbox) {
+      // Remove existing onclick to avoid duplicates
+      selectAllCheckbox.onclick = null
+      selectAllCheckbox.onclick = (e) => {
+        const isChecked = e.target.checked
+        const checkboxes = this.element.querySelectorAll('.lead-checkbox')
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = isChecked
+        })
+        this.updateBulkActionBar()
+        this.updateSelectAllCheckbox()
+      }
+    }
+  }
+  
+  handleCheckboxChange() {
+    this.updateBulkActionBar()
+    this.updateSelectAllCheckbox()
+  }
+  
+  updateSelectAllCheckbox() {
+    const selectAllCheckbox = document.getElementById('select-all-leads')
+    if (!selectAllCheckbox) return
+    
+    const checkboxes = this.element.querySelectorAll('.lead-checkbox')
+    const checkedCount = this.element.querySelectorAll('.lead-checkbox:checked').length
+    
+    if (checkedCount === 0) {
+      selectAllCheckbox.checked = false
+      selectAllCheckbox.indeterminate = false
+    } else if (checkedCount === checkboxes.length) {
+      selectAllCheckbox.checked = true
+      selectAllCheckbox.indeterminate = false
+    } else {
+      selectAllCheckbox.checked = false
+      selectAllCheckbox.indeterminate = true
+    }
+  }
+  
+  updateBulkActionBar() {
+    const checkedBoxes = this.element.querySelectorAll('.lead-checkbox:checked')
+    const checkedCount = checkedBoxes.length
+    
+    if (this.hasBulkActionBarTarget) {
+      if (checkedCount > 1) {
+        this.bulkActionBarTarget.classList.remove('hidden')
+        const countElement = this.bulkActionBarTarget.querySelector('.selected-count')
+        if (countElement) {
+          countElement.textContent = checkedCount
+        }
+      } else {
+        this.bulkActionBarTarget.classList.add('hidden')
+      }
+    }
+  }
+  
+  getSelectedLeadIds() {
+    const checkedBoxes = this.element.querySelectorAll('.lead-checkbox:checked')
+    return Array.from(checkedBoxes).map(cb => cb.dataset.leadId)
+  }
+  
+  openBulkFeedbackModal() {
+    const selectedIds = this.getSelectedLeadIds()
+    if (selectedIds.length < 2) {
+      if (window.showInfo) {
+        window.showInfo('Selecione pelo menos 2 leads para avaliar em lote')
+      } else {
+        alert('Selecione pelo menos 2 leads para avaliar em lote')
+      }
+      return
+    }
+    
+    if (window.openFeedbackModal) {
+      window.openFeedbackModal(null, selectedIds)
+    } else {
+      console.error("Feedback modal function not found")
+    }
   }
 
   formatLeadTypeTag(leadType) {

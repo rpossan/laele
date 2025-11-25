@@ -4,6 +4,7 @@ class ActivityLog < ApplicationRecord
   # Action types
   ACTIONS = {
     lead_feedback: 'lead_feedback',
+    bulk_lead_feedback: 'bulk_lead_feedback',
     account_switched: 'account_switched',
     account_connected: 'account_connected',
     account_disconnected: 'account_disconnected',
@@ -21,6 +22,8 @@ class ActivityLog < ApplicationRecord
     case action
     when ACTIONS[:lead_feedback]
       "Avaliou lead"
+    when ACTIONS[:bulk_lead_feedback]
+      "Avaliou leads em lote"
     when ACTIONS[:account_switched]
       "Trocou conta administrada"
     when ACTIONS[:account_connected]
@@ -44,6 +47,18 @@ class ActivityLog < ApplicationRecord
       reason = metadata['reason']
       
       desc = "Lead #{lead_id}: #{survey_answer&.humanize}"
+      desc += " - #{reason&.humanize}" if reason.present?
+      desc
+    when ACTIONS[:bulk_lead_feedback]
+      lead_count = metadata['lead_count'] || metadata['lead_ids']&.length || 0
+      processed_count = metadata['processed_count'] || 0
+      failed_count = metadata['failed_count'] || 0
+      survey_answer = metadata['survey_answer']
+      reason = metadata['reason']
+      
+      desc = "#{processed_count} leads processados"
+      desc += " (#{failed_count} falharam)" if failed_count > 0
+      desc += ": #{survey_answer&.humanize}"
       desc += " - #{reason&.humanize}" if reason.present?
       desc
     when ACTIONS[:account_switched]

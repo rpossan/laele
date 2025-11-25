@@ -29,6 +29,9 @@ Rails.application.routes.draw do
       member do
         post :feedback, to: "leads/lead_feedback#create"
       end
+      collection do
+        post :bulk_feedback, to: "leads/bulk_lead_feedback#create"
+      end
     end
   end
 

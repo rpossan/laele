@@ -111,6 +111,41 @@
 </div>
 
 <script>
+  // Notification helpers using SweetAlert2
+  window.showSuccess = function(message, title = 'Sucesso!') {
+    Swal.fire({
+      icon: 'success',
+      title: title,
+      text: message,
+      confirmButtonColor: '#4f46e5',
+      confirmButtonText: 'OK',
+      timer: 3000,
+      timerProgressBar: true
+    });
+  };
+
+  window.showError = function(message, title = 'Erro!') {
+    Swal.fire({
+      icon: 'error',
+      title: title,
+      text: message,
+      confirmButtonColor: '#ef4444',
+      confirmButtonText: 'OK'
+    });
+  };
+
+  window.showInfo = function(message, title = 'Informação') {
+    Swal.fire({
+      icon: 'info',
+      title: title,
+      text: message,
+      confirmButtonColor: '#4f46e5',
+      confirmButtonText: 'OK',
+      timer: 3000,
+      timerProgressBar: true
+    });
+  };
+
   // Tab switching with content refresh
   window.switchTab = async function(tabName) {
     // Hide all tab contents
@@ -208,11 +243,11 @@
                 if (response.ok) {
                   window.location.reload();
                 } else {
-                  alert(data.error || 'Erro ao selecionar conta');
+                  showError(data.error || 'Erro ao selecionar conta');
                 }
               } catch (error) {
                 console.error('Error selecting customer:', error);
-                alert('Erro ao selecionar conta');
+                showError('Erro ao selecionar conta');
               }
             });
           }
@@ -239,13 +274,13 @@
                 if (response.ok) {
                   window.location.reload();
                 } else {
-                  alert(data.error || 'Erro ao atualizar contas');
+                  showError(data.error || 'Erro ao atualizar contas');
                   refreshBtn.disabled = false;
                   refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
                 }
               } catch (error) {
                 console.error('Error refreshing customers:', error);
-                alert('Erro ao atualizar contas');
+                showError('Erro ao atualizar contas');
                 refreshBtn.disabled = false;
                 refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
               }
@@ -299,7 +334,7 @@
     const googleAccountId = selectedOption ? selectedOption.dataset.googleAccountId : null;
     
     if (!customerId) {
-      alert('Por favor, selecione uma conta');
+      showInfo('Por favor, selecione uma conta');
       return;
     }
     
@@ -323,14 +358,14 @@
         closeAccountSwitcherModal();
         window.location.reload();
       } else {
-        alert(data.error || 'Erro ao selecionar conta');
+            showError(data.error || 'Erro ao selecionar conta');
         saveBtn.disabled = false;
         saveBtn.textContent = 'Salvar';
       }
     })
     .catch(error => {
       console.error('Error selecting customer:', error);
-      alert('Erro ao selecionar conta');
+          showError('Erro ao selecionar conta');
       saveBtn.disabled = false;
       saveBtn.textContent = 'Salvar';
     });
@@ -371,13 +406,13 @@
           if (response.ok) {
             window.location.reload();
           } else {
-            alert(data.error || 'Erro ao atualizar contas');
+            showError(data.error || 'Erro ao atualizar contas');
             refreshBtn.disabled = false;
             refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
           }
         } catch (error) {
           console.error('Error refreshing customers:', error);
-          alert('Erro ao atualizar contas');
+          showError('Erro ao atualizar contas');
           refreshBtn.disabled = false;
           refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
         }
@@ -423,11 +458,11 @@
           if (response.ok) {
             window.location.reload();
           } else {
-            alert(data.error || 'Erro ao selecionar conta');
+            showError(data.error || 'Erro ao selecionar conta');
           }
         } catch (error) {
           console.error('Error selecting customer:', error);
-          alert('Erro ao selecionar conta');
+          showError('Erro ao selecionar conta');
         }
       });
     }
@@ -454,19 +489,40 @@
       { value: 'OTHER_SATISFIED_REASON', label: 'Outro motivo' }
     ];
     
-    window.openFeedbackModal = function(leadId) {
-      if (!leadId) {
-        alert('Erro: ID do lead não fornecido');
+    window.openFeedbackModal = function(leadId, leadIds = null) {
+      // Support both single lead and bulk leads
+      const isBulk = Array.isArray(leadIds) && leadIds.length > 1;
+      const singleLeadId = isBulk ? null : leadId;
+      
+      if (!singleLeadId && !isBulk) {
+        showError('ID do lead não fornecido');
         return;
       }
       
       const modal = document.getElementById('feedback-modal');
       const leadIdInput = document.getElementById('feedback-lead-id');
+      const leadIdsInput = document.getElementById('feedback-lead-ids');
+      const bulkInfo = document.getElementById('bulk-feedback-info');
+      const bulkCount = document.getElementById('bulk-lead-count');
+      const modalTitle = document.getElementById('modal-title');
       const form = document.getElementById('feedback-form');
       
-      if (!modal || !leadIdInput || !form) return;
+      if (!modal || !form) return;
       
-      leadIdInput.value = leadId;
+      // Set lead IDs
+      if (isBulk) {
+        leadIdInput.value = '';
+        leadIdsInput.value = JSON.stringify(leadIds);
+        if (bulkInfo) bulkInfo.classList.remove('hidden');
+        if (bulkCount) bulkCount.textContent = leadIds.length;
+        if (modalTitle) modalTitle.textContent = 'Avaliar Leads Selecionados';
+      } else {
+        leadIdInput.value = singleLeadId;
+        leadIdsInput.value = '';
+        if (bulkInfo) bulkInfo.classList.add('hidden');
+        if (modalTitle) modalTitle.textContent = 'Submeter Feedback';
+      }
+      
       form.reset();
       const reasonSection = document.getElementById('reason-section');
       const otherReasonSection = document.getElementById('other-reason-section');
@@ -543,6 +599,7 @@
       
       const form = event.target;
       const leadId = document.getElementById('feedback-lead-id').value;
+      const leadIdsJson = document.getElementById('feedback-lead-ids').value;
       const submitBtn = document.getElementById('submit-feedback-btn');
       
       const formData = new FormData(form);
@@ -556,10 +613,60 @@
       const otherComment = formData.get('other_reason_comment');
       if (otherComment) payload.other_reason_comment = otherComment;
       
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Enviando...';
+      // Check if it's bulk feedback
+      const isBulk = leadIdsJson && leadIdsJson.trim() !== '';
+      let leadIds = [];
       
-      fetch(`/api/leads/${leadId}/feedback`, {
+      if (isBulk) {
+        try {
+          leadIds = JSON.parse(leadIdsJson);
+          if (!Array.isArray(leadIds) || leadIds.length < 2) {
+            showError('IDs de leads inválidos para avaliação em lote');
+            return;
+          }
+          payload.lead_ids = leadIds;
+        } catch (e) {
+          showError('Erro ao processar IDs dos leads selecionados');
+          return;
+        }
+      }
+      
+      submitBtn.disabled = true;
+      const originalBtnText = submitBtn.textContent;
+      const loadingText = isBulk ? `Enviando para ${leadIds.length} leads...` : 'Enviando...';
+      submitBtn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        ${loadingText}
+      `;
+      
+      // Show loading overlay with SweetAlert2
+      const loadingMessage = isBulk 
+        ? `Processando feedback para ${leadIds.length} leads...`
+        : 'Enviando feedback...';
+      
+      Swal.fire({
+        title: 'Processando...',
+        html: `
+          <div class="flex flex-col items-center gap-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <p class="text-slate-600">${loadingMessage}</p>
+            <p class="text-xs text-slate-400">Por favor, aguarde...</p>
+          </div>
+        `,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+      const url = isBulk ? '/api/leads/bulk_feedback' : `/api/leads/${leadId}/feedback`;
+      
+      fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -598,22 +705,38 @@
         return response.json();
       })
       .then(data => {
+        // Close loading overlay
+        Swal.close();
+        
         if (data.success || data.message) {
           closeFeedbackModal();
-          alert("Feedback enviado com sucesso!");
+          const message = isBulk 
+            ? `Feedback enviado com sucesso para ${data.processed_count || leadIds.length} leads!`
+            : "Feedback enviado com sucesso!";
+          showSuccess(message);
           const button = document.getElementById('fetch-leads-btn');
           if (button) button.click();
+          // Clear checkboxes after successful bulk feedback
+          if (isBulk && window.leadsController) {
+            const checkboxes = document.querySelectorAll('.lead-checkbox:checked');
+            checkboxes.forEach(cb => cb.checked = false);
+            window.leadsController.updateBulkActionBar();
+            window.leadsController.updateSelectAllCheckbox();
+          }
         } else {
-          alert("Erro ao enviar feedback: " + (data.error || "Erro desconhecido"));
+          showError("Erro ao enviar feedback: " + (data.error || "Erro desconhecido"));
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Enviar Feedback';
+          submitBtn.innerHTML = originalBtnText;
         }
       })
       .catch(error => {
+        // Close loading overlay
+        Swal.close();
+        
         console.error("Error submitting feedback:", error);
-        alert("Erro ao enviar feedback: " + error.message);
+        showError("Erro ao enviar feedback: " + error.message);
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Enviar Feedback';
+        submitBtn.innerHTML = originalBtnText;
       });
     };
   })();
@@ -941,7 +1064,7 @@
     const googleAccountId = selectedOption ? selectedOption.dataset.googleAccountId : null;
     
     if (!customerId) {
-      alert('Por favor, selecione uma conta');
+      showInfo('Por favor, selecione uma conta');
       return;
     }
     
@@ -965,14 +1088,14 @@
         closeAccountSwitcherModal();
         window.location.reload();
       } else {
-        alert(data.error || 'Erro ao selecionar conta');
+            showError(data.error || 'Erro ao selecionar conta');
         saveBtn.disabled = false;
         saveBtn.textContent = 'Salvar';
       }
     })
     .catch(error => {
       console.error('Error selecting customer:', error);
-      alert('Erro ao selecionar conta');
+          showError('Erro ao selecionar conta');
       saveBtn.disabled = false;
       saveBtn.textContent = 'Salvar';
     });
@@ -1013,13 +1136,13 @@
           if (response.ok) {
             window.location.reload();
           } else {
-            alert(data.error || 'Erro ao atualizar contas');
+            showError(data.error || 'Erro ao atualizar contas');
             refreshBtn.disabled = false;
             refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
           }
         } catch (error) {
           console.error('Error refreshing customers:', error);
-          alert('Erro ao atualizar contas');
+          showError('Erro ao atualizar contas');
           refreshBtn.disabled = false;
           refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
         }
@@ -1065,11 +1188,11 @@
           if (response.ok) {
             window.location.reload();
           } else {
-            alert(data.error || 'Erro ao selecionar conta');
+            showError(data.error || 'Erro ao selecionar conta');
           }
         } catch (error) {
           console.error('Error selecting customer:', error);
-          alert('Erro ao selecionar conta');
+          showError('Erro ao selecionar conta');
         }
       });
     }
@@ -1090,23 +1213,46 @@
     
     const satisfiedReasons = [
       { value: 'SERVICE_RELATED', label: 'Relacionado ao serviço' },
-      { value: 'BOOKED_CUSTOMER', label: 'Cliente agendado' }
-      // Note: "OTHER" is not a valid value for satisfied reasons in Google Ads API
+      { value: 'BOOKED_CUSTOMER', label: 'Cliente agendado' },
+      { value: 'LIKELY_BOOKED_CUSTOMER', label: 'Provavelmente cliente agendado' },
+      { value: 'HIGH_VALUE_SERVICE', label: 'Serviço de alto valor' },
+      { value: 'OTHER_SATISFIED_REASON', label: 'Outro motivo' }
     ];
     
-    window.openFeedbackModal = function(leadId) {
-      if (!leadId) {
-        alert('Erro: ID do lead não fornecido');
+    window.openFeedbackModal = function(leadId, leadIds = null) {
+      // Support both single lead and bulk leads
+      const isBulk = Array.isArray(leadIds) && leadIds.length > 1;
+      const singleLeadId = isBulk ? null : leadId;
+      
+      if (!singleLeadId && !isBulk) {
+        showError('ID do lead não fornecido');
         return;
       }
       
       const modal = document.getElementById('feedback-modal');
       const leadIdInput = document.getElementById('feedback-lead-id');
+      const leadIdsInput = document.getElementById('feedback-lead-ids');
+      const bulkInfo = document.getElementById('bulk-feedback-info');
+      const bulkCount = document.getElementById('bulk-lead-count');
+      const modalTitle = document.getElementById('modal-title');
       const form = document.getElementById('feedback-form');
       
-      if (!modal || !leadIdInput || !form) return;
+      if (!modal || !form) return;
       
-      leadIdInput.value = leadId;
+      // Set lead IDs
+      if (isBulk) {
+        leadIdInput.value = '';
+        leadIdsInput.value = JSON.stringify(leadIds);
+        if (bulkInfo) bulkInfo.classList.remove('hidden');
+        if (bulkCount) bulkCount.textContent = leadIds.length;
+        if (modalTitle) modalTitle.textContent = 'Avaliar Leads Selecionados';
+      } else {
+        leadIdInput.value = singleLeadId;
+        leadIdsInput.value = '';
+        if (bulkInfo) bulkInfo.classList.add('hidden');
+        if (modalTitle) modalTitle.textContent = 'Submeter Feedback';
+      }
+      
       form.reset();
       const reasonSection = document.getElementById('reason-section');
       const otherReasonSection = document.getElementById('other-reason-section');
@@ -1170,7 +1316,7 @@
       }
       
       reasonSelect.addEventListener('change', function() {
-        if (this.value === 'OTHER') {
+        if (this.value === 'OTHER_SATISFIED_REASON') {
           otherReasonSection.classList.remove('hidden');
         } else {
           otherReasonSection.classList.add('hidden');
@@ -1183,6 +1329,7 @@
       
       const form = event.target;
       const leadId = document.getElementById('feedback-lead-id').value;
+      const leadIdsJson = document.getElementById('feedback-lead-ids').value;
       const submitBtn = document.getElementById('submit-feedback-btn');
       
       const formData = new FormData(form);
@@ -1196,10 +1343,60 @@
       const otherComment = formData.get('other_reason_comment');
       if (otherComment) payload.other_reason_comment = otherComment;
       
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Enviando...';
+      // Check if it's bulk feedback
+      const isBulk = leadIdsJson && leadIdsJson.trim() !== '';
+      let leadIds = [];
       
-      fetch(`/api/leads/${leadId}/feedback`, {
+      if (isBulk) {
+        try {
+          leadIds = JSON.parse(leadIdsJson);
+          if (!Array.isArray(leadIds) || leadIds.length < 2) {
+            showError('IDs de leads inválidos para avaliação em lote');
+            return;
+          }
+          payload.lead_ids = leadIds;
+        } catch (e) {
+          showError('Erro ao processar IDs dos leads selecionados');
+          return;
+        }
+      }
+      
+      submitBtn.disabled = true;
+      const originalBtnText = submitBtn.textContent;
+      const loadingText = isBulk ? `Enviando para ${leadIds.length} leads...` : 'Enviando...';
+      submitBtn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        ${loadingText}
+      `;
+      
+      // Show loading overlay with SweetAlert2
+      const loadingMessage = isBulk 
+        ? `Processando feedback para ${leadIds.length} leads...`
+        : 'Enviando feedback...';
+      
+      Swal.fire({
+        title: 'Processando...',
+        html: `
+          <div class="flex flex-col items-center gap-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <p class="text-slate-600">${loadingMessage}</p>
+            <p class="text-xs text-slate-400">Por favor, aguarde...</p>
+          </div>
+        `,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+      const url = isBulk ? '/api/leads/bulk_feedback' : `/api/leads/${leadId}/feedback`;
+      
+      fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1238,22 +1435,38 @@
         return response.json();
       })
       .then(data => {
+        // Close loading overlay
+        Swal.close();
+        
         if (data.success || data.message) {
           closeFeedbackModal();
-          alert("Feedback enviado com sucesso!");
+          const message = isBulk 
+            ? `Feedback enviado com sucesso para ${data.processed_count || leadIds.length} leads!`
+            : "Feedback enviado com sucesso!";
+          showSuccess(message);
           const button = document.getElementById('fetch-leads-btn');
           if (button) button.click();
+          // Clear checkboxes after successful bulk feedback
+          if (isBulk && window.leadsController) {
+            const checkboxes = document.querySelectorAll('.lead-checkbox:checked');
+            checkboxes.forEach(cb => cb.checked = false);
+            window.leadsController.updateBulkActionBar();
+            window.leadsController.updateSelectAllCheckbox();
+          }
         } else {
-          alert("Erro ao enviar feedback: " + (data.error || "Erro desconhecido"));
+          showError("Erro ao enviar feedback: " + (data.error || "Erro desconhecido"));
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Enviar Feedback';
+          submitBtn.innerHTML = originalBtnText;
         }
       })
       .catch(error => {
+        // Close loading overlay
+        Swal.close();
+        
         console.error("Error submitting feedback:", error);
-        alert("Erro ao enviar feedback: " + error.message);
+        showError("Erro ao enviar feedback: " + error.message);
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Enviar Feedback';
+        submitBtn.innerHTML = originalBtnText;
       });
     };
   })();
