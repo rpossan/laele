@@ -3,6 +3,10 @@ class LeadsController < ApplicationController
   before_action :set_active_selection
 
   def index
+    # Set the same variables as dashboard for the shared view
+    @google_accounts = current_user.google_accounts.includes(:accessible_customers)
+    @active_selection = current_user.active_customer_selection
+    @activity_logs = current_user.activity_logs.recent.limit(50)
     # Render the same dashboard view
     render "dashboard/show"
   end
@@ -55,15 +59,15 @@ class LeadsController < ApplicationController
   def status_color_class(status)
     case status&.to_s
     when "NEW"
-      "bg-blue-400/20 text-blue-300"
+      "bg-blue-50 text-blue-700"
     when "CONTACTED"
-      "bg-yellow-400/20 text-yellow-300"
+      "bg-amber-50 text-amber-700"
     when "CONVERTED"
-      "bg-emerald-400/20 text-emerald-300"
+      "bg-emerald-50 text-emerald-700"
     when "NOT_CONVERTED"
-      "bg-red-400/20 text-red-300"
+      "bg-rose-50 text-rose-700"
     else
-      "bg-gray-400/20 text-gray-300"
+      "bg-slate-100 text-slate-700"
     end
   end
 

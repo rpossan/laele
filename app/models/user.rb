@@ -6,6 +6,7 @@ class User < ApplicationRecord
 
   has_many :google_accounts, dependent: :destroy
   has_one :active_customer_selection, dependent: :destroy
+  has_many :activity_logs, dependent: :destroy
 
   def active_customer_id
     active_customer_selection&.customer_id

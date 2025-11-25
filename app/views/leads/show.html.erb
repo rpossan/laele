@@ -1,95 +1,119 @@
-<div class="space-y-6">
+<div class="space-y-8">
   <!-- Header -->
-  <div class="flex items-center justify-between">
-    <%= link_to "← Voltar", @back_params.present? ? dashboard_path(@back_params) : dashboard_path, class: "text-white/60 hover:text-white" %>
-    <h1 class="text-2xl font-semibold text-white">Detalhes do Lead</h1>
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <%= link_to @back_params.present? ? dashboard_path(@back_params) : dashboard_path, 
+                class: "inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      <span>Voltar</span>
+    <% end %>
+    <h1 class="text-3xl font-bold text-slate-900">Detalhes do Lead</h1>
     <div></div>
   </div>
 
-  <div class="grid lg:grid-cols-2 gap-6">
-    <!-- Lead Info Section -->
-    <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <h2 class="text-xl font-semibold text-white mb-4">Informações do Lead</h2>
-      
-      <div class="space-y-4">
-        <div>
-          <p class="text-xs uppercase text-white/50">Lead ID</p>
-          <p class="text-lg font-medium text-white mt-1"><%= @lead.id %></p>
+  <!-- Cards Grid -->
+  <div class="grid gap-6 lg:grid-cols-2">
+    <!-- Informações do Lead -->
+    <section class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 shadow-lg">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
         </div>
-
+        <h2 class="text-xl font-bold text-slate-900">Informações do Lead</h2>
+      </div>
+      <div class="space-y-5">
         <div>
-          <p class="text-xs uppercase text-white/50">Tipo</p>
-          <p class="text-white mt-1"><%= @lead.lead_type || 'N/A' %></p>
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Lead ID</p>
+          <p class="text-base font-bold text-slate-900 font-mono"><%= @lead.id %></p>
         </div>
-
         <div>
-          <p class="text-xs uppercase text-white/50">Status</p>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-1 <%= status_color_class(@lead.status) %>">
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Tipo</p>
+          <p class="text-base text-slate-700 font-medium"><%= @lead.lead_type || 'N/A' %></p>
+        </div>
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Status</p>
+          <span class="inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold <%= status_color_class(@lead.status) %>">
             <%= format_lead_status(@lead.status) %>
           </span>
         </div>
-
         <div>
-          <p class="text-xs uppercase text-white/50">Data de Criação</p>
-          <p class="text-white mt-1">
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Data de Criação</p>
+          <p class="text-base text-slate-700 font-medium">
             <%= @lead.created_at ? @lead.created_at.in_time_zone.strftime("%d/%m/%Y às %H:%M") : 'N/A' %>
           </p>
         </div>
       </div>
     </section>
 
-    <!-- Contact Info Section -->
-    <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <h2 class="text-xl font-semibold text-white mb-4">Informações de Contato</h2>
-      
-      <div class="space-y-4">
-        <div>
-          <p class="text-xs uppercase text-white/50">Nome</p>
-          <p class="text-white mt-1"><%= @lead.name || 'N/A' %></p>
+    <!-- Informações de Contato -->
+    <section class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 shadow-lg">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
         </div>
-
+        <h2 class="text-xl font-bold text-slate-900">Informações de Contato</h2>
+      </div>
+      <div class="space-y-5">
         <div>
-          <p class="text-xs uppercase text-white/50">Telefone</p>
-          <p class="text-white mt-1"><%= @lead.phone || 'N/A' %></p>
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Nome</p>
+          <p class="text-base text-slate-700 font-medium"><%= @lead.name || 'N/A' %></p>
         </div>
-
         <div>
-          <p class="text-xs uppercase text-white/50">Email</p>
-          <p class="text-white mt-1"><%= @lead.email || 'N/A' %></p>
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Telefone</p>
+          <p class="text-base text-slate-700 font-medium"><%= @lead.phone || 'N/A' %></p>
+        </div>
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Email</p>
+          <p class="text-base text-slate-700 font-medium break-all"><%= @lead.email || 'N/A' %></p>
         </div>
       </div>
     </section>
 
-    <!-- Charge and Feedback Info Section -->
-    <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <h2 class="text-xl font-semibold text-white mb-4">Cobrança e Feedback</h2>
-      
-      <div class="space-y-4">
-        <div>
-          <p class="text-xs uppercase text-white/50">Status de Cobrança</p>
-          <p class="text-white mt-1"><%= @lead.charge_status %></p>
+    <!-- Cobrança e Feedback -->
+    <section class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 shadow-lg">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
         </div>
-
+        <h2 class="text-xl font-bold text-slate-900">Cobrança e Feedback</h2>
+      </div>
+      <div class="space-y-5">
         <div>
-          <p class="text-xs uppercase text-white/50">Status de Feedback</p>
-          <p class="text-white mt-1"><%= @lead.feedback_status %></p>
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Status de Cobrança</p>
+          <p class="text-base text-slate-700 font-medium"><%= @lead.charge_status || 'N/A' %></p>
+        </div>
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Status de Feedback</p>
+          <p class="text-base text-slate-700 font-medium"><%= @lead.feedback_status || 'N/A' %></p>
         </div>
       </div>
     </section>
 
-    <!-- Additional Info Section -->
-    <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <h2 class="text-xl font-semibold text-white mb-4">Informações Adicionais</h2>
-      
-      <div class="space-y-4">
-        <div>
-          <p class="text-xs uppercase text-white/50">Categoria</p>
-          <p class="text-sm text-white/70 mt-1"><%= format_category_id(@lead.category_id) %></p>
+    <!-- Informações Adicionais -->
+    <section class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 shadow-lg">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+          </svg>
         </div>
-
+        <h2 class="text-xl font-bold text-slate-900">Informações Adicionais</h2>
+      </div>
+      <div class="space-y-5">
         <div>
-          <p class="text-xs uppercase text-white/50">Serviço</p>
-          <p class="text-sm text-white/70 mt-1"><%= format_service_id(@lead.service_id) %></p>
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Categoria</p>
+          <p class="text-base text-slate-700 font-medium"><%= format_category_id(@lead.category_id) %></p>
+        </div>
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Serviço</p>
+          <p class="text-base text-slate-700 font-medium"><%= format_service_id(@lead.service_id) %></p>
         </div>
       </div>
     </section>

@@ -1,80 +1,146 @@
-<section class="grid lg:grid-cols-2 gap-12 items-center">
-  <div class="space-y-10">
-    <div class="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-1 text-xs uppercase tracking-[0.3em] text-white/60">
-      <span>Google Local Services Ads</span>
-    </div>
-    <div>
-      <h1 class="text-4xl lg:text-6xl font-semibold tracking-tight leading-tight text-white">
-        Gerencie os leads mais valiosos do Google LSA em um único painel.
+<!-- Hero Section -->
+<div class="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900">
+  <!-- Background Pattern -->
+  <div class="absolute inset-0 opacity-10">
+    <div class="absolute inset-0" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 40px 40px;"></div>
+  </div>
+  
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+    <div class="text-center">
+      <!-- Badge -->
+      <div class="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 mb-8">
+        <svg class="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span class="text-xs font-semibold uppercase tracking-wider text-white">Google Local Services Ads</span>
+      </div>
+      
+      <!-- Headline -->
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-white mb-6">
+        Gerencie os leads mais valiosos do
+        <span class="text-emerald-300">Google LSA</span>
+        <br class="hidden sm:block" />
+        em um único painel
       </h1>
-      <p class="mt-6 text-lg text-white/70">
+      
+      <!-- Subheadline -->
+      <p class="mx-auto max-w-2xl text-lg sm:text-xl text-indigo-100 mb-10 leading-relaxed">
         O Local Services Lead Manager conecta sua conta Google Ads, puxa leads em tempo real,
         aplica filtros inteligentes de cobrança e feedback e prepara sua operação para enviar
         respostas diretamente via API.
       </p>
-    </div>
-    <div class="flex flex-col sm:flex-row gap-4">
-      <%= link_to "Criar minha conta", new_user_registration_path,
-                  class: "flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-400 text-slate-950 font-semibold py-4 text-lg shadow-xl shadow-emerald-400/40" %>
-      <%= link_to "Entrar", new_user_session_path,
-                  class: "flex-1 inline-flex items-center justify-center rounded-2xl border border-white/20 text-white font-semibold py-4 text-lg" %>
-    </div>
-    <div class="grid sm:grid-cols-3 gap-4 text-sm text-white/60">
-      <div class="p-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
-        <p class="text-3xl font-semibold text-white">+3</p>
-        <p>Tipos de filtros combinados (período, cobrança e feedback)</p>
+      
+      <!-- CTA Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+        <%= link_to new_user_registration_path,
+                    class: "group inline-flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-8 py-4 text-lg shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-200 transform hover:-translate-y-0.5" do %>
+          <span>Criar minha conta</span>
+          <svg class="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+        <% end %>
+        <%= link_to new_user_session_path,
+                    class: "inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white font-semibold px-8 py-4 text-lg transition-all duration-200" do %>
+          Entrar
+        <% end %>
       </div>
-      <div class="p-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
-        <p class="text-3xl font-semibold text-white">GAQL</p>
-        <p>Consultas dinâmicas sobre o recurso local_services_lead</p>
-      </div>
-      <div class="p-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
-        <p class="text-3xl font-semibold text-white">Pronto</p>
-        <p>Para ProvideLeadFeedback e conversas em etapas futuras</p>
+      
+      <!-- Features Grid -->
+      <div class="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-200">
+          <div class="text-4xl font-bold text-emerald-300 mb-2">+3</div>
+          <p class="text-sm text-indigo-100 font-medium">Tipos de filtros combinados</p>
+          <p class="text-xs text-indigo-200/80 mt-1">Período, cobrança e feedback</p>
+        </div>
+        <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-200">
+          <div class="text-4xl font-bold text-emerald-300 mb-2">GAQL</div>
+          <p class="text-sm text-indigo-100 font-medium">Consultas dinâmicas</p>
+          <p class="text-xs text-indigo-200/80 mt-1">Sobre o recurso local_services_lead</p>
+        </div>
+        <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-200">
+          <div class="text-4xl font-bold text-emerald-300 mb-2">API</div>
+          <p class="text-sm text-indigo-100 font-medium">Pronto para integração</p>
+          <p class="text-xs text-indigo-200/80 mt-1">ProvideLeadFeedback e conversas</p>
+        </div>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="space-y-6">
-    <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 to-transparent p-6">
-      <div class="border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-        <div>
-          <p class="text-sm text-white/60">Status atual</p>
-          <p class="text-2xl font-semibold text-white mt-1">MVP em desenvolvimento</p>
+<!-- Features Section -->
+<section class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-2 gap-12 items-start">
+      <!-- Status Card -->
+      <div class="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-8 shadow-lg">
+        <div class="flex items-center justify-between mb-6 pb-6 border-b border-slate-200">
+          <div>
+            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-1">Status atual</p>
+            <p class="text-2xl font-bold text-slate-900">MVP em desenvolvimento</p>
+          </div>
+          <span class="px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider">Alpha</span>
         </div>
-        <span class="px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-200 text-xs font-semibold uppercase tracking-widest">Alpha</span>
+        
+        <ul class="space-y-5">
+          <li class="flex gap-4">
+            <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+              <span class="text-indigo-600 font-bold">1</span>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-900 mb-1">Autenticação com login/senha</p>
+              <p class="text-sm text-slate-600">Devise configurado com Postgres e Tailwind.</p>
+            </div>
+          </li>
+          <li class="flex gap-4">
+            <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+              <span class="text-indigo-600 font-bold">2</span>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-900 mb-1">Conexão Google Ads OAuth</p>
+              <p class="text-sm text-slate-600">Fluxo planejado para MCCs e contas individuais.</p>
+            </div>
+          </li>
+          <li class="flex gap-4">
+            <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+              <span class="text-indigo-600 font-bold">3</span>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-900 mb-1">Filtros e relatórios GAQL</p>
+              <p class="text-sm text-slate-600">Seleção de período, charge status e feedback.</p>
+            </div>
+          </li>
+        </ul>
       </div>
-      <ul class="mt-6 space-y-4 text-white/80 text-sm">
-        <li class="flex gap-3">
-          <div class="h-8 w-8 rounded-full bg-emerald-400/20 flex items-center justify-center text-emerald-200">1</div>
-          <div>
-            <p class="font-semibold text-white">Autenticação com login/senha</p>
-            <p class="text-white/60">Devise configurado com Postgres e Tailwind.</p>
-          </div>
-        </li>
-        <li class="flex gap-3">
-          <div class="h-8 w-8 rounded-full bg-emerald-400/20 flex items-center justify-center text-emerald-200">2</div>
-          <div>
-            <p class="font-semibold text-white">Conexão Google Ads OAuth</p>
-            <p class="text-white/60">Fluxo planejado para MCCs e contas individuais.</p>
-          </div>
-        </li>
-        <li class="flex gap-3">
-          <div class="h-8 w-8 rounded-full bg-emerald-400/20 flex items-center justify-center text-emerald-200">3</div>
-          <div>
-            <p class="font-semibold text-white">Filtros e relatórios GAQL</p>
-            <p class="text-white/60">Seleção de período, charge status e feedback.</p>
-          </div>
-        </li>
-      </ul>
-    </div>
-    <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-sm text-white/80">
-      <p class="font-semibold text-white mb-2">Próximos passos</p>
-      <ul class="space-y-2 list-disc list-inside text-white/70">
-        <li>Salvar refresh tokens criptografados e selecionar customer ativo.</li>
-        <li>Renderizar tabela paginada de leads direto da Google Ads API.</li>
-        <li>Expor endpoints para conversas e ProvideLeadFeedback.</li>
-      </ul>
+      
+      <!-- Roadmap Card -->
+      <div class="rounded-3xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-8 shadow-lg">
+        <div class="flex items-center gap-3 mb-6">
+          <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+          <h3 class="text-xl font-bold text-slate-900">Próximos passos</h3>
+        </div>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-sm text-slate-700">Salvar refresh tokens criptografados e selecionar customer ativo.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-sm text-slate-700">Renderizar tabela paginada de leads direto da Google Ads API.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-sm text-slate-700">Expor endpoints para conversas e ProvideLeadFeedback.</span>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>

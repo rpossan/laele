@@ -24,7 +24,7 @@ Rails.application.routes.draw do
     resources :leads, only: [:index] do
       resources :conversations, only: [:index], module: :leads
       member do
-        post :feedback, to: "lead_feedback#create"
+        post :feedback, to: "leads/lead_feedback#create"
       end
     end
   end

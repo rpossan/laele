@@ -27,12 +27,23 @@ module Api
           other_reason_comment: other_reason_comment
         )
 
+        # Log activity
+        ActivityLogger.log_lead_feedback(
+          user: current_user,
+          lead_id: lead_id,
+          survey_answer: survey_answer,
+          reason: reason,
+          other_reason_comment: other_reason_comment,
+          request: request
+        )
+
         render json: result, status: :ok
       rescue ArgumentError => e
+        Rails.logger.error("[Api::Leads::LeadFeedbackController] ArgumentError: #{e.message}")
         render_error(e.message, :bad_request)
       rescue => e
         Rails.logger.error("[Api::Leads::LeadFeedbackController] Error: #{e.class} - #{e.message}")
-        Rails.logger.error("[Api::Leads::LeadFeedbackController] Backtrace: #{e.backtrace.first(5).join("\n")}")
+        Rails.logger.error("[Api::Leads::LeadFeedbackController] Backtrace: #{e.backtrace.first(10).join("\n")}")
         render_error("Erro ao enviar feedback: #{e.message}", :internal_server_error)
       end
     end

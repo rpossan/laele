@@ -160,6 +160,9 @@ module GoogleAds
       
       Rails.logger.info("[GoogleAds::ConnectionsController] Created/updated ActiveCustomerSelection: customer_id=#{selection.customer_id}, google_account_id=#{selection.google_account_id}, id=#{selection.id}")
 
+      session[:active_customer_id] = selection.customer_id
+      session[:active_google_account_id] = selection.google_account_id
+
       # Try to fetch accessible customers (but don't fetch names for all - too slow and may have permission issues)
       begin
         service = GoogleAds::CustomerService.new(google_account: google_account)
@@ -201,11 +204,27 @@ module GoogleAds
       session.delete(:pending_google_account_id)
       session.delete(:accessible_customer_ids)
 
+      # Log activity
+      ActivityLogger.log_account_connected(
+        user: current_user,
+        login_customer_id: google_account.login_customer_id || selected_customer_id,
+        request: request
+      )
+
       redirect_to dashboard_path, notice: "Conta Google Ads conectada com sucesso!"
     end
 
     def destroy
+      login_customer_id = @google_account.login_customer_id
       @google_account.destroy!
+      
+      # Log activity
+      ActivityLogger.log_account_disconnected(
+        user: current_user,
+        login_customer_id: login_customer_id,
+        request: request
+      )
+      
       redirect_to dashboard_path, notice: "Conexão removida."
     end
 

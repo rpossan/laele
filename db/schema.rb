@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_20_193814) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_25_181039) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -34,6 +34,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_193814) do
     t.datetime "updated_at", null: false
     t.index ["google_account_id"], name: "index_active_customer_selections_on_google_account_id"
     t.index ["user_id"], name: "index_active_customer_selections_on_user_id_unique", unique: true
+  end
+
+  create_table "activity_logs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "action", null: false
+    t.string "resource_type"
+    t.string "resource_id"
+    t.jsonb "metadata", default: {}
+    t.text "description"
+    t.string "ip_address"
+    t.string "user_agent"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action", "created_at"], name: "index_activity_logs_on_action_and_created_at"
+    t.index ["resource_type", "resource_id"], name: "index_activity_logs_on_resource_type_and_resource_id"
+    t.index ["user_id", "created_at"], name: "index_activity_logs_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_activity_logs_on_user_id"
   end
 
   create_table "google_accounts", force: :cascade do |t|
@@ -65,5 +82,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_193814) do
   add_foreign_key "accessible_customers", "google_accounts"
   add_foreign_key "active_customer_selections", "google_accounts"
   add_foreign_key "active_customer_selections", "users"
+  add_foreign_key "activity_logs", "users"
   add_foreign_key "google_accounts", "users"
 end

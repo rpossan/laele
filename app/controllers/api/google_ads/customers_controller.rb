@@ -79,12 +79,27 @@ module Api
 
         return render_error("Conta não encontrada") unless customer
 
+        previous_customer_id = current_user.active_customer_selection&.customer_id
+
         selection = current_user.active_customer_selection ||
                     current_user.build_active_customer_selection
 
         selection.customer_id = customer.customer_id
         selection.google_account = customer.google_account
         selection.save!
+
+        session[:active_customer_id] = selection.customer_id
+        session[:active_google_account_id] = selection.google_account_id
+
+        # Log activity if customer changed
+        if previous_customer_id != customer.customer_id
+          ActivityLogger.log_account_switched(
+            user: current_user,
+            customer_id: customer.customer_id,
+            previous_customer_id: previous_customer_id,
+            request: request
+          )
+        end
 
         render json: { message: "Conta ativa atualizada", customer_id: selection.customer_id }
       end
