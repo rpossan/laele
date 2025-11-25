@@ -3,6 +3,9 @@ Rails.application.routes.draw do
 
   root "marketing/landing#show"
   get "/dashboard", to: "dashboard#show"
+  get "/dashboard/activity_log", to: "dashboard#activity_log"
+  get "/dashboard/account", to: "dashboard#account"
+  get "/dashboard/leads", to: "dashboard#leads"
 
   resources :leads, only: [:index, :show]
 

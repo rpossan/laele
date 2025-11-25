@@ -47,12 +47,577 @@
 
   <!-- Tab Content: Account -->
   <div id="content-account" class="tab-content hidden">
-    <div class="space-y-8">
-      <section class="grid gap-6 lg:grid-cols-3">
-        <div class="lg:col-span-2 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 shadow-lg">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <%= render partial: 'dashboard/account_tab' %>
+  </div>
+
+  <!-- Tab Content: Leads -->
+  <div id="content-leads" class="tab-content <%= current_page?(dashboard_path) ? 'hidden' : '' %>">
+    <%= render partial: 'dashboard/leads_section' %>
+  </div>
+</div>
+
+<!-- Account Switcher Modal -->
+<div id="account-switcher-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeAccountSwitcherModal()"></div>
+  <div class="fixed inset-0 flex items-center justify-center p-4">
+    <div class="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
+    <div class="px-6 pt-6 pb-4">
+      <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h3 class="text-xl font-bold text-slate-900" id="modal-title">Trocar conta administrada</h3>
+            <p class="mt-1 text-sm text-slate-600">Selecione a conta que deseja usar para trabalhar</p>
+          </div>
+          <button onclick="closeAccountSwitcherModal()" class="text-slate-400 hover:text-slate-900 transition">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Conta administrada</label>
+          <select id="modal-customer-select" class="w-full">
+            <option value="">Selecione uma conta...</option>
+            <% if all_customers.any? %>
+              <% all_customers.each do |customer| %>
+                <option value="<%= customer.customer_id %>"
+                        data-google-account-id="<%= customer.google_account_id %>"
+                        <%= "selected" if @active_selection&.customer_id == customer.customer_id %>>
+                  <%= format_customer_id(customer.customer_id) %> — <%= customer.display_name || "Sem nome" %>
+                </option>
+              <% end %>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
+          <button 
+            type="button" 
+            onclick="closeAccountSwitcherModal()" 
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:border-slate-300 transition">
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            id="modal-save-btn"
+            onclick="saveAccountSelection()" 
+            class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition">
+            Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tab switching with content refresh
+  window.switchTab = async function(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.add('hidden');
+    });
+    
+    // Remove active class from all tabs
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.classList.remove('active', 'border-indigo-600', 'text-indigo-600');
+      button.classList.add('border-transparent', 'text-slate-500');
+    });
+    
+    // Show loading state
+    const contentDiv = document.getElementById(`content-${tabName}`);
+    if (contentDiv) {
+      contentDiv.innerHTML = '<div class="flex items-center justify-center py-12"><div class="text-center"><svg class="mx-auto h-8 w-8 text-indigo-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><p class="mt-2 text-sm text-slate-600">Carregando...</p></div></div>';
+      contentDiv.classList.remove('hidden');
+    }
+    
+    // Add active class to selected tab
+    const activeTab = document.getElementById(`tab-${tabName}`);
+    activeTab.classList.add('active', 'border-indigo-600', 'text-indigo-600');
+    activeTab.classList.remove('border-transparent', 'text-slate-500');
+    
+    // Fetch updated content
+    try {
+      let url;
+      switch(tabName) {
+        case 'dashboard':
+          url = '/dashboard/activity_log';
+          break;
+        case 'account':
+          url = '/dashboard/account';
+          break;
+        case 'leads':
+          url = '/dashboard/leads';
+          break;
+        default:
+          return;
+      }
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/html',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+      });
+      
+      if (response.ok) {
+        const html = await response.text();
+        contentDiv.innerHTML = html;
+        
+        // Reinitialize any scripts or components that need it
+        if (tabName === 'account') {
+          // Reinitialize Select2 and event listeners for account tab
+          if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+            jQuery('#customer-select').select2({
+              placeholder: 'Selecione uma conta...',
+              allowClear: true,
+              width: '100%',
+              language: {
+                noResults: function() {
+                  return "Nenhuma conta encontrada";
+                },
+                searching: function() {
+                  return "Buscando...";
+                }
+              }
+            });
+            
+            jQuery('#customer-select').off('change').on('change', async function() {
+              const customerId = this.value;
+              const googleAccountId = this.options[this.selectedIndex].dataset.googleAccountId;
+              
+              if (!customerId) return;
+              
+              try {
+                const response = await fetch('/api/google_ads/customers/select', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    'Accept': 'application/json'
+                  },
+                  credentials: 'same-origin',
+                  body: JSON.stringify({ customer_id: customerId })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                  window.location.reload();
+                } else {
+                  alert(data.error || 'Erro ao selecionar conta');
+                }
+              } catch (error) {
+                console.error('Error selecting customer:', error);
+                alert('Erro ao selecionar conta');
+              }
+            });
+          }
+          
+          // Reinitialize refresh button
+          const refreshBtn = document.getElementById('refresh-customers-btn');
+          if (refreshBtn) {
+            refreshBtn.onclick = async function() {
+              refreshBtn.disabled = true;
+              refreshBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizando...</span>';
+              
+              try {
+                const response = await fetch('/api/google_ads/customers/refresh', {
+                  method: 'POST',
+                  headers: {
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    'Accept': 'application/json'
+                  },
+                  credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                  window.location.reload();
+                } else {
+                  alert(data.error || 'Erro ao atualizar contas');
+                  refreshBtn.disabled = false;
+                  refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
+                }
+              } catch (error) {
+                console.error('Error refreshing customers:', error);
+                alert('Erro ao atualizar contas');
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
+              }
+            };
+          }
+        }
+      } else {
+        contentDiv.innerHTML = '<div class="text-center py-12"><p class="text-sm text-slate-500">Erro ao carregar conteúdo. Por favor, recarregue a página.</p></div>';
+      }
+    } catch (error) {
+      console.error('Error loading tab content:', error);
+      contentDiv.innerHTML = '<div class="text-center py-12"><p class="text-sm text-slate-500">Erro ao carregar conteúdo. Por favor, recarregue a página.</p></div>';
+    }
+  }
+
+  // Modal functions
+  window.openAccountSwitcherModal = function() {
+    const modal = document.getElementById('account-switcher-modal');
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    
+    // Initialize Select2 if not already initialized
+    if (!jQuery('#modal-customer-select').hasClass('select2-hidden-accessible')) {
+      jQuery('#modal-customer-select').select2({
+        dropdownParent: jQuery('#account-switcher-modal'),
+        placeholder: 'Selecione uma conta...',
+        allowClear: true,
+        width: '100%',
+        language: {
+          noResults: function() {
+            return "Nenhuma conta encontrada";
+          },
+          searching: function() {
+            return "Buscando...";
+          }
+        }
+      });
+    }
+  }
+
+  window.closeAccountSwitcherModal = function() {
+    const modal = document.getElementById('account-switcher-modal');
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  window.saveAccountSelection = function() {
+    const select = document.getElementById('modal-customer-select');
+    const customerId = select.value;
+    const selectedOption = select.options[select.selectedIndex];
+    const googleAccountId = selectedOption ? selectedOption.dataset.googleAccountId : null;
+    
+    if (!customerId) {
+      alert('Por favor, selecione uma conta');
+      return;
+    }
+    
+    const saveBtn = document.getElementById('modal-save-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Salvando...';
+    
+    fetch('/api/google_ads/customers/select', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+        'Accept': 'application/json'
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({ customer_id: customerId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success || data.message) {
+        closeAccountSwitcherModal();
+        window.location.reload();
+      } else {
+        alert(data.error || 'Erro ao selecionar conta');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Salvar';
+      }
+    })
+    .catch(error => {
+      console.error('Error selecting customer:', error);
+      alert('Erro ao selecionar conta');
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Salvar';
+    });
+  }
+
+  // Initialize correct tab on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Check which tab should be active based on current route
+    const isLeadsPage = window.location.pathname === '<%= leads_path %>';
+    if (isLeadsPage) {
+      switchTab('leads');
+    } else {
+      switchTab('dashboard');
+    }
+  });
+
+  // Initialize Select2 for main customer select and refresh button
+  document.addEventListener('DOMContentLoaded', function() {
+    // Refresh customers button
+    const refreshBtn = document.getElementById('refresh-customers-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', async function() {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizando...</span>';
+        
+        try {
+          const response = await fetch('/api/google_ads/customers/refresh', {
+            method: 'POST',
+            headers: {
+              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+              'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            window.location.reload();
+          } else {
+            alert(data.error || 'Erro ao atualizar contas');
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
+          }
+        } catch (error) {
+          console.error('Error refreshing customers:', error);
+          alert('Erro ao atualizar contas');
+          refreshBtn.disabled = false;
+          refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
+        }
+      });
+    }
+
+    // Initialize Select2 for customer select
+    if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+      jQuery('#customer-select').select2({
+        placeholder: 'Selecione uma conta...',
+        allowClear: true,
+        width: '100%',
+        language: {
+          noResults: function() {
+            return "Nenhuma conta encontrada";
+          },
+          searching: function() {
+            return "Buscando...";
+          }
+        }
+      });
+      
+      jQuery('#customer-select').on('change', async function() {
+        const customerId = this.value;
+        const googleAccountId = this.options[this.selectedIndex].dataset.googleAccountId;
+        
+        if (!customerId) return;
+        
+        try {
+          const response = await fetch('/api/google_ads/customers/select', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+              'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ customer_id: customerId })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            window.location.reload();
+          } else {
+            alert(data.error || 'Erro ao selecionar conta');
+          }
+        } catch (error) {
+          console.error('Error selecting customer:', error);
+          alert('Erro ao selecionar conta');
+        }
+      });
+    }
+  });
+
+  // Feedback modal functions (from original dashboard)
+  (function() {
+    const dissatisfiedReasons = [
+      { value: 'SPAM', label: 'Spam' },
+      { value: 'JOB_TYPE_MISMATCH', label: 'Tipo de trabalho não corresponde' },
+      { value: 'DUPLICATE', label: 'Duplicado' },
+      { value: 'NOT_INTERESTED', label: 'Não interessado' },
+      { value: 'WRONG_PHONE_NUMBER', label: 'Número de telefone errado' },
+      { value: 'WRONG_EMAIL_ADDRESS', label: 'Email errado' },
+      { value: 'WRONG_NAME', label: 'Nome errado' }
+      // Note: "OTHER" is not a valid value for dissatisfied reasons in Google Ads API v22
+    ];
+    
+    const satisfiedReasons = [
+      { value: 'SERVICE_RELATED', label: 'Relacionado ao serviço' },
+      { value: 'BOOKED_CUSTOMER', label: 'Cliente agendado' },
+      { value: 'LIKELY_BOOKED_CUSTOMER', label: 'Provavelmente cliente agendado' },
+      { value: 'HIGH_VALUE_SERVICE', label: 'Serviço de alto valor' },
+      { value: 'OTHER_SATISFIED_REASON', label: 'Outro motivo' }
+    ];
+    
+    window.openFeedbackModal = function(leadId) {
+      if (!leadId) {
+        alert('Erro: ID do lead não fornecido');
+        return;
+      }
+      
+      const modal = document.getElementById('feedback-modal');
+      const leadIdInput = document.getElementById('feedback-lead-id');
+      const form = document.getElementById('feedback-form');
+      
+      if (!modal || !leadIdInput || !form) return;
+      
+      leadIdInput.value = leadId;
+      form.reset();
+      const reasonSection = document.getElementById('reason-section');
+      const otherReasonSection = document.getElementById('other-reason-section');
+      if (reasonSection) reasonSection.classList.add('hidden');
+      if (otherReasonSection) otherReasonSection.classList.add('hidden');
+      
+      modal.classList.remove('hidden');
+      modal.style.display = 'block';
+      modal.setAttribute('aria-hidden', 'false');
+      
+      const surveyInputs = form.querySelectorAll('input[name="survey_answer"]');
+      surveyInputs.forEach(input => {
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        newInput.addEventListener('change', function() {
+          updateReasonOptions(this.value);
+        });
+      });
+    };
+    
+    window.closeFeedbackModal = function() {
+      const modal = document.getElementById('feedback-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    };
+    
+    function updateReasonOptions(surveyAnswer) {
+      const reasonSection = document.getElementById('reason-section');
+      const reasonSelect = document.getElementById('feedback-reason');
+      const otherReasonSection = document.getElementById('other-reason-section');
+      const reasonLabel = document.getElementById('reason-label');
+      
+      if (!reasonSection || !reasonSelect) return;
+      
+      reasonSelect.innerHTML = '<option value="">Selecione um motivo (opcional)</option>';
+      
+      if (surveyAnswer === 'VERY_DISSATISFIED' || surveyAnswer === 'DISSATISFIED') {
+        reasonLabel.textContent = 'Motivo da insatisfação';
+        dissatisfiedReasons.forEach(reason => {
+          const option = document.createElement('option');
+          option.value = reason.value;
+          option.textContent = reason.label;
+          reasonSelect.appendChild(option);
+        });
+        reasonSection.classList.remove('hidden');
+      } else if (surveyAnswer === 'SATISFIED' || surveyAnswer === 'VERY_SATISFIED') {
+        reasonLabel.textContent = 'Motivo da satisfação';
+        satisfiedReasons.forEach(reason => {
+          const option = document.createElement('option');
+          option.value = reason.value;
+          option.textContent = reason.label;
+          reasonSelect.appendChild(option);
+        });
+        reasonSection.classList.remove('hidden');
+      } else {
+        reasonSection.classList.add('hidden');
+        otherReasonSection.classList.add('hidden');
+      }
+      
+      reasonSelect.addEventListener('change', function() {
+        if (this.value === 'OTHER_SATISFIED_REASON') {
+          otherReasonSection.classList.remove('hidden');
+        } else {
+          otherReasonSection.classList.add('hidden');
+        }
+      });
+    }
+    
+    window.handleFeedbackSubmit = function(event) {
+      event.preventDefault();
+      
+      const form = event.target;
+      const leadId = document.getElementById('feedback-lead-id').value;
+      const submitBtn = document.getElementById('submit-feedback-btn');
+      
+      const formData = new FormData(form);
+      const payload = {
+        survey_answer: formData.get('survey_answer')
+      };
+      
+      const reason = formData.get('reason');
+      if (reason) payload.reason = reason;
+      
+      const otherComment = formData.get('other_reason_comment');
+      if (otherComment) payload.other_reason_comment = otherComment;
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enviando...';
+      
+      fetch(`/api/leads/${leadId}/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+      })
+      .then(async response => {
+        // Check if response is ok
+        if (!response.ok) {
+          // Try to parse error as JSON, fallback to text
+          let errorMessage = `Erro ${response.status}: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch (e) {
+            // If not JSON, try to get text
+            try {
+              const errorText = await response.text();
+              errorMessage = errorText || errorMessage;
+            } catch (e2) {
+              // Keep default error message
+            }
+          }
+          throw new Error(errorMessage);
+        }
+        
+        // Parse JSON response
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Resposta do servidor não é JSON válido');
+        }
+        
+        return response.json();
+      })
+      .then(data => {
+        if (data.success || data.message) {
+          closeFeedbackModal();
+          alert("Feedback enviado com sucesso!");
+          const button = document.getElementById('fetch-leads-btn');
+          if (button) button.click();
+        } else {
+          alert("Erro ao enviar feedback: " + (data.error || "Erro desconhecido"));
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Enviar Feedback';
+        }
+      })
+      .catch(error => {
+        console.error("Error submitting feedback:", error);
+        alert("Erro ao enviar feedback: " + error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar Feedback';
+      });
+    };
+  })();
+</script>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
               </svg>
             </div>
@@ -283,12 +848,6 @@
       </div>
     </div>
 
-  <!-- Tab Content: Leads -->
-  <div id="content-leads" class="tab-content <%= current_page?(dashboard_path) ? 'hidden' : '' %>">
-    <%= render partial: 'dashboard/leads_section' %>
-    </div>
-</div>
-
 <!-- Account Switcher Modal -->
 <div id="account-switcher-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
   <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeAccountSwitcherModal()"></div>
@@ -344,30 +903,8 @@
 </div>
 
 <script>
-  // Tab switching
-  function switchTab(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(content => {
-      content.classList.add('hidden');
-    });
-    
-    // Remove active class from all tabs
-    document.querySelectorAll('.tab-button').forEach(button => {
-      button.classList.remove('active', 'border-indigo-600', 'text-indigo-600');
-      button.classList.add('border-transparent', 'text-slate-500');
-    });
-    
-    // Show selected tab content
-    document.getElementById(`content-${tabName}`).classList.remove('hidden');
-    
-    // Add active class to selected tab
-    const activeTab = document.getElementById(`tab-${tabName}`);
-    activeTab.classList.add('active', 'border-indigo-600', 'text-indigo-600');
-    activeTab.classList.remove('border-transparent', 'text-slate-500');
-  }
-
   // Modal functions
-  function openAccountSwitcherModal() {
+  window.openAccountSwitcherModal = function() {
     const modal = document.getElementById('account-switcher-modal');
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
@@ -391,13 +928,13 @@
     }
   }
 
-  function closeAccountSwitcherModal() {
+  window.closeAccountSwitcherModal = function() {
     const modal = document.getElementById('account-switcher-modal');
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
   }
 
-  function saveAccountSelection() {
+  window.saveAccountSelection = function() {
     const select = document.getElementById('modal-customer-select');
     const customerId = select.value;
     const selectedOption = select.options[select.selectedIndex];

@@ -1,0 +1,237 @@
+<% all_customers = (@google_accounts || []).flat_map(&:accessible_customers) %>
+
+<div class="space-y-8">
+  <section class="grid gap-6 lg:grid-cols-3">
+    <div class="lg:col-span-2 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 shadow-lg">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-500 uppercase tracking-wide">Integração Google Ads</p>
+        </div>
+      </div>
+      
+      <% if @google_accounts&.any? %>
+        <!-- Conta conectada -->
+        <h2 class="text-3xl font-bold text-slate-900 leading-tight mb-4">Conta Google conectada</h2>
+        <p class="text-base text-slate-600 leading-relaxed mb-6">
+          Você tem <strong><%= @google_accounts.count %></strong> conta(s) Google Ads conectada(s). 
+          As sub-contas podem ser selecionadas e trocadas abaixo.
+        </p>
+        
+        <div class="space-y-4 mb-6">
+          <% @google_accounts.each do |account| %>
+            <div class="rounded-xl border-2 border-slate-200 bg-white p-5 hover:border-indigo-200 transition-colors">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center">
+                      <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-sm font-bold text-slate-500 uppercase tracking-wide">Conta Principal</p>
+                      <p class="text-lg font-bold text-slate-900">
+                        <% if account.login_customer_id.present? %>
+                          <%= format_customer_id(account.login_customer_id) %>
+                        <% else %>
+                          <span class="text-slate-400">Sem login_customer_id</span>
+                        <% end %>
+                      </p>
+                    </div>
+                  </div>
+                  <div class="ml-13 space-y-1">
+                    <p class="text-xs text-slate-500">
+                      <span class="font-semibold">Sub-contas acessíveis:</span> 
+                      <%= account.accessible_customers.count %>
+                    </p>
+                    <p class="text-xs text-slate-500">
+                      <span class="font-semibold">Conectada em:</span> 
+                      <%= account.created_at.strftime("%d/%m/%Y às %H:%M") %>
+                    </p>
+                  </div>
+                </div>
+                <%= button_to google_ads_disconnect_path(account.id),
+                              method: :delete,
+                              data: { 
+                                confirm: "Tem certeza que deseja desconectar esta conta Google? Todas as sub-contas associadas serão removidas."
+                              },
+                              class: "inline-flex items-center gap-2 rounded-xl border-2 border-rose-200 bg-rose-50 hover:bg-rose-100 hover:border-rose-300 px-4 py-2.5 text-sm font-semibold text-rose-700 transition-all" do %>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  <span>Desconectar</span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        
+        <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+          <p class="text-sm text-indigo-900">
+            <strong>Nota:</strong> Desconectar a conta principal removerá todas as sub-contas associadas. 
+            Você precisará conectar novamente para acessar suas contas Google Ads.
+          </p>
+        </div>
+      <% else %>
+        <!-- Nenhuma conta conectada -->
+        <h2 class="text-3xl font-bold text-slate-900 leading-tight mb-4">Conecte seu MCC ou contas individuais</h2>
+        <p class="text-base text-slate-600 leading-relaxed mb-6">
+          Após o consentimento, listamos todas as contas acessíveis para que você selecione qual deseja trabalhar.
+          Todo o dashboard passa a responder a esta conta até que você troque manualmente.
+        </p>
+        <%= link_to google_ads_auth_start_path,
+              data: { turbo: false },
+                    class: "inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-6 py-3.5 text-sm font-semibold text-white shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5" do %>
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <span>Conectar Google Ads</span>
+        <% end %>
+        <p class="mt-4 text-xs text-slate-500">
+          Precisa informar manualmente o <code class="bg-slate-100 px-2 py-1 rounded-md text-slate-700 font-mono text-xs">login_customer_id</code>? 
+          Acrescente na URL: <span class="font-mono text-xs text-indigo-600 font-semibold">?login_customer_id=2574786031</span>
+        </p>
+      <% end %>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-6 shadow-lg">
+      <div class="flex items-start justify-between gap-3 mb-6">
+        <div class="flex-1">
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Conta ativa</p>
+          <% if @active_selection.present? %>
+            <p class="text-3xl font-bold text-slate-900 leading-tight mb-2">
+              <%= format_customer_id(@active_selection.customer_id) %>
+            </p>
+            <p class="text-sm text-slate-600">
+              Login MCC:
+              <span class="font-semibold text-slate-900">
+                <%= format_customer_id(@active_selection.google_account.login_customer_id) %>
+              </span>
+            </p>
+          <% else %>
+            <p class="text-base text-slate-600 leading-relaxed">
+              Nenhuma conta selecionada ainda. Conecte e escolha uma conta para habilitar os relatórios.
+            </p>
+          <% end %>
+        </div>
+        <span class="rounded-full bg-<%= @active_selection.present? ? 'emerald' : 'amber' %>-100 px-3 py-1.5 text-xs font-bold text-<%= @active_selection.present? ? 'emerald' : 'amber' %>-700 uppercase tracking-wide">
+          <%= @active_selection.present? ? "Sincronizada" : "Pendente" %>
+        </span>
+      </div>
+      <div class="space-y-3">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Fluxo ativo</p>
+          <ul class="space-y-2 text-sm text-slate-700">
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <span>Leads, filtros e feedbacks respeitam a conta atual</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <span>Troque a conta somente quando desejar mudar o contexto</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <span>Seleção persistida em banco e sessão</span>
+            </li>
+          </ul>
+        </div>
+        <button 
+          onclick="openAccountSwitcherModal()" 
+          class="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+          </svg>
+          <span>Trocar conta</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 shadow-lg">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+      <div>
+        <p class="text-sm font-bold text-slate-500 uppercase tracking-wide mb-1">Selecionar conta</p>
+        <h2 class="text-2xl font-bold text-slate-900 leading-tight mb-2">Escolha uma conta administrada</h2>
+        <p class="text-sm text-slate-600">
+          O contexto fica fixo até você alterar manualmente. Todos os filtros usam esta conta.
+        </p>
+      </div>
+      <button id="refresh-customers-btn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span>Atualizar lista</span>
+      </button>
+    </div>
+
+    <% if all_customers.any? %>
+      <div class="relative">
+        <select id="customer-select" class="w-full appearance-none rounded-xl border-2 border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all">
+          <option value="">Selecione uma conta...</option>
+          <% all_customers.each do |customer| %>
+            <option value="<%= customer.customer_id %>"
+                    data-google-account-id="<%= customer.google_account_id %>"
+                    <%= "selected" if @active_selection&.customer_id == customer.customer_id %>>
+              <%= format_customer_id(customer.customer_id) %> — <%= customer.display_name || "Sem nome" %>
+            </option>
+          <% end %>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+          <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div id="selected-customer-info" class="mt-4 rounded-xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-5 <%= 'hidden' unless @active_selection %>">
+        <% if @active_selection %>
+          <% selected_customer = all_customers.find { |c| c.customer_id == @active_selection.customer_id } %>
+          <% if selected_customer %>
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Conta ativa</p>
+                <p class="text-lg font-bold text-slate-900 mb-1">
+                  <%= format_customer_id(selected_customer.customer_id) %>
+                </p>
+                <p class="text-sm text-slate-600">
+                  <%= selected_customer.display_name || "Sem nome" %>
+                </p>
+              </div>
+              <span class="rounded-full bg-indigo-100 px-4 py-1.5 text-xs font-bold text-indigo-700 uppercase tracking-wide">
+                Contexto corrente
+              </span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+        </svg>
+        <p class="text-sm font-medium text-slate-500">
+          Nenhuma conta encontrada. Conecte seu MCC ou conta individual para sincronizar a lista.
+        </p>
+      </div>
+    <% end %>
+  </section>
+</div>
+
