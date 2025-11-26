@@ -83,20 +83,22 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
+  # Rails automatically uses DATABASE_URL if present (Render.com provides this)
+  # Otherwise, use individual environment variables
   primary: &primary_production
     <<: *default
-    database: lsaescale_production
-    username: lsaescale
-    password: <%= ENV["LSAESCALE_DATABASE_PASSWORD"] %>
+    database: <%= ENV.fetch("DB_NAME", "lsaescale_production") %>
+    username: <%= ENV.fetch("DB_USER", "lsaescale") %>
+    password: <%= ENV["DB_PASSWORD"] || ENV["LSAESCALE_DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production
-    database: lsaescale_production_cache
+    database: <%= ENV.fetch("DB_NAME", "lsaescale_production") %>_cache
     migrations_paths: db/cache_migrate
   queue:
     <<: *primary_production
-    database: lsaescale_production_queue
+    database: <%= ENV.fetch("DB_NAME", "lsaescale_production") %>_queue
     migrations_paths: db/queue_migrate
   cable:
     <<: *primary_production
-    database: lsaescale_production_cable
+    database: <%= ENV.fetch("DB_NAME", "lsaescale_production") %>_cable
     migrations_paths: db/cable_migrate

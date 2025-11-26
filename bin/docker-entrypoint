@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # Enable jemalloc for reduced memory usage and latency.
 if [ -z "${LD_PRELOAD+x}" ]; then
@@ -8,7 +8,39 @@ fi
 
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  ./bin/rails db:prepare
+  # Check if DATABASE_URL or required DB env vars are set
+  if [ -n "${DATABASE_URL}" ] || ([ -n "${DB_HOST}" ] && [ -n "${DB_PASSWORD}" ]); then
+    # Wait for database to be available with retries
+    echo "Waiting for database connection..."
+    max_attempts=30
+    attempt=0
+    
+    while [ $attempt -lt $max_attempts ]; do
+      # Try to connect to database using Rails runner
+      if ./bin/rails runner "ActiveRecord::Base.connection" >/dev/null 2>&1; then
+        echo "Database connection established."
+        # Database is available, run migrations
+        echo "Running database migrations..."
+        ./bin/rails db:prepare && echo "Database prepared successfully." || echo "Warning: Database preparation had issues, but continuing..."
+        break
+      fi
+      
+      attempt=$((attempt + 1))
+      if [ $attempt -lt $max_attempts ]; then
+        echo "Database not ready yet. Waiting... (attempt $attempt/$max_attempts)"
+        sleep 2
+      fi
+    done
+    
+    if [ $attempt -eq $max_attempts ]; then
+      echo "Warning: Could not establish database connection after $max_attempts attempts."
+      echo "The application will continue to start, but database operations may fail."
+      echo "Please ensure DATABASE_URL or DB_* environment variables are correctly configured."
+    fi
+  else
+    echo "Warning: Database configuration not found (DATABASE_URL or DB_* variables missing)."
+    echo "Skipping db:prepare. Please configure database connection in Render.com environment variables."
+  fi
 fi
 
 exec "${@}"
