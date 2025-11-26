@@ -46,7 +46,8 @@ COPY . .
 RUN bundle exec bootsnap precompile app/ lib/
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# The encryption initializer will use dummy keys during asset precompilation
+RUN SECRET_KEY_BASE=dummy_secret_key_base_for_build_only ./bin/rails assets:precompile
 
 
 
