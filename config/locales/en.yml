@@ -1,31 +1,262 @@
-# Files in the config/locales directory are used for internationalization and
-# are automatically loaded by Rails. If you want to use locales other than
-# English, add the necessary files in this directory.
-#
-# To use the locales, use `I18n.t`:
-#
-#     I18n.t "hello"
-#
-# In views, this is aliased to just `t`:
-#
-#     <%= t("hello") %>
-#
-# To use a different locale, set it with `I18n.locale`:
-#
-#     I18n.locale = :es
-#
-# This would use the information in config/locales/es.yml.
-#
-# To learn more about the API, please read the Rails Internationalization guide
-# at https://guides.rubyonrails.org/i18n.html.
-#
-# Be aware that YAML interprets the following case-insensitive strings as
-# booleans: `true`, `false`, `on`, `off`, `yes`, `no`. Therefore, these strings
-# must be quoted to be interpreted as strings. For example:
-#
-#     en:
-#       "yes": yup
-#       enabled: "ON"
-
 en:
-  hello: "Hello world"
+  # Application
+  app_name: "LSA eScale"
+  app_tagline: "Lead Intelligence Hub"
+  
+  # Navigation
+  navigation:
+    dashboard: "Dashboard"
+    leads: "Leads"
+    account: "Account"
+    sign_in: "Sign In"
+    sign_up: "Sign Up"
+    sign_out: "Sign Out"
+    back: "Back"
+    language: "Language"
+  
+  # Common
+  common:
+    loading: "Loading..."
+    cancel: "Cancel"
+    save: "Save"
+    saving: "Saving..."
+    update: "Update"
+    updating: "Updating..."
+    delete: "Delete"
+    edit: "Edit"
+    close: "Close"
+    confirm: "Confirm"
+    select: "Select"
+    search: "Search"
+    filter: "Filter"
+    actions: "Actions"
+    yes: "Yes"
+    no: "No"
+    na: "N/A"
+    never: "Never"
+    ago: "ago"
+    and: "and"
+    or: "or"
+    at: "at"
+    built_with: "Built with Ruby on Rails"
+  
+  # Account
+  account:
+    active: "Active Account"
+    switch: "Switch"
+    switch_account: "Switch Managed Account"
+    switch_description: "Select the account you want to use to work"
+    managed_account: "Managed Account"
+    select_account: "Select an account..."
+    no_account_found: "No account found"
+    searching: "Searching..."
+    connected: "Connected"
+    disconnected: "Disconnected"
+    pending: "Pending"
+    synchronized: "Synchronized"
+    current_context: "Current Context"
+    main_account: "Main Account"
+    accessible_sub_accounts: "Accessible Sub-Accounts"
+    connected_at: "Connected at"
+    no_login_customer_id: "No login_customer_id"
+    no_name: "No name"
+    disconnect: "Disconnect"
+    disconnect_confirm: "Are you sure you want to disconnect this Google account? All associated sub-accounts will be removed."
+    disconnect_note: "Disconnecting the main account will remove all associated sub-accounts. You will need to connect again to access your Google Ads accounts."
+    refresh_list: "Refresh List"
+    refreshing: "Refreshing..."
+    select_managed_account: "Choose a Managed Account"
+    select_description: "The context remains fixed until you manually change it. All filters use this account."
+    no_account_selected: "No account selected yet. Connect and choose an account to enable reports."
+    connect_description: "Connect your MCC or individual accounts"
+    connect_description_detail: "After consent, we list all accessible accounts so you can select which one you want to work with. The entire dashboard responds to this account until you manually switch."
+    connect_google_ads: "Connect Google Ads"
+    manual_login_customer_id: "Need to manually enter the login_customer_id? Add to URL:"
+    google_account_connected: "Google Account Connected"
+    accounts_connected: "Google Ads account(s) connected"
+    sub_accounts_can_be_selected: "Sub-accounts can be selected and switched below."
+    active_flow: "Active Flow"
+    active_flow_item1: "Leads, filters and feedbacks respect the current account"
+    active_flow_item2: "Switch the account only when you want to change the context"
+    active_flow_item3: "Selection persisted in database and session"
+    login_mcc: "Login MCC:"
+    error_selecting: "Error selecting account"
+    error_refreshing: "Error refreshing accounts"
+    error_loading: "Error loading content. Please reload the page."
+    please_select_account: "Please select an account"
+  
+  # Google Ads
+  google_ads:
+    integration: "Google Ads Integration"
+    choose_account: "Choose Google Ads Account"
+    found_accounts: "We found %{count} accessible account"
+    found_accounts_plural: "We found %{count} accessible accounts"
+    selection_info: "About the selection"
+    selection_info_item1: "The chosen account will be applied as global context until you switch."
+    selection_info_item2: "You can connect new Google Ads accounts at any time."
+    selection_info_item3: "MCCs (Manager Accounts) usually appear first in the list."
+    confirm_selection: "Confirm Selection"
+    recommended: "Recommended"
+  
+  # Leads
+  leads:
+    title: "Leads"
+    filters: "Lead Filters"
+    filters_description: "Configure filters and search for your leads"
+    period: "Period"
+    this_week: "This Week"
+    last_week: "Last Week"
+    this_month: "This Month"
+    last_month: "Last Month"
+    last_30_days: "Last 30 Days"
+    all_time: "All Time"
+    custom: "Custom"
+    charge_status: "Charge Status"
+    charged: "Charged"
+    credited: "Credited"
+    in_review: "In Review"
+    rejected: "Rejected"
+    not_charged: "Not Charged"
+    feedback: "Feedback"
+    with_feedback: "With Feedback"
+    without_feedback: "Without Feedback"
+    last_sync: "Last Sync:"
+    update_table: "Update Table"
+    type: "Type"
+    contact: "Contact"
+    status: "Status"
+    charge: "Charge"
+    created_at: "Created At"
+    select_all: "Select All"
+    selected: "leads selected"
+    evaluate_selected: "Evaluate Selected"
+    click_to_fetch: "Click \"Update Table\" to fetch leads from this account."
+    connect_and_select: "Connect your account and select an active account before fetching leads."
+    details: "Lead Details"
+    lead_information: "Lead Information"
+    lead_id: "Lead ID"
+    contact_information: "Contact Information"
+    name: "Name"
+    phone: "Phone"
+    email: "Email"
+    charge_and_feedback: "Charge and Feedback"
+    charge_status_label: "Charge Status"
+    feedback_status_label: "Feedback Status"
+    additional_information: "Additional Information"
+    category: "Category"
+    service: "Service"
+    creation_date: "Creation Date"
+    submit_feedback: "Submit Feedback"
+    evaluate_selected_leads: "Evaluate Selected Leads"
+    how_do_you_rate: "How do you rate this lead?"
+    very_satisfied: "Very Satisfied"
+    satisfied: "Satisfied"
+    dissatisfied: "Dissatisfied"
+    very_dissatisfied: "Very Dissatisfied"
+    reason: "Reason"
+    dissatisfaction_reason: "Dissatisfaction Reason"
+    satisfaction_reason: "Satisfaction Reason"
+    select_reason_optional: "Select a reason (optional)"
+    additional_comment: "Additional Comment"
+    describe_reason: "Describe the reason (optional)"
+    send_feedback: "Send Feedback"
+    sending: "Sending..."
+    sending_to_leads: "Sending to %{count} leads..."
+    processing: "Processing..."
+    processing_feedback: "Processing feedback for %{count} leads..."
+    please_wait: "Please wait..."
+    feedback_sent_success: "Feedback sent successfully!"
+    feedback_sent_success_bulk: "Feedback sent successfully to %{count} leads!"
+    error_sending: "Error sending feedback: %{error}"
+    invalid_lead_ids: "Invalid lead IDs for bulk evaluation"
+    error_processing_ids: "Error processing selected lead IDs"
+    lead_id_not_provided: "Lead ID not provided"
+    leads_will_be_evaluated: "leads will be evaluated with the same configuration."
+    spam: "Spam"
+    job_type_mismatch: "Job Type Mismatch"
+    duplicate: "Duplicate"
+    not_interested: "Not Interested"
+    wrong_phone_number: "Wrong Phone Number"
+    wrong_email_address: "Wrong Email Address"
+    wrong_name: "Wrong Name"
+    service_related: "Service Related"
+    booked_customer: "Booked Customer"
+    likely_booked_customer: "Likely Booked Customer"
+    high_value_service: "High Value Service"
+    other_satisfied_reason: "Other Reason"
+  
+  # Dashboard
+  dashboard:
+    title: "Dashboard"
+    activity_log: "Activity History"
+    activity_log_description: "Record of all actions performed on the platform"
+    no_activity: "No activity recorded yet. Your actions will be recorded here."
+  
+  # Landing Page
+  landing:
+    tagline: "Google Local Services Ads"
+    headline: "Manage the most valuable leads from"
+    headline_highlight: "Google LSA"
+    headline_continuation: "in a single dashboard"
+    subheadline: "The Local Services Lead Manager connects your Google Ads account, pulls leads in real-time, applies intelligent charge and feedback filters, and prepares your operation to send responses directly via API."
+    create_account: "Create My Account"
+    sign_in: "Sign In"
+    filter_types: "Combined Filter Types"
+    filter_types_detail: "Period, charge and feedback"
+    dynamic_queries: "Dynamic Queries"
+    dynamic_queries_detail: "On the local_services_lead resource"
+    api_ready: "API Ready"
+    api_ready_detail: "ProvideLeadFeedback and conversations"
+    current_status: "Current Status"
+    mvp_development: "MVP in Development"
+    alpha: "Alpha"
+    auth_with_password: "Authentication with login/password"
+    auth_with_password_detail: "Devise configured with Postgres and Tailwind."
+    google_ads_oauth: "Google Ads OAuth Connection"
+    google_ads_oauth_detail: "Flow planned for MCCs and individual accounts."
+    filters_and_reports: "GAQL Filters and Reports"
+    filters_and_reports_detail: "Period selection, charge status and feedback."
+    next_steps: "Next Steps"
+    next_step1: "Save encrypted refresh tokens and select active customer."
+    next_step2: "Render paginated lead table directly from Google Ads API."
+    next_step3: "Expose endpoints for conversations and ProvideLeadFeedback."
+  
+  # Devise
+  devise:
+    sign_in:
+      title: "Sign In"
+      description: "Access your account to continue"
+      email: "Email"
+      password: "Password"
+      remember_me: "Remember me"
+      submit: "Sign In"
+    sign_up:
+      title: "Sign Up"
+      description: "Start managing your leads today"
+      email: "Email"
+      password: "Password"
+      password_confirmation: "Confirm Password"
+      minimum_characters: "Minimum %{count} characters"
+      submit: "Sign Up"
+  
+  # Messages
+  messages:
+    success: "Success!"
+    error: "Error!"
+    info: "Information"
+    ok: "OK"
+  
+  # Footer
+  footer:
+    copyright: "© %{year} LSA eScale · Built with Ruby on Rails"
+  
+  # Errors
+  errors:
+    server_error: "Server Error"
+    not_found: "Not Found"
+    unauthorized: "Unauthorized"
+    forbidden: "Forbidden"
+    unprocessable_entity: "Unprocessable Entity"
+    unknown_error: "Unknown Error"
+    invalid_response: "Server response is not valid JSON"
+    invalid_locale: "Invalid locale"

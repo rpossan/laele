@@ -19,18 +19,18 @@ module GoogleAds
     GAQL
 
     PERIODS = {
-      "this_week" => -> { [Time.zone.now.beginning_of_week, Time.zone.now.end_of_week] },
+      "this_week" => -> { [ Time.zone.now.beginning_of_week, Time.zone.now.end_of_week ] },
       "last_week" => -> {
         last_week = Time.zone.now.last_week
-        [last_week.beginning_of_week, last_week.end_of_week]
+        [ last_week.beginning_of_week, last_week.end_of_week ]
       },
-      "this_month" => -> { [Time.zone.now.beginning_of_month, Time.zone.now.end_of_month] },
+      "this_month" => -> { [ Time.zone.now.beginning_of_month, Time.zone.now.end_of_month ] },
       "last_month" => -> {
         last_month = Time.zone.now.last_month
-        [last_month.beginning_of_month, last_month.end_of_month]
+        [ last_month.beginning_of_month, last_month.end_of_month ]
       },
-      "last_30_days" => -> { [30.days.ago.beginning_of_day, Time.zone.now.end_of_day] },
-      "all_time" => -> { [nil, nil] }
+      "last_30_days" => -> { [ 30.days.ago.beginning_of_day, Time.zone.now.end_of_day ] },
+      "all_time" => -> { [ nil, nil ] }
     }.freeze
 
     def initialize(filters = {})
@@ -72,7 +72,7 @@ module GoogleAds
     attr_reader :filters
 
     def resolve_period
-      return [parse_date(filters[:start_date]).beginning_of_day, parse_date(filters[:end_date]).end_of_day] if filters[:period] == "custom" && filters[:start_date] && filters[:end_date]
+      return [ parse_date(filters[:start_date]).beginning_of_day, parse_date(filters[:end_date]).end_of_day ] if filters[:period] == "custom" && filters[:start_date] && filters[:end_date]
 
       resolver = PERIODS[filters[:period]]
       resolver ? resolver.call : PERIODS["last_30_days"].call
@@ -120,4 +120,3 @@ module GoogleAds
     end
   end
 end
-

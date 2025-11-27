@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   devise_for :users
 
+  # Locale switching
+  get '/locale/:locale', to: 'locales#update', as: :set_locale
+
   root "marketing/landing#show"
   get "/dashboard", to: "dashboard#show"
   get "/dashboard/activity_log", to: "dashboard#activity_log"

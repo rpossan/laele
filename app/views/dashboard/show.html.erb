@@ -12,7 +12,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
           </svg>
-          <span>Dashboard</span>
+          <span><%= t('navigation.dashboard') %></span>
         </div>
       </button>
       <button 
@@ -23,7 +23,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
           </svg>
-          <span>Conta</span>
+          <span><%= t('navigation.account') %></span>
         </div>
       </button>
       <button 
@@ -34,7 +34,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
-          <span>Leads</span>
+          <span><%= t('navigation.leads') %></span>
         </div>
       </button>
     </nav>
@@ -64,8 +64,8 @@
     <div class="px-6 pt-6 pb-4">
       <div class="mb-4 flex items-center justify-between">
           <div>
-            <h3 class="text-xl font-bold text-slate-900" id="modal-title">Trocar conta administrada</h3>
-            <p class="mt-1 text-sm text-slate-600">Selecione a conta que deseja usar para trabalhar</p>
+            <h3 class="text-xl font-bold text-slate-900" id="modal-title"><%= t('account.switch_account') %></h3>
+            <p class="mt-1 text-sm text-slate-600"><%= t('account.switch_description') %></p>
           </div>
           <button onclick="closeAccountSwitcherModal()" class="text-slate-400 hover:text-slate-900 transition">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,15 +75,15 @@
       </div>
 
         <div class="mb-4">
-          <label class="block text-sm font-semibold text-slate-700 mb-2">Conta administrada</label>
+          <label class="block text-sm font-semibold text-slate-700 mb-2"><%= t('account.managed_account') %></label>
           <select id="modal-customer-select" class="w-full">
-            <option value="">Selecione uma conta...</option>
+            <option value=""><%= t('account.select_account') %></option>
             <% if all_customers.any? %>
               <% all_customers.each do |customer| %>
                 <option value="<%= customer.customer_id %>"
                         data-google-account-id="<%= customer.google_account_id %>"
                         <%= "selected" if @active_selection&.customer_id == customer.customer_id %>>
-                  <%= format_customer_id(customer.customer_id) %> — <%= customer.display_name || "Sem nome" %>
+                  <%= format_customer_id(customer.customer_id) %> — <%= customer.display_name || t('account.no_name') %>
                 </option>
               <% end %>
             <% end %>
@@ -95,14 +95,14 @@
             type="button" 
             onclick="closeAccountSwitcherModal()" 
             class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:border-slate-300 transition">
-            Cancelar
+            <%= t('common.cancel') %>
           </button>
           <button 
             type="button" 
             id="modal-save-btn"
             onclick="saveAccountSelection()" 
             class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition">
-            Salvar
+            <%= t('common.save') %>
           </button>
         </div>
       </div>
@@ -112,35 +112,38 @@
 
 <script>
   // Notification helpers using SweetAlert2
-  window.showSuccess = function(message, title = 'Sucesso!') {
+  window.showSuccess = function(message, title) {
+    title = title || (window.I18n && window.I18n.messages ? window.I18n.messages.success : 'Success!');
     Swal.fire({
       icon: 'success',
       title: title,
       text: message,
       confirmButtonColor: '#4f46e5',
-      confirmButtonText: 'OK',
+      confirmButtonText: window.I18n && window.I18n.messages ? window.I18n.messages.ok : 'OK',
       timer: 3000,
       timerProgressBar: true
     });
   };
 
-  window.showError = function(message, title = 'Erro!') {
+  window.showError = function(message, title) {
+    title = title || (window.I18n && window.I18n.messages ? window.I18n.messages.error : 'Error!');
     Swal.fire({
       icon: 'error',
       title: title,
       text: message,
       confirmButtonColor: '#ef4444',
-      confirmButtonText: 'OK'
+      confirmButtonText: window.I18n && window.I18n.messages ? window.I18n.messages.ok : 'OK'
     });
   };
 
-  window.showInfo = function(message, title = 'Informação') {
+  window.showInfo = function(message, title) {
+    title = title || (window.I18n && window.I18n.messages ? window.I18n.messages.info : 'Information');
     Swal.fire({
       icon: 'info',
       title: title,
       text: message,
       confirmButtonColor: '#4f46e5',
-      confirmButtonText: 'OK',
+      confirmButtonText: window.I18n && window.I18n.messages ? window.I18n.messages.ok : 'OK',
       timer: 3000,
       timerProgressBar: true
     });
@@ -162,7 +165,8 @@
     // Show loading state
     const contentDiv = document.getElementById(`content-${tabName}`);
     if (contentDiv) {
-      contentDiv.innerHTML = '<div class="flex items-center justify-center py-12"><div class="text-center"><svg class="mx-auto h-8 w-8 text-indigo-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><p class="mt-2 text-sm text-slate-600">Carregando...</p></div></div>';
+      const loadingText = window.I18n && window.I18n.common ? window.I18n.common.loading : 'Loading...';
+      contentDiv.innerHTML = '<div class="flex items-center justify-center py-12"><div class="text-center"><svg class="mx-auto h-8 w-8 text-indigo-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><p class="mt-2 text-sm text-slate-600">' + loadingText + '</p></div></div>';
       contentDiv.classList.remove('hidden');
     }
     
@@ -206,16 +210,19 @@
         if (tabName === 'account') {
           // Reinitialize Select2 and event listeners for account tab
           if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+            const selectPlaceholder = window.I18n && window.I18n.account ? window.I18n.account.select_account : 'Select an account...';
+            const noResultsText = window.I18n && window.I18n.account ? window.I18n.account.no_account_found : 'No account found';
+            const searchingText = window.I18n && window.I18n.account ? window.I18n.account.searching : 'Searching...';
             jQuery('#customer-select').select2({
-              placeholder: 'Selecione uma conta...',
+              placeholder: selectPlaceholder,
               allowClear: true,
               width: '100%',
               language: {
                 noResults: function() {
-                  return "Nenhuma conta encontrada";
+                  return noResultsText;
                 },
                 searching: function() {
-                  return "Buscando...";
+                  return searchingText;
                 }
               }
             });
@@ -243,11 +250,13 @@
                 if (response.ok) {
                   window.location.reload();
                 } else {
-                  showError(data.error || 'Erro ao selecionar conta');
+                  const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_selecting : 'Error selecting account';
+                  showError(data.error || errorMsg);
                 }
               } catch (error) {
                 console.error('Error selecting customer:', error);
-                showError('Erro ao selecionar conta');
+                const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_selecting : 'Error selecting account';
+                showError(errorMsg);
               }
             });
           }
@@ -257,7 +266,8 @@
           if (refreshBtn) {
             refreshBtn.onclick = async function() {
               refreshBtn.disabled = true;
-              refreshBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizando...</span>';
+              const refreshingText = window.I18n && window.I18n.account ? window.I18n.account.refreshing : 'Refreshing...';
+              refreshBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + refreshingText + '</span>';
               
               try {
                 const response = await fetch('/api/google_ads/customers/refresh', {
@@ -274,21 +284,26 @@
                 if (response.ok) {
                   window.location.reload();
                 } else {
-                  showError(data.error || 'Erro ao atualizar contas');
+                  const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_refreshing : 'Error refreshing accounts';
+                  showError(data.error || errorMsg);
                   refreshBtn.disabled = false;
-                  refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
+                  const refreshText = window.I18n && window.I18n.account ? window.I18n.account.refresh_list : 'Refresh List';
+                  refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + refreshText + '</span>';
                 }
               } catch (error) {
                 console.error('Error refreshing customers:', error);
-                showError('Erro ao atualizar contas');
+                const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_refreshing : 'Error refreshing accounts';
+                showError(errorMsg);
                 refreshBtn.disabled = false;
-                refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
+                const refreshText = window.I18n && window.I18n.account ? window.I18n.account.refresh_list : 'Refresh List';
+                refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + refreshText + '</span>';
               }
             };
           }
         }
       } else {
-        contentDiv.innerHTML = '<div class="text-center py-12"><p class="text-sm text-slate-500">Erro ao carregar conteúdo. Por favor, recarregue a página.</p></div>';
+        const errorLoadingText = window.I18n && window.I18n.account ? window.I18n.account.error_loading : 'Error loading content. Please reload the page.';
+        contentDiv.innerHTML = '<div class="text-center py-12"><p class="text-sm text-slate-500">' + errorLoadingText + '</p></div>';
       }
     } catch (error) {
       console.error('Error loading tab content:', error);
@@ -304,17 +319,20 @@
     
     // Initialize Select2 if not already initialized
     if (!jQuery('#modal-customer-select').hasClass('select2-hidden-accessible')) {
+      const selectPlaceholder = window.I18n && window.I18n.account ? window.I18n.account.select_account : 'Select an account...';
+      const noResultsText = window.I18n && window.I18n.account ? window.I18n.account.no_account_found : 'No account found';
+      const searchingText = window.I18n && window.I18n.account ? window.I18n.account.searching : 'Searching...';
       jQuery('#modal-customer-select').select2({
         dropdownParent: jQuery('#account-switcher-modal'),
-        placeholder: 'Selecione uma conta...',
+        placeholder: selectPlaceholder,
         allowClear: true,
         width: '100%',
         language: {
           noResults: function() {
-            return "Nenhuma conta encontrada";
+            return noResultsText;
           },
           searching: function() {
-            return "Buscando...";
+            return searchingText;
           }
         }
       });
@@ -334,13 +352,15 @@
     const googleAccountId = selectedOption ? selectedOption.dataset.googleAccountId : null;
     
     if (!customerId) {
-      showInfo('Por favor, selecione uma conta');
+      const pleaseSelectText = window.I18n && window.I18n.account ? window.I18n.account.please_select_account : 'Please select an account';
+      showInfo(pleaseSelectText);
       return;
     }
     
     const saveBtn = document.getElementById('modal-save-btn');
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Salvando...';
+    const savingText = window.I18n && window.I18n.common ? window.I18n.common.saving : 'Saving...';
+    saveBtn.textContent = savingText;
     
     fetch('/api/google_ads/customers/select', {
       method: 'POST',
@@ -358,16 +378,20 @@
         closeAccountSwitcherModal();
         window.location.reload();
       } else {
-            showError(data.error || 'Erro ao selecionar conta');
+        const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_selecting : 'Error selecting account';
+        showError(data.error || errorMsg);
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Salvar';
+        const saveText = window.I18n && window.I18n.common ? window.I18n.common.save : 'Save';
+        saveBtn.textContent = saveText;
       }
     })
     .catch(error => {
       console.error('Error selecting customer:', error);
-          showError('Erro ao selecionar conta');
+      const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_selecting : 'Error selecting account';
+      showError(errorMsg);
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Salvar';
+      const saveText = window.I18n && window.I18n.common ? window.I18n.common.save : 'Save';
+      saveBtn.textContent = saveText;
     });
   }
 
@@ -389,7 +413,8 @@
     if (refreshBtn) {
       refreshBtn.addEventListener('click', async function() {
         refreshBtn.disabled = true;
-        refreshBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizando...</span>';
+        const refreshingText = window.I18n && window.I18n.account ? window.I18n.account.refreshing : 'Refreshing...';
+        refreshBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + refreshingText + '</span>';
         
         try {
           const response = await fetch('/api/google_ads/customers/refresh', {
@@ -406,9 +431,11 @@
           if (response.ok) {
             window.location.reload();
           } else {
-            showError(data.error || 'Erro ao atualizar contas');
+            const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_refreshing : 'Error refreshing accounts';
+            showError(data.error || errorMsg);
             refreshBtn.disabled = false;
-            refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
+            const refreshText = window.I18n && window.I18n.account ? window.I18n.account.refresh_list : 'Refresh List';
+            refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + refreshText + '</span>';
           }
         } catch (error) {
           console.error('Error refreshing customers:', error);
@@ -421,16 +448,19 @@
 
     // Initialize Select2 for customer select
     if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+      const selectPlaceholder = window.I18n && window.I18n.account ? window.I18n.account.select_account : 'Select an account...';
+      const noResultsText = window.I18n && window.I18n.account ? window.I18n.account.no_account_found : 'No account found';
+      const searchingText = window.I18n && window.I18n.account ? window.I18n.account.searching : 'Searching...';
       jQuery('#customer-select').select2({
-        placeholder: 'Selecione uma conta...',
+        placeholder: selectPlaceholder,
         allowClear: true,
         width: '100%',
         language: {
           noResults: function() {
-            return "Nenhuma conta encontrada";
+            return noResultsText;
           },
           searching: function() {
-            return "Buscando...";
+            return searchingText;
           }
         }
       });
@@ -458,11 +488,13 @@
           if (response.ok) {
             window.location.reload();
           } else {
-            showError(data.error || 'Erro ao selecionar conta');
+            const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_selecting : 'Error selecting account';
+          showError(data.error || errorMsg);
           }
         } catch (error) {
           console.error('Error selecting customer:', error);
-          showError('Erro ao selecionar conta');
+          const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_selecting : 'Error selecting account';
+          showError(errorMsg);
         }
       });
     }
@@ -471,22 +503,22 @@
   // Feedback modal functions (from original dashboard)
   (function() {
     const dissatisfiedReasons = [
-      { value: 'SPAM', label: 'Spam' },
-      { value: 'JOB_TYPE_MISMATCH', label: 'Tipo de trabalho não corresponde' },
-      { value: 'DUPLICATE', label: 'Duplicado' },
-      { value: 'NOT_INTERESTED', label: 'Não interessado' },
-      { value: 'WRONG_PHONE_NUMBER', label: 'Número de telefone errado' },
-      { value: 'WRONG_EMAIL_ADDRESS', label: 'Email errado' },
-      { value: 'WRONG_NAME', label: 'Nome errado' }
+      { value: 'SPAM', label: window.I18n && window.I18n.leads ? window.I18n.leads.spam : 'Spam' },
+      { value: 'JOB_TYPE_MISMATCH', label: window.I18n && window.I18n.leads ? window.I18n.leads.job_type_mismatch : 'Job Type Mismatch' },
+      { value: 'DUPLICATE', label: window.I18n && window.I18n.leads ? window.I18n.leads.duplicate : 'Duplicate' },
+      { value: 'NOT_INTERESTED', label: window.I18n && window.I18n.leads ? window.I18n.leads.not_interested : 'Not Interested' },
+      { value: 'WRONG_PHONE_NUMBER', label: window.I18n && window.I18n.leads ? window.I18n.leads.wrong_phone_number : 'Wrong Phone Number' },
+      { value: 'WRONG_EMAIL_ADDRESS', label: window.I18n && window.I18n.leads ? window.I18n.leads.wrong_email_address : 'Wrong Email Address' },
+      { value: 'WRONG_NAME', label: window.I18n && window.I18n.leads ? window.I18n.leads.wrong_name : 'Wrong Name' }
       // Note: "OTHER" is not a valid value for dissatisfied reasons in Google Ads API v22
     ];
     
     const satisfiedReasons = [
-      { value: 'SERVICE_RELATED', label: 'Relacionado ao serviço' },
-      { value: 'BOOKED_CUSTOMER', label: 'Cliente agendado' },
-      { value: 'LIKELY_BOOKED_CUSTOMER', label: 'Provavelmente cliente agendado' },
-      { value: 'HIGH_VALUE_SERVICE', label: 'Serviço de alto valor' },
-      { value: 'OTHER_SATISFIED_REASON', label: 'Outro motivo' }
+      { value: 'SERVICE_RELATED', label: window.I18n && window.I18n.leads ? window.I18n.leads.service_related : 'Service Related' },
+      { value: 'BOOKED_CUSTOMER', label: window.I18n && window.I18n.leads ? window.I18n.leads.booked_customer : 'Booked Customer' },
+      { value: 'LIKELY_BOOKED_CUSTOMER', label: window.I18n && window.I18n.leads ? window.I18n.leads.likely_booked_customer : 'Likely Booked Customer' },
+      { value: 'HIGH_VALUE_SERVICE', label: window.I18n && window.I18n.leads ? window.I18n.leads.high_value_service : 'High Value Service' },
+      { value: 'OTHER_SATISFIED_REASON', label: window.I18n && window.I18n.leads ? window.I18n.leads.other_satisfied_reason : 'Other Reason' }
     ];
     
     window.openFeedbackModal = function(leadId, leadIds = null) {
@@ -495,7 +527,8 @@
       const singleLeadId = isBulk ? null : leadId;
       
       if (!singleLeadId && !isBulk) {
-        showError('ID do lead não fornecido');
+        const errorMsg = window.I18n && window.I18n.leads ? window.I18n.leads.lead_id_not_provided : 'Lead ID not provided';
+        showError(errorMsg);
         return;
       }
       
@@ -515,12 +548,12 @@
         leadIdsInput.value = JSON.stringify(leadIds);
         if (bulkInfo) bulkInfo.classList.remove('hidden');
         if (bulkCount) bulkCount.textContent = leadIds.length;
-        if (modalTitle) modalTitle.textContent = 'Avaliar Leads Selecionados';
+        if (modalTitle) modalTitle.textContent = window.I18n && window.I18n.leads ? window.I18n.leads.evaluate_selected_leads : 'Evaluate Selected Leads';
       } else {
         leadIdInput.value = singleLeadId;
         leadIdsInput.value = '';
         if (bulkInfo) bulkInfo.classList.add('hidden');
-        if (modalTitle) modalTitle.textContent = 'Submeter Feedback';
+        if (modalTitle) modalTitle.textContent = window.I18n && window.I18n.leads ? window.I18n.leads.submit_feedback : 'Submit Feedback';
       }
       
       form.reset();
@@ -560,10 +593,11 @@
       
       if (!reasonSection || !reasonSelect) return;
       
-      reasonSelect.innerHTML = '<option value="">Selecione um motivo (opcional)</option>';
+      const selectReasonText = window.I18n && window.I18n.leads ? window.I18n.leads.select_reason_optional : 'Select a reason (optional)';
+      reasonSelect.innerHTML = '<option value="">' + selectReasonText + '</option>';
       
       if (surveyAnswer === 'VERY_DISSATISFIED' || surveyAnswer === 'DISSATISFIED') {
-        reasonLabel.textContent = 'Motivo da insatisfação';
+        reasonLabel.textContent = window.I18n && window.I18n.leads ? window.I18n.leads.dissatisfaction_reason : 'Dissatisfaction Reason';
         dissatisfiedReasons.forEach(reason => {
           const option = document.createElement('option');
           option.value = reason.value;
@@ -572,7 +606,7 @@
         });
         reasonSection.classList.remove('hidden');
       } else if (surveyAnswer === 'SATISFIED' || surveyAnswer === 'VERY_SATISFIED') {
-        reasonLabel.textContent = 'Motivo da satisfação';
+        reasonLabel.textContent = window.I18n && window.I18n.leads ? window.I18n.leads.satisfaction_reason : 'Satisfaction Reason';
         satisfiedReasons.forEach(reason => {
           const option = document.createElement('option');
           option.value = reason.value;
@@ -621,19 +655,23 @@
         try {
           leadIds = JSON.parse(leadIdsJson);
           if (!Array.isArray(leadIds) || leadIds.length < 2) {
-            showError('IDs de leads inválidos para avaliação em lote');
+            const errorMsg = window.I18n && window.I18n.leads ? window.I18n.leads.invalid_lead_ids : 'Invalid lead IDs for bulk evaluation';
+            showError(errorMsg);
             return;
           }
           payload.lead_ids = leadIds;
         } catch (e) {
-          showError('Erro ao processar IDs dos leads selecionados');
+          const errorMsg = window.I18n && window.I18n.leads ? window.I18n.leads.error_processing_ids : 'Error processing selected lead IDs';
+          showError(errorMsg);
           return;
         }
       }
       
       submitBtn.disabled = true;
       const originalBtnText = submitBtn.textContent;
-      const loadingText = isBulk ? `Enviando para ${leadIds.length} leads...` : 'Enviando...';
+      const sendingText = window.I18n && window.I18n.leads ? window.I18n.leads.sending : 'Sending...';
+      const sendingToLeadsText = window.I18n && window.I18n.leads ? window.I18n.leads.sending_to_leads : 'Sending to %{count} leads...';
+      const loadingText = isBulk ? sendingToLeadsText.replace('%{count}', leadIds.length) : sendingText;
       submitBtn.innerHTML = `
         <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -643,17 +681,20 @@
       `;
       
       // Show loading overlay with SweetAlert2
+      const processingText = window.I18n && window.I18n.leads ? window.I18n.leads.processing : 'Processing...';
+      const processingFeedbackText = window.I18n && window.I18n.leads ? window.I18n.leads.processing_feedback : 'Processing feedback for %{count} leads...';
+      const pleaseWaitText = window.I18n && window.I18n.leads ? window.I18n.leads.please_wait : 'Please wait...';
       const loadingMessage = isBulk 
-        ? `Processando feedback para ${leadIds.length} leads...`
-        : 'Enviando feedback...';
+        ? processingFeedbackText.replace('%{count}', leadIds.length)
+        : (window.I18n && window.I18n.leads ? window.I18n.leads.sending : 'Sending feedback...');
       
       Swal.fire({
-        title: 'Processando...',
+        title: processingText,
         html: `
           <div class="flex flex-col items-center gap-4">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             <p class="text-slate-600">${loadingMessage}</p>
-            <p class="text-xs text-slate-400">Por favor, aguarde...</p>
+            <p class="text-xs text-slate-400">${pleaseWaitText}</p>
           </div>
         `,
         allowOutsideClick: false,
@@ -710,9 +751,11 @@
         
         if (data.success || data.message) {
           closeFeedbackModal();
+          const successText = window.I18n && window.I18n.leads ? window.I18n.leads.feedback_sent_success : 'Feedback sent successfully!';
+          const successBulkText = window.I18n && window.I18n.leads ? window.I18n.leads.feedback_sent_success_bulk : 'Feedback sent successfully to %{count} leads!';
           const message = isBulk 
-            ? `Feedback enviado com sucesso para ${data.processed_count || leadIds.length} leads!`
-            : "Feedback enviado com sucesso!";
+            ? successBulkText.replace('%{count}', data.processed_count || leadIds.length)
+            : successText;
           showSuccess(message);
           const button = document.getElementById('fetch-leads-btn');
           if (button) button.click();
@@ -724,7 +767,9 @@
             window.leadsController.updateSelectAllCheckbox();
           }
         } else {
-          showError("Erro ao enviar feedback: " + (data.error || "Erro desconhecido"));
+          const errorSendingText = window.I18n && window.I18n.leads ? window.I18n.leads.error_sending : 'Error sending feedback: %{error}';
+          const errorMsg = errorSendingText.replace('%{error}', data.error || (window.I18n && window.I18n.errors ? window.I18n.errors.unknown_error : 'Unknown error'));
+          showError(errorMsg);
           submitBtn.disabled = false;
           submitBtn.innerHTML = originalBtnText;
         }
@@ -734,7 +779,9 @@
         Swal.close();
         
         console.error("Error submitting feedback:", error);
-        showError("Erro ao enviar feedback: " + error.message);
+        const errorSendingText = window.I18n && window.I18n.leads ? window.I18n.leads.error_sending : 'Error sending feedback: %{error}';
+        const errorMsg = errorSendingText.replace('%{error}', error.message);
+        showError(errorMsg);
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnText;
       });

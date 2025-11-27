@@ -2,11 +2,45 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
+  before_action :set_locale
   before_action :set_active_customer_context
 
   helper_method :active_customer_context
 
   private
+
+  def set_locale
+    # Check if locale is set in session
+    if session[:locale].present?
+      I18n.locale = session[:locale]
+    # Check Accept-Language header from browser
+    elsif request.env['HTTP_ACCEPT_LANGUAGE'].present?
+      browser_locale = extract_locale_from_accept_language
+      I18n.locale = browser_locale if browser_locale.present?
+    else
+      # Default to English
+      I18n.locale = :en
+    end
+  end
+
+  def extract_locale_from_accept_language
+    accept_language = request.env['HTTP_ACCEPT_LANGUAGE'] || ''
+    # Parse Accept-Language header (e.g., "pt-BR,pt;q=0.9,en;q=0.8")
+    locales = accept_language.scan(/[a-z]{2}(?:-[A-Z]{2})?/i).map { |l| l.downcase }
+    
+    # Map browser locales to our supported locales
+    locales.each do |locale|
+      case locale
+      when /^pt/
+        return :'pt-BR'
+      when /^en/
+        return :en
+      end
+    end
+    
+    # Default to English if no match
+    :en
+  end
 
   def set_active_customer_context
     return unless user_signed_in?

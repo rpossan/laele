@@ -7,8 +7,8 @@
         </svg>
       </div>
       <div>
-        <h2 class="text-2xl font-bold text-slate-900">Histórico de Atividades</h2>
-        <p class="text-sm text-slate-600">Registro de todas as ações realizadas na plataforma</p>
+        <h2 class="text-2xl font-bold text-slate-900"><%= t('dashboard.activity_log') %></h2>
+        <p class="text-sm text-slate-600"><%= t('dashboard.activity_log_description') %></p>
       </div>
     </div>
 
@@ -63,9 +63,9 @@
                     <p class="text-sm font-semibold text-slate-900"><%= log.formatted_action %></p>
                     <p class="text-sm text-slate-600 mt-1"><%= log.formatted_description %></p>
                     <p class="text-xs text-slate-400 mt-2">
-                      <%= time_ago_in_words(log.created_at) %> atrás
+                      <%= time_ago_in_words(log.created_at) %> <%= t('common.ago') %>
                       <span class="mx-1">•</span>
-                      <%= log.created_at.strftime("%d/%m/%Y às %H:%M") %>
+                      <%= log.created_at.strftime("%d/%m/%Y #{t('common.at')} %H:%M") %>
                     </p>
                   </div>
                 </div>
@@ -80,7 +80,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
         </svg>
         <p class="text-sm font-medium text-slate-500">
-          Nenhuma atividade registrada ainda. Suas ações serão registradas aqui.
+          <%= t('dashboard.no_activity') %>
         </p>
       </div>
     <% end %>
