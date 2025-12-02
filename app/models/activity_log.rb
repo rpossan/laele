@@ -8,7 +8,8 @@ class ActivityLog < ApplicationRecord
     account_switched: 'account_switched',
     account_connected: 'account_connected',
     account_disconnected: 'account_disconnected',
-    leads_fetched: 'leads_fetched'
+    leads_fetched: 'leads_fetched',
+    geo_targets_updated: 'geo_targets_updated'
   }.freeze
 
   validates :action, presence: true
@@ -32,6 +33,8 @@ class ActivityLog < ApplicationRecord
       "Desconectou conta Google Ads"
     when ACTIONS[:leads_fetched]
       "Buscou leads"
+    when ACTIONS[:geo_targets_updated]
+      "Atualizou localizações da campanha"
     else
       action.humanize
     end
@@ -76,6 +79,19 @@ class ActivityLog < ApplicationRecord
       filters << "Charge: #{metadata['charge_status']}" if metadata['charge_status'].present?
       filters << "Feedback: #{metadata['feedback_status']}" if metadata['feedback_status'].present?
       "Período: #{period&.humanize}" + (filters.any? ? " | #{filters.join(', ')}" : "")
+    when ACTIONS[:geo_targets_updated]
+      campaign_id = metadata['campaign_id']
+      added_count = metadata['added_count'] || 0
+      removed_count = metadata['removed_count'] || 0
+      total_count = metadata['total_count'] || 0
+      
+      desc = "Campanha #{campaign_id}"
+      parts = []
+      parts << "#{added_count} adicionadas" if added_count > 0
+      parts << "#{removed_count} removidas" if removed_count > 0
+      desc += " | #{parts.join(', ')}" if parts.any?
+      desc += " | Total: #{total_count}" if total_count > 0
+      desc
     else
       ""
     end

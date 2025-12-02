@@ -2,15 +2,16 @@ Rails.application.routes.draw do
   devise_for :users
 
   # Locale switching
-  get '/locale/:locale', to: 'locales#update', as: :set_locale
+  get "/locale/:locale", to: "locales#update", as: :set_locale
 
   root "marketing/landing#show"
   get "/dashboard", to: "dashboard#show"
   get "/dashboard/activity_log", to: "dashboard#activity_log"
   get "/dashboard/account", to: "dashboard#account"
   get "/dashboard/leads", to: "dashboard#leads"
+  get "/dashboard/campaigns", to: "dashboard#campaigns"
 
-  resources :leads, only: [:index, :show]
+  resources :leads, only: [ :index, :show ]
 
   namespace :google_ads do
     get "auth/start", to: "connections#start"
@@ -25,10 +26,12 @@ Rails.application.routes.draw do
       get "customers", to: "customers#index"
       post "customers/refresh", to: "customers#refresh"
       post "customers/select", to: "customers#select"
+      get "campaigns", to: "campaigns#index"
+      get "campaign_locations", to: "campaigns#locations"
     end
 
-    resources :leads, only: [:index] do
-      resources :conversations, only: [:index], module: :leads
+    resources :leads, only: [ :index ] do
+      resources :conversations, only: [ :index ], module: :leads
       member do
         post :feedback, to: "leads/lead_feedback#create"
       end
@@ -36,6 +39,9 @@ Rails.application.routes.draw do
         post :bulk_feedback, to: "leads/bulk_lead_feedback#create"
       end
     end
+
+    get "geo_targets/search", to: "geo_targets#search"
+    post "geo_targets/update", to: "geo_targets#update"
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

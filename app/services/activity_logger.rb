@@ -120,5 +120,24 @@ class ActivityLogger
       request: request
     )
   end
+
+  def self.log_geo_targets_updated(user:, campaign_id:, added_count: 0, removed_count: 0, total_count: 0, locations: [], request: nil)
+    metadata = {
+      'campaign_id' => campaign_id.to_s,
+      'added_count' => added_count,
+      'removed_count' => removed_count,
+      'total_count' => total_count,
+      'locations' => locations.is_a?(Array) ? locations : [locations.to_s]
+    }.compact
+
+    log(
+      user: user,
+      action: ActivityLog::ACTIONS[:geo_targets_updated],
+      resource_type: 'Campaign',
+      resource_id: campaign_id.to_s,
+      metadata: metadata,
+      request: request
+    )
+  end
 end
 

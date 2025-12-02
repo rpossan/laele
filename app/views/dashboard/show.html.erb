@@ -37,6 +37,18 @@
           <span><%= t('navigation.leads') %></span>
         </div>
       </button>
+      <button 
+        id="tab-campaigns" 
+        class="tab-button border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 py-4 px-1 text-sm font-semibold transition-colors"
+        onclick="switchTab('campaigns')">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <span><%= t('navigation.campaigns') %></span>
+        </div>
+      </button>
     </nav>
   </div>
 
@@ -53,6 +65,11 @@
   <!-- Tab Content: Leads -->
   <div id="content-leads" class="tab-content <%= current_page?(dashboard_path) ? 'hidden' : '' %>">
     <%= render partial: 'dashboard/leads_section' %>
+  </div>
+
+  <!-- Tab Content: Campaigns -->
+  <div id="content-campaigns" class="tab-content hidden">
+    <%= render partial: 'dashboard/campaigns_section' %>
   </div>
 </div>
 
@@ -188,6 +205,9 @@
         case 'leads':
           url = '/dashboard/leads';
           break;
+        case 'campaigns':
+          url = '/dashboard/campaigns';
+          break;
         default:
           return;
       }
@@ -207,6 +227,56 @@
         contentDiv.innerHTML = html;
         
         // Reinitialize any scripts or components that need it
+        if (tabName === 'campaigns') {
+          // Reinitialize Select2 for campaigns tab if campaigns are already loaded
+          if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+            const campaignSelect = document.getElementById('campaign-select');
+            if (campaignSelect && campaignSelect.options.length > 1) {
+              const selectPlaceholder = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.select_campaign_placeholder : 'Select a campaign...';
+              const noResultsText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.no_campaigns_found : 'No campaigns found';
+              const searchingText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.searching : 'Searching...';
+              
+              if (jQuery(campaignSelect).hasClass('select2-hidden-accessible')) {
+                jQuery(campaignSelect).select2('destroy');
+              }
+              
+              jQuery(campaignSelect).select2({
+                placeholder: selectPlaceholder,
+                allowClear: true,
+                width: '100%',
+                language: {
+                  noResults: function() {
+                    return noResultsText;
+                  },
+                  searching: function() {
+                    return searchingText;
+                  }
+                }
+              });
+              
+              jQuery(campaignSelect).off('change').on('change', function() {
+                const selectedCampaignId = this.value;
+                const applyBtn = document.getElementById('apply-locations-btn');
+                const locationManagement = document.getElementById('location-management');
+                
+                if (this.value) {
+                  locationManagement.classList.remove('hidden');
+                  applyBtn.disabled = false;
+                  if (typeof fetchCurrentLocations === 'function') {
+                    fetchCurrentLocations();
+                  }
+                  if (typeof initializeLocationsSelect2 === 'function') {
+                    initializeLocationsSelect2();
+                  }
+                } else {
+                  locationManagement.classList.add('hidden');
+                  applyBtn.disabled = true;
+                }
+              });
+            }
+          }
+        }
+        
         if (tabName === 'account') {
           // Reinitialize Select2 and event listeners for account tab
           if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {

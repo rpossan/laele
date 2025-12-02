@@ -35,6 +35,12 @@ class DashboardController < ApplicationController
     render partial: 'dashboard/leads_section', layout: false
   end
 
+  # Endpoint para retornar conteúdo da aba Campaigns
+  def campaigns
+    @active_selection = current_user.active_customer_selection
+    render partial: 'dashboard/campaigns_section', layout: false
+  end
+
   private
 
   def fetch_missing_customer_names

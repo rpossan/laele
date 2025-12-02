@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_25_181039) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_27_152748) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -51,6 +51,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_25_181039) do
     t.index ["resource_type", "resource_id"], name: "index_activity_logs_on_resource_type_and_resource_id"
     t.index ["user_id", "created_at"], name: "index_activity_logs_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_activity_logs_on_user_id"
+  end
+
+  create_table "geo_targets", force: :cascade do |t|
+    t.string "criteria_id"
+    t.string "name"
+    t.string "canonical_name"
+    t.string "parent_id"
+    t.string "country_code"
+    t.string "target_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["canonical_name"], name: "index_geo_targets_on_canonical_name"
+    t.index ["country_code"], name: "index_geo_targets_on_country_code"
+    t.index ["criteria_id"], name: "index_geo_targets_on_criteria_id", unique: true
+    t.index ["name"], name: "index_geo_targets_on_name"
+    t.index ["target_type"], name: "index_geo_targets_on_target_type"
   end
 
   create_table "google_accounts", force: :cascade do |t|

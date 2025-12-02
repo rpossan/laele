@@ -17,31 +17,29 @@
       
       <!-- Headline -->
       <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-white mb-6">
-        Gerencie os leads mais valiosos do
-        <span class="text-emerald-300">Google LSA</span>
+        <%= t('landing.headline') %>
+        <span class="text-emerald-300"><%= t('landing.headline_highlight') %></span>
         <br class="hidden sm:block" />
-        em um único painel
+        <%= t('landing.headline_continuation') %>
       </h1>
       
       <!-- Subheadline -->
       <p class="mx-auto max-w-2xl text-lg sm:text-xl text-indigo-100 mb-10 leading-relaxed">
-        O Local Services Lead Manager conecta sua conta Google Ads, puxa leads em tempo real,
-        aplica filtros inteligentes de cobrança e feedback e prepara sua operação para enviar
-        respostas diretamente via API.
+        <%= t('landing.subheadline') %>
       </p>
       
       <!-- CTA Buttons -->
       <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
         <%= link_to new_user_registration_path,
                     class: "group inline-flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-8 py-4 text-lg shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-200 transform hover:-translate-y-0.5" do %>
-          <span>Criar minha conta</span>
+          <span><%= t('landing.create_account') %></span>
           <svg class="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
           </svg>
         <% end %>
         <%= link_to new_user_session_path,
                     class: "inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white font-semibold px-8 py-4 text-lg transition-all duration-200" do %>
-          Entrar
+          <%= t('landing.sign_in') %>
         <% end %>
       </div>
       
@@ -49,18 +47,18 @@
       <div class="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
         <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-200">
           <div class="text-4xl font-bold text-emerald-300 mb-2">+3</div>
-          <p class="text-sm text-indigo-100 font-medium">Tipos de filtros combinados</p>
-          <p class="text-xs text-indigo-200/80 mt-1">Período, cobrança e feedback</p>
+          <p class="text-sm text-indigo-100 font-medium"><%= t('landing.filter_types') %></p>
+          <p class="text-xs text-indigo-200/80 mt-1"><%= t('landing.filter_types_detail') %></p>
         </div>
         <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-200">
           <div class="text-4xl font-bold text-emerald-300 mb-2">GAQL</div>
-          <p class="text-sm text-indigo-100 font-medium">Consultas dinâmicas</p>
-          <p class="text-xs text-indigo-200/80 mt-1">Sobre o recurso local_services_lead</p>
+          <p class="text-sm text-indigo-100 font-medium"><%= t('landing.dynamic_queries') %></p>
+          <p class="text-xs text-indigo-200/80 mt-1"><%= t('landing.dynamic_queries_detail') %></p>
         </div>
         <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-200">
           <div class="text-4xl font-bold text-emerald-300 mb-2">API</div>
-          <p class="text-sm text-indigo-100 font-medium">Pronto para integração</p>
-          <p class="text-xs text-indigo-200/80 mt-1">ProvideLeadFeedback e conversas</p>
+          <p class="text-sm text-indigo-100 font-medium"><%= t('landing.api_ready') %></p>
+          <p class="text-xs text-indigo-200/80 mt-1"><%= t('landing.api_ready_detail') %></p>
         </div>
       </div>
     </div>
@@ -75,10 +73,10 @@
       <div class="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-8 shadow-lg">
         <div class="flex items-center justify-between mb-6 pb-6 border-b border-slate-200">
           <div>
-            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-1">Status atual</p>
-            <p class="text-2xl font-bold text-slate-900">MVP em desenvolvimento</p>
+            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-1"><%= t('landing.current_status') %></p>
+            <p class="text-2xl font-bold text-slate-900"><%= t('landing.mvp_development') %></p>
           </div>
-          <span class="px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider">Alpha</span>
+          <span class="px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider"><%= t('landing.alpha') %></span>
         </div>
         
         <ul class="space-y-5">
@@ -87,8 +85,8 @@
               <span class="text-indigo-600 font-bold">1</span>
             </div>
             <div>
-              <p class="font-semibold text-slate-900 mb-1">Autenticação com login/senha</p>
-              <p class="text-sm text-slate-600">Devise configurado com Postgres e Tailwind.</p>
+              <p class="font-semibold text-slate-900 mb-1"><%= t('landing.auth_with_password') %></p>
+              <p class="text-sm text-slate-600"><%= t('landing.auth_with_password_detail') %></p>
             </div>
           </li>
           <li class="flex gap-4">
@@ -96,8 +94,8 @@
               <span class="text-indigo-600 font-bold">2</span>
             </div>
             <div>
-              <p class="font-semibold text-slate-900 mb-1">Conexão Google Ads OAuth</p>
-              <p class="text-sm text-slate-600">Fluxo planejado para MCCs e contas individuais.</p>
+              <p class="font-semibold text-slate-900 mb-1"><%= t('landing.google_ads_oauth') %></p>
+              <p class="text-sm text-slate-600"><%= t('landing.google_ads_oauth_detail') %></p>
             </div>
           </li>
           <li class="flex gap-4">
@@ -105,8 +103,8 @@
               <span class="text-indigo-600 font-bold">3</span>
             </div>
             <div>
-              <p class="font-semibold text-slate-900 mb-1">Filtros e relatórios GAQL</p>
-              <p class="text-sm text-slate-600">Seleção de período, charge status e feedback.</p>
+              <p class="font-semibold text-slate-900 mb-1"><%= t('landing.filters_and_reports') %></p>
+              <p class="text-sm text-slate-600"><%= t('landing.filters_and_reports_detail') %></p>
             </div>
           </li>
         </ul>
@@ -118,26 +116,26 @@
           <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
           </svg>
-          <h3 class="text-xl font-bold text-slate-900">Próximos passos</h3>
+          <h3 class="text-xl font-bold text-slate-900"><%= t('landing.next_steps') %></h3>
         </div>
         <ul class="space-y-3">
           <li class="flex items-start gap-3">
             <svg class="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            <span class="text-sm text-slate-700">Salvar refresh tokens criptografados e selecionar customer ativo.</span>
+            <span class="text-sm text-slate-700"><%= t('landing.next_step1') %></span>
           </li>
           <li class="flex items-start gap-3">
             <svg class="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            <span class="text-sm text-slate-700">Renderizar tabela paginada de leads direto da Google Ads API.</span>
+            <span class="text-sm text-slate-700"><%= t('landing.next_step2') %></span>
           </li>
           <li class="flex items-start gap-3">
             <svg class="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            <span class="text-sm text-slate-700">Expor endpoints para conversas e ProvideLeadFeedback.</span>
+            <span class="text-sm text-slate-700"><%= t('landing.next_step3') %></span>
           </li>
         </ul>
       </div>
