@@ -12,6 +12,7 @@ pt-BR:
     sign_in: "Entrar"
     sign_up: "Criar conta"
     sign_out: "Sair"
+    pricing: "Planos"
     back: "Voltar"
     language: "Idioma"
   
@@ -271,6 +272,51 @@ pt-BR:
       password_confirmation: "Confirmar senha"
       minimum_characters: "Mínimo de %{count} caracteres"
       submit: "Criar conta"
+    passwords:
+      new:
+        title: "Recuperar acesso"
+        description: "Informe seu e-mail para receber o link de redefinição de senha"
+        email: "E-mail"
+        email_placeholder: "seu@email.com"
+        submit: "Enviar instruções"
+        tip: "Caso não encontre o e-mail, verifique a pasta de spam ou lixo eletrônico."
+  pricing:
+    currency:
+      brl_unit: "R$"
+      usd_unit: "USD"
+      format: "%u %n"
+    badge: "Simples e transparente"
+    title: "Planos para onde você quer chegar"
+    subtitle: "Escolha a faixa de contas que melhor se encaixa no momento da sua operação. Você pode mudar de plano quando evoluir."
+    bill_cycle: "Faturamento"
+    bill_cycle_detail: "Valores mensais com cobrança em real ou dólar"
+    support_note: "Ativação rápida e suporte humano"
+    switch_note: "Altere de plano a qualquer momento"
+    per_month: "por mês"
+    custom: "Sob demanda"
+    cards:
+      standard:
+        name: "Standard"
+        accounts: "Até 10 contas"
+        price_brl_amount: 100
+        price_usd_amount: 20
+        description: "Ideal para equipes começando com Local Services Ads e validando o fluxo de captura e feedback."
+        cta: "Começar no Standard"
+      professional:
+        name: "Professional"
+        badge: "Mais escolhido"
+        accounts: "Até 50 contas"
+        price_brl_amount: 150
+        price_usd_amount: 50
+        description: "Para operações com várias localidades e necessidade de escala com relatórios consistentes."
+        cta: "Assinar o Professional"
+      enterprise:
+        name: "Enterprise"
+        accounts: "Mais de 40 contas"
+        price_brl: "Valores customizados"
+        price_usd: "Custom pricing"
+        description: "Quando você precisa de volume, SLA dedicado e integrações alinhadas com seu stack."
+        cta: "Falar com vendas"
   
   # Messages
   messages:
@@ -293,4 +339,3 @@ pt-BR:
     unknown_error: "Erro desconhecido"
     invalid_response: "Resposta do servidor não é JSON válido"
     invalid_locale: "Idioma inválido"
-

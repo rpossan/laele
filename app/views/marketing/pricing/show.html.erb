@@ -1,0 +1,75 @@
+<div class="max-w-6xl mx-auto space-y-10">
+  <div class="text-center space-y-4">
+    <div class="inline-flex items-center gap-2 rounded-full bg-indigo-50 text-indigo-700 px-4 py-2 text-xs font-semibold uppercase tracking-wider">
+      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white font-bold">✓</span>
+      <span><%= t("pricing.badge") %></span>
+    </div>
+    <h1 class="text-4xl sm:text-5xl font-bold text-slate-900"><%= t("pricing.title") %></h1>
+    <p class="text-lg text-slate-600 max-w-3xl mx-auto"><%= t("pricing.subtitle") %></p>
+    <div class="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
+      <div class="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-bold uppercase tracking-wider"><%= t("pricing.bill_cycle") %></div>
+      <p class="text-sm text-slate-700"><%= t("pricing.bill_cycle_detail") %></p>
+      <span class="text-slate-400">•</span>
+      <p class="text-sm text-slate-700"><%= t("pricing.support_note") %></p>
+      <span class="text-slate-400">•</span>
+      <p class="text-sm text-slate-700"><%= t("pricing.switch_note") %></p>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6 items-stretch">
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-lg hover:shadow-xl transition-all flex flex-col">
+      <div class="p-6 flex flex-col h-full space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-semibold text-indigo-600 uppercase tracking-wide"><%= t("pricing.cards.standard.name") %></p>
+            <p class="text-lg font-bold text-slate-900"><%= t("pricing.cards.standard.accounts") %></p>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider"><%= t("pricing.per_month") %></span>
+        </div>
+        <div class="space-y-1">
+          <p class="text-3xl font-bold text-slate-900"><%= number_to_currency(t("pricing.cards.standard.price_brl_amount"), unit: t("pricing.currency.brl_unit"), format: t("pricing.currency.format"), precision: 0) %></p>
+          <p class="text-sm text-slate-500"><%= number_to_currency(t("pricing.cards.standard.price_usd_amount"), unit: t("pricing.currency.usd_unit"), format: t("pricing.currency.format"), precision: 0) %></p>
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed flex-1"><%= t("pricing.cards.standard.description") %></p>
+        <%= link_to t("pricing.cards.standard.cta"), new_user_registration_path, class: "inline-flex w-full justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all" %>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border-2 border-emerald-200 bg-gradient-to-b from-white via-emerald-50 to-white shadow-xl hover:shadow-2xl transition-all flex flex-col relative">
+      <div class="absolute -top-3 right-4 px-3 py-1 rounded-full bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider shadow-md"><%= t("pricing.cards.professional.badge") %></div>
+      <div class="p-6 flex flex-col h-full space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-semibold text-emerald-600 uppercase tracking-wide"><%= t("pricing.cards.professional.name") %></p>
+            <p class="text-lg font-bold text-slate-900"><%= t("pricing.cards.professional.accounts") %></p>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider"><%= t("pricing.per_month") %></span>
+        </div>
+        <div class="space-y-1">
+          <p class="text-3xl font-bold text-slate-900"><%= number_to_currency(t("pricing.cards.professional.price_brl_amount"), unit: t("pricing.currency.brl_unit"), format: t("pricing.currency.format"), precision: 0) %></p>
+          <p class="text-sm text-slate-500"><%= number_to_currency(t("pricing.cards.professional.price_usd_amount"), unit: t("pricing.currency.usd_unit"), format: t("pricing.currency.format"), precision: 0) %></p>
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed flex-1"><%= t("pricing.cards.professional.description") %></p>
+        <%= link_to t("pricing.cards.professional.cta"), new_user_registration_path, class: "inline-flex w-full justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-emerald-700 hover:shadow-lg transition-all" %>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-lg hover:shadow-xl transition-all flex flex-col">
+      <div class="p-6 flex flex-col h-full space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-semibold text-slate-700 uppercase tracking-wide"><%= t("pricing.cards.enterprise.name") %></p>
+            <p class="text-lg font-bold text-slate-900"><%= t("pricing.cards.enterprise.accounts") %></p>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider"><%= t("pricing.custom") %></span>
+        </div>
+        <div class="space-y-1">
+          <p class="text-3xl font-bold text-slate-900"><%= t("pricing.cards.enterprise.price_brl") %></p>
+          <p class="text-sm text-slate-500"><%= t("pricing.cards.enterprise.price_usd") %></p>
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed flex-1"><%= t("pricing.cards.enterprise.description") %></p>
+        <%= mail_to "contato@lsaescale.com", t("pricing.cards.enterprise.cta"), class: "inline-flex w-full justify-center rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-800 bg-slate-50 hover:bg-slate-100 hover:border-slate-400 transition-all" %>
+      </div>
+    </div>
+  </div>
+</div>

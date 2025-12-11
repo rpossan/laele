@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   get "/dashboard/campaigns", to: "dashboard#campaigns"
 
   resources :leads, only: [ :index, :show ]
+  get "/pricing", to: "marketing/pricing#show"
 
   namespace :google_ads do
     get "auth/start", to: "connections#start"

@@ -12,6 +12,7 @@ en:
     sign_in: "Sign In"
     sign_up: "Sign Up"
     sign_out: "Sign Out"
+    pricing: "Pricing"
     back: "Back"
     language: "Language"
   
@@ -271,6 +272,51 @@ en:
       password_confirmation: "Confirm Password"
       minimum_characters: "Minimum %{count} characters"
       submit: "Sign Up"
+    passwords:
+      new:
+        title: "Recover access"
+        description: "Enter your email to receive the password reset link"
+        email: "Email"
+        email_placeholder: "you@example.com"
+        submit: "Send instructions"
+        tip: "If you can't find the email, check your spam or junk folder."
+  pricing:
+    currency:
+      brl_unit: "R$"
+      usd_unit: "USD"
+      format: "%u %n"
+    badge: "Simple and transparent"
+    title: "Plans for where you're going"
+    subtitle: "Pick the account volume that fits your operation today. Switch plans easily as you grow."
+    bill_cycle: "Billing"
+    bill_cycle_detail: "Monthly pricing, pay in BRL or USD"
+    support_note: "Fast onboarding and human support"
+    switch_note: "Change plans anytime"
+    per_month: "per month"
+    custom: "On demand"
+    cards:
+      standard:
+        name: "Standard"
+        accounts: "Up to 10 accounts"
+        price_brl_amount: 100
+        price_usd_amount: 20
+        description: "Built for teams starting with Local Services Ads and validating capture plus feedback loops."
+        cta: "Start with Standard"
+      professional:
+        name: "Professional"
+        badge: "Most popular"
+        accounts: "Up to 50 accounts"
+        price_brl_amount: 150
+        price_usd_amount: 50
+        description: "For multi-location operations that need scale and consistent reporting."
+        cta: "Choose Professional"
+      enterprise:
+        name: "Enterprise"
+        accounts: "More than 40 accounts"
+        price_brl: "Custom values"
+        price_usd: "Custom pricing"
+        description: "When you need volume, dedicated SLA, and integrations aligned to your stack."
+        cta: "Talk to sales"
   
   # Messages
   messages:

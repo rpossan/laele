@@ -112,6 +112,7 @@
               <nav class="hidden md:flex items-center gap-1 text-sm">
                 <%= navigation_link_to t('navigation.dashboard'), dashboard_path %>
                 <%= navigation_link_to t('navigation.leads'), leads_path %>
+                <%= navigation_link_to t('navigation.pricing'), pricing_path %>
               </nav>
 
               <% if active_customer_context.present? %>
@@ -140,6 +141,7 @@
               </div>
             <% else %>
               <div class="flex items-center gap-3">
+                <%= link_to t('navigation.pricing'), pricing_path, class: "text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors" %>
                 <%= link_to t('navigation.sign_in'), new_user_session_path, class: "text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors" %>
                 <%= link_to t('navigation.sign_up'), new_user_registration_path, class: "inline-flex items-center px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold shadow-sm hover:bg-indigo-700 hover:shadow-md transition-all" %>
               </div>
