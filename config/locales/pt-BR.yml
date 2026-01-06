@@ -2,7 +2,7 @@ pt-BR:
   # Application
   app_name: "LSA eScale"
   app_tagline: "Lead Intelligence Hub"
-  
+
   # Navigation
   navigation:
     dashboard: "Dashboard"
@@ -15,7 +15,7 @@ pt-BR:
     pricing: "Planos"
     back: "Voltar"
     language: "Idioma"
-  
+
   # Common
   common:
     loading: "Carregando..."
@@ -41,7 +41,7 @@ pt-BR:
     or: "ou"
     at: "às"
     built_with: "Construído com Ruby on Rails"
-  
+
   # Account
   account:
     active: "Conta ativa"
@@ -86,7 +86,7 @@ pt-BR:
     error_refreshing: "Erro ao atualizar contas"
     error_loading: "Erro ao carregar conteúdo. Por favor, recarregue a página."
     please_select_account: "Por favor, selecione uma conta"
-  
+
   # Google Ads
   google_ads:
     integration: "Integração Google Ads"
@@ -99,7 +99,7 @@ pt-BR:
     selection_info_item3: "MCCs (Manager Accounts) costumam aparecer primeiro na relação."
     confirm_selection: "Confirmar seleção"
     recommended: "Recomendado"
-  
+
   # Leads
   leads:
     title: "Leads"
@@ -186,7 +186,7 @@ pt-BR:
     likely_booked_customer: "Provavelmente cliente agendado"
     high_value_service: "Serviço de alto valor"
     other_satisfied_reason: "Outro motivo"
-  
+
   # Campaigns
   campaigns:
     title: "Campanhas e Localizações"
@@ -218,14 +218,14 @@ pt-BR:
     locations: "localizações"
     error_applying: "Erro ao aplicar localizações"
     searching: "Buscando..."
-  
+
   # Dashboard
   dashboard:
     title: "Dashboard"
     activity_log: "Histórico de Atividades"
     activity_log_description: "Registro de todas as ações realizadas na plataforma"
     no_activity: "Nenhuma atividade registrada ainda. Suas ações serão registradas aqui."
-  
+
   # Landing Page
   landing:
     tagline: "Google Local Services Ads"
@@ -254,7 +254,7 @@ pt-BR:
     next_step1: "Salvar refresh tokens criptografados e selecionar customer ativo."
     next_step2: "Renderizar tabela paginada de leads direto da Google Ads API."
     next_step3: "Expor endpoints para conversas e ProvideLeadFeedback."
-  
+
   # Devise
   devise:
     sign_in:
@@ -317,18 +317,19 @@ pt-BR:
         price_usd: "Custom pricing"
         description: "Quando você precisa de volume, SLA dedicado e integrações alinhadas com seu stack."
         cta: "Falar com vendas"
-  
+
   # Messages
   messages:
     success: "Sucesso!"
     error: "Erro!"
     info: "Informação"
     ok: "OK"
-  
+
   # Footer
   footer:
-    copyright: "© %{year} LSA eScale · Construído com Ruby on Rails"
-  
+    privacy_policy: "Política de Privacidade"
+    copyright: "© %{year} LSA eScale · %{privacy_link}"
+
   # Errors
   errors:
     server_error: "Erro do servidor"

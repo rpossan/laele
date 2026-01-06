@@ -2,7 +2,7 @@ en:
   # Application
   app_name: "LSA eScale"
   app_tagline: "Lead Intelligence Hub"
-  
+
   # Navigation
   navigation:
     dashboard: "Dashboard"
@@ -15,7 +15,7 @@ en:
     pricing: "Pricing"
     back: "Back"
     language: "Language"
-  
+
   # Common
   common:
     loading: "Loading..."
@@ -41,7 +41,7 @@ en:
     or: "or"
     at: "at"
     built_with: "Built with Ruby on Rails"
-  
+
   # Account
   account:
     active: "Active Account"
@@ -86,7 +86,7 @@ en:
     error_refreshing: "Error refreshing accounts"
     error_loading: "Error loading content. Please reload the page."
     please_select_account: "Please select an account"
-  
+
   # Google Ads
   google_ads:
     integration: "Google Ads Integration"
@@ -99,7 +99,7 @@ en:
     selection_info_item3: "MCCs (Manager Accounts) usually appear first in the list."
     confirm_selection: "Confirm Selection"
     recommended: "Recommended"
-  
+
   # Leads
   leads:
     title: "Leads"
@@ -186,7 +186,7 @@ en:
     likely_booked_customer: "Likely Booked Customer"
     high_value_service: "High Value Service"
     other_satisfied_reason: "Other Reason"
-  
+
   # Campaigns
   campaigns:
     title: "Campaigns and Locations"
@@ -218,14 +218,14 @@ en:
     locations: "locations"
     error_applying: "Error applying locations"
     searching: "Searching..."
-  
+
   # Dashboard
   dashboard:
     title: "Dashboard"
     activity_log: "Activity History"
     activity_log_description: "Record of all actions performed on the platform"
     no_activity: "No activity recorded yet. Your actions will be recorded here."
-  
+
   # Landing Page
   landing:
     tagline: "Google Local Services Ads"
@@ -254,7 +254,7 @@ en:
     next_step1: "Save encrypted refresh tokens and select active customer."
     next_step2: "Render paginated lead table directly from Google Ads API."
     next_step3: "Expose endpoints for conversations and ProvideLeadFeedback."
-  
+
   # Devise
   devise:
     sign_in:
@@ -317,18 +317,19 @@ en:
         price_usd: "Custom pricing"
         description: "When you need volume, dedicated SLA, and integrations aligned to your stack."
         cta: "Talk to sales"
-  
+
   # Messages
   messages:
     success: "Success!"
     error: "Error!"
     info: "Information"
     ok: "OK"
-  
+
   # Footer
   footer:
-    copyright: "© %{year} LSA eScale · Built with Ruby on Rails"
-  
+    privacy_policy: "Privacy Policy"
+    copyright: "© %{year} LSA eScale · %{privacy_link}"
+
   # Errors
   errors:
     server_error: "Server Error"

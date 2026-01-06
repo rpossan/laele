@@ -13,6 +13,7 @@ Rails.application.routes.draw do
 
   resources :leads, only: [ :index, :show ]
   get "/pricing", to: "marketing/pricing#show"
+  get "/privacy", to: "legal#privacy", as: :privacy
 
   namespace :google_ads do
     get "auth/start", to: "connections#start"
