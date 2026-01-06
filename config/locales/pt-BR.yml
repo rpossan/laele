@@ -330,6 +330,125 @@ pt-BR:
     privacy_policy: "Política de Privacidade"
     copyright: "© %{year} LSA eScale · %{privacy_link}"
 
+  # Access
+  access:
+    pending:
+      title: "Aprovação de cadastro"
+      message: "Estamos validando seu cadastro e assim que terminarmos iremos te notificar."
+
+  # Privacy
+  privacy:
+    title: "Política de Privacidade — LSA Escale"
+    body_html: |
+      <h2>Introdução</h2>
+      <p>Na LSA Escale, acessível em <a href="https://lsaescale.com">https://lsaescale.com</a>, estamos comprometidos em proteger sua privacidade. Esta Política de Privacidade explica quais informações coletamos, como as utilizamos, como as protegemos e os seus direitos sobre essas informações.</p>
+
+      <p>Se tiver dúvidas sobre esta política, entre em contato pelo e‑mail <a href="mailto:support@lsaescale.com">support@lsaescale.com</a>.</p>
+
+      <h3>Conformidade com o GDPR</h3>
+      <p>A LSA Escale é a Controladora dos seus dados pessoais. A base legal para coletar e processar seus dados depende de como você interage com nossa plataforma:</p>
+      <ul>
+        <li>Você nos concedeu permissão para tal</li>
+        <li>Precisamos executar um contrato com você</li>
+        <li>O processamento é de nosso interesse legítimo (analytics, prevenção de fraude, melhoria de serviço)</li>
+        <li>Temos obrigações legais a cumprir</li>
+      </ul>
+
+      <p>Reteremos seus dados pessoais apenas enquanto necessário para os fins descritos nesta política, inclusive para cumprir obrigações legais, resolver disputas e aplicar nossos acordos.</p>
+
+      <h4>Seus direitos (GDPR)</h4>
+      <p>Se você estiver na Área Econômica Europeia, tem os seguintes direitos:</p>
+      <ul>
+        <li>Direito de acessar, atualizar ou excluir seus dados pessoais</li>
+        <li>Direito de retificação</li>
+        <li>Direito de se opor ao processamento</li>
+        <li>Direito de restringir o processamento</li>
+        <li>Direito à portabilidade dos dados</li>
+        <li>Direito de retirar o consentimento</li>
+      </ul>
+      <p>Para exercer esses direitos, entre em contato pelo <a href="mailto:support@lsaescale.com">support@lsaescale.com</a>.</p>
+
+      <h3>Uso das APIs do Google</h3>
+      <p>A LSA Escale integra-se às APIs do Google Local Services Ads para recuperar dados de leads, gerenciar insights e habilitar automações.</p>
+      <p>Seguimos rigorosamente a Google API Services User Data Policy, incluindo os requisitos de uso limitado.</p>
+      <h4>Nossos compromissos</h4>
+      <ul>
+        <li>Usamos os dados obtidos nas APIs do Google apenas para prover a funcionalidade da LSA Escale</li>
+        <li>Não vendemos, alugamos ou compartilhamos dados de usuários do Google com terceiros</li>
+        <li>Não usamos dados do Google para publicidade</li>
+        <li>Não usamos dados do Google para construir perfis fora da funcionalidade da LSA Escale</li>
+        <li>O acesso aos dados das APIs do Google é restrito a processos essenciais do sistema</li>
+        <li>Todos os dados são armazenados com criptografia e boas práticas de segurança</li>
+      </ul>
+
+      <p>Para ver as políticas do Google, visite: <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">https://developers.google.com/terms/api-services-user-data-policy</a></p>
+
+      <h3>Informações que coletamos</h3>
+      <p>Poderemos coletar e processar os seguintes dados:</p>
+      <h4>1. Informações fornecidas por você</h4>
+      <ul>
+        <li>Nome</li>
+        <li>Endereço de email</li>
+        <li>Número de telefone</li>
+        <li>Informações da conta</li>
+        <li>Detalhes do negócio</li>
+        <li>Mensagens ou solicitações de suporte</li>
+      </ul>
+
+      <h4>2. Informações coletadas automaticamente</h4>
+      <p>Ao acessar a LSA Escale, nossos servidores podem registrar automaticamente:</p>
+      <ul>
+        <li>Endereço IP</li>
+        <li>Tipo de navegador</li>
+        <li>Provedor de Internet</li>
+        <li>Data e hora da visita</li>
+        <li>Páginas visitadas</li>
+        <li>Páginas de referência/saída</li>
+        <li>Dados de cliques</li>
+      </ul>
+      <p>Esses dados são usados apenas para analytics, solução de problemas, melhoria do serviço e segurança.</p>
+
+      <h4>3. Dados do Google Local Services Ads</h4>
+      <p>Se você conectar sua conta Google Local Services, poderemos processar:</p>
+      <ul>
+        <li>Detalhes do lead</li>
+        <li>Status do lead</li>
+        <li>Informações de chamadas</li>
+        <li>Categorias de trabalho</li>
+        <li>Dados de interação com o cliente</li>
+      </ul>
+      <p>Essas informações são usadas apenas para entregar as funcionalidades da plataforma.</p>
+
+      <h3>Arquivos de log</h3>
+      <p>Seguimos procedimentos padrão para arquivos de log. Esses logs incluem endereços IP, detalhes do navegador, timestamps, páginas de referência e dados de cliques. Nada disso identifica pessoalmente o usuário. Logs são usados para manutenção do sistema, analytics e monitoramento de segurança.</p>
+
+      <h3>Cookies e web beacons</h3>
+      <p>Como a maioria dos sites, usamos cookies para:</p>
+      <ul>
+        <li>Lembrar preferências do usuário</li>
+        <li>Manter sessões de login</li>
+        <li>Otimizar desempenho do site</li>
+        <li>Fornecer funcionalidades personalizadas</li>
+      </ul>
+      <p>Você pode desabilitar cookies nas configurações do seu navegador. Algumas funcionalidades podem não funcionar corretamente sem cookies.</p>
+
+      <h3>Políticas de privacidade de terceiros</h3>
+      <p>Nossa Política não se aplica a serviços de terceiros, como Google, redes de publicidade externas ou outras plataformas vinculadas. Recomendamos revisar as políticas de privacidade de qualquer serviço de terceiros com o qual você interaja.</p>
+
+      <h3>Privacidade de crianças</h3>
+      <p>Não coletamos intencionalmente informações pessoais de crianças menores de 13 anos. Se você acredita que seu filho forneceu dados pessoais no nosso site, entre em contato para que possamos remover as informações.</p>
+
+      <h3>Política online</h3>
+      <p>Esta Política aplica‑se às atividades online em <a href="https://lsaescale.com">https://lsaescale.com</a> e é válida para visitantes no que diz respeito às informações compartilhadas ou coletadas por meio da plataforma. Não se aplica a informações coletadas offline.</p>
+
+      <h3>Contato</h3>
+      <p>Se tiver dúvidas sobre esta Política de Privacidade, entre em contato: <br/>LSA Escale — Email: <a href="mailto:support@lsaescale.com">support@lsaescale.com</a></p>
+
+      <h3>Consentimento</h3>
+      <p>Ao usar o nosso site, você concorda com esta Política de Privacidade e seus termos.</p>
+
+      <p class="text-sm text-slate-500">Última atualização: 13 de Novembro de 2025</p>
+
   # Errors
   errors:
     server_error: "Erro do servidor"

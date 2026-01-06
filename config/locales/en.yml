@@ -330,6 +330,125 @@ en:
     privacy_policy: "Privacy Policy"
     copyright: "© %{year} LSA eScale · %{privacy_link}"
 
+  # Access
+  access:
+    pending:
+      title: "Account pending"
+      message: "We are validating your registration and will notify you as soon as it's completed."
+
+  # Privacy
+  privacy:
+    title: "Privacy Policy for LSA Escale"
+    body_html: |
+      <h2>Introduction</h2>
+      <p>At LSA Escale, accessible from <a href="https://lsaescale.com">https://lsaescale.com</a>, we are committed to protecting your privacy. This Privacy Policy explains what information we collect, how we use it, how we safeguard it, and your rights regarding that information.</p>
+
+      <p>If you have any questions about this policy, please contact us at <a href="mailto:support@lsaescale.com">support@lsaescale.com</a>.</p>
+
+      <h3>General Data Protection Regulation (GDPR) Compliance</h3>
+      <p>LSA Escale is the Data Controller of your personal information. The lawful basis for collecting and processing your data depends on how you interact with our platform:</p>
+      <ul>
+        <li>You have given LSA Escale permission to do so</li>
+        <li>We need to perform a contract with you</li>
+        <li>Processing is in our legitimate interests (analytics, fraud prevention, service improvement)</li>
+        <li>We must comply with legal obligations</li>
+      </ul>
+
+      <p>We will retain your personal information only as long as necessary to meet the purposes described in this policy, including legal compliance, dispute resolution, and enforcing our agreements.</p>
+
+      <h4>Your GDPR Rights</h4>
+      <p>If you are located in the European Economic Area, you have the following rights:</p>
+      <ul>
+        <li>Right to access, update, or delete your personal information</li>
+        <li>Right to rectification</li>
+        <li>Right to object to processing</li>
+        <li>Right to restrict processing</li>
+        <li>Right to data portability</li>
+        <li>Right to withdraw consent</li>
+      </ul>
+      <p>To exercise any of these rights, contact us at <a href="mailto:support@lsaescale.com">support@lsaescale.com</a>.</p>
+
+      <h3>Use of Google APIs</h3>
+      <p>LSA Escale integrates with Google Local Services Ads APIs to retrieve lead data, manage lead insights, and enable workflow automations.</p>
+      <p>We strictly follow the Google API Services User Data Policy, including Limited Use requirements.</p>
+      <h4>Our Commitments</h4>
+      <ul>
+        <li>We only use data obtained from Google APIs to provide the functionality of LSA Escale</li>
+        <li>We do not sell, rent, or share Google user data with third parties</li>
+        <li>We do not use Google user data for advertising</li>
+        <li>We do not use Google user data to build or enhance user profiles unrelated to LSA Escale functionality</li>
+        <li>Access to Google API data is restricted to essential system processes</li>
+        <li>All data is stored securely with industry-standard encryption</li>
+      </ul>
+
+      <p>To review Google’s policies, visit: <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">https://developers.google.com/terms/api-services-user-data-policy</a></p>
+
+      <h3>Information We Collect</h3>
+      <p>We may collect and process the following data:</p>
+      <h4>1. Information You Provide</h4>
+      <ul>
+        <li>Name</li>
+        <li>Email address</li>
+        <li>Phone number</li>
+        <li>Account information</li>
+        <li>Business details</li>
+        <li>Messages or support requests</li>
+      </ul>
+
+      <h4>2. Information Collected Automatically</h4>
+      <p>When you access LSA Escale, our servers may automatically log:</p>
+      <ul>
+        <li>IP address</li>
+        <li>Browser type</li>
+        <li>Internet Service Provider</li>
+        <li>Date and time of visit</li>
+        <li>Pages visited</li>
+        <li>Referring/exit pages</li>
+        <li>Click data</li>
+      </ul>
+      <p>This data is used solely for analytics, troubleshooting, service improvement, and security.</p>
+
+      <h4>3. Google Local Service Ads Data</h4>
+      <p>If you connect your Google Local Services account, we may process:</p>
+      <ul>
+        <li>Lead details</li>
+        <li>Lead status</li>
+        <li>Call information</li>
+        <li>Job categories</li>
+        <li>Customer interaction data</li>
+      </ul>
+      <p>This information is used only to deliver the features of the platform.</p>
+
+      <h3>Log Files</h3>
+      <p>LSA Escale follows standard procedures for log files. These logs include IP addresses, browser details, timestamps, referring pages, and click data. None of this information identifies you personally. Logs are used for system maintenance, analytics, and security monitoring.</p>
+
+      <h3>Cookies and Web Beacons</h3>
+      <p>Like most websites, LSA Escale uses cookies to:</p>
+      <ul>
+        <li>Remember user preferences</li>
+        <li>Maintain login sessions</li>
+        <li>Optimize website performance</li>
+        <li>Provide personalized functionality</li>
+      </ul>
+      <p>You may disable cookies through your browser settings. Note that some features may not function properly without them.</p>
+
+      <h3>Third-Party Privacy Policies</h3>
+      <p>Our Privacy Policy does not apply to third-party services such as Google, external advertising networks or other linked platforms. We recommend reviewing the privacy policies of any third-party service you interact with. LSA Escale has no control over third-party cookies or tracking technologies.</p>
+
+      <h3>Children’s Privacy</h3>
+      <p>LSA Escale does not knowingly collect any Personal Identifiable Information from children under 13. If you believe your child submitted personal information on our website, please contact us immediately. We will remove such data as quickly as possible.</p>
+
+      <h3>Online-Only Policy</h3>
+      <p>This Privacy Policy applies to online activities on <a href="https://lsaescale.com">https://lsaescale.com</a> and is valid for visitors with regard to information shared or collected through our platform. It does not apply to information collected offline or outside of this website.</p>
+
+      <h3>Contact Us</h3>
+      <p>If you have any questions or concerns regarding this Privacy Policy, data usage, or your privacy rights, you may contact us at: <br/>LSA Escale — Email: <a href="mailto:support@lsaescale.com">support@lsaescale.com</a></p>
+
+      <h3>Consent</h3>
+      <p>By using our website, you consent to our Privacy Policy and agree to its terms.</p>
+
+      <p class="text-sm text-slate-500">Last updated: November 13, 2025</p>
+
   # Errors
   errors:
     server_error: "Server Error"
