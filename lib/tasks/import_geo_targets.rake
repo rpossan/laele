@@ -2,7 +2,7 @@ namespace :geo do
   desc "Import geo targets from CSV file"
   task import: :environment do
     file_path = ENV.fetch("FILE", "geo_targets.csv")
-    
+
     unless File.exist?(file_path)
       puts "Error: File not found: #{file_path}"
       puts "Usage: rake geo:import FILE=path/to/GeoTargetConstants.csv"
@@ -10,17 +10,20 @@ namespace :geo do
     end
 
     puts "Importing geo targets from #{file_path}..."
-    
+
     require "csv"
-    
+
     total_rows = 0
     imported = 0
     updated = 0
     errors = 0
 
+    GeoTarget.delete_all
+    puts "Cleared existing geo targets."
+
     CSV.foreach(file_path, headers: true) do |row|
       total_rows += 1
-      
+
       begin
         criteria_id = row["Criteria ID"]&.strip
         name = row["Name"]&.strip
@@ -73,4 +76,3 @@ namespace :geo do
     puts "Errors: #{errors}"
   end
 end
-
