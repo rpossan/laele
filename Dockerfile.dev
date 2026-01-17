@@ -1,0 +1,42 @@
+FROM ruby:3.3.3-slim
+
+# Instalar dependências do sistema
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    curl \
+    git \
+    libpq-dev \
+    libvips \
+    libyaml-dev \
+    nodejs \
+    npm \
+    pkg-config \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Configurar diretório de trabalho
+WORKDIR /rails
+
+# Instalar gems
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+# Copiar o código da aplicação
+COPY . .
+
+
+# Precompilar bootsnap para desenvolvimento
+RUN bundle exec bootsnap precompile --gemfile app/ lib/
+
+# Expor porta
+EXPOSE 3000
+
+# Script de entrada
+COPY docker-entrypoint-dev.sh /usr/bin/
+COPY docker-entrypoint-css.sh /usr/bin/
+RUN chmod +x /usr/bin/docker-entrypoint-dev.sh
+RUN chmod +x /usr/bin/docker-entrypoint-css.sh
+ENTRYPOINT ["docker-entrypoint-dev.sh"]
+
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
