@@ -36,13 +36,12 @@ module GoogleAds
       # Try using search_stream first
       begin
         Rails.logger.info("[GoogleAds::LeadService] Trying search_stream...")
-        
         # search_stream returns an enumerable of SearchGoogleAdsStreamResponse objects
         response_enum = @service.search_stream(
           customer_id: customer_id,
           query: query
         )
-        
+
         # Collect results up to page_size
         all_results = []
         response_enum.each do |response|
@@ -57,14 +56,16 @@ module GoogleAds
         end
         
         Rails.logger.info("[GoogleAds::LeadService] Response received, processing #{all_results.size} leads...")
-
         leads = all_results.map do |row|
           # Each row has a local_services_lead field
           lead_data = row.local_services_lead
           LocalServicesLeadPresenter.new(lead_data).as_json
         end
 
-        Rails.logger.info("[GoogleAds::LeadService] Found #{leads.count} leads")
+        # Apply client-side filtering for not_charged if needed
+        leads = apply_client_side_filters(leads, filters)
+
+        Rails.logger.info("[GoogleAds::LeadService] Found #{leads.count} leads after filtering")
 
         {
           leads: leads,
@@ -73,7 +74,7 @@ module GoogleAds
         }
       rescue GRPC::Unimplemented => e
         Rails.logger.warn("[GoogleAds::LeadService] search_stream not available via gRPC, trying REST API...")
-        return list_leads_via_rest(query, page_size_int, page_token)
+        return list_leads_via_rest(query, page_size_int, page_token, filters)
       rescue => e
         Rails.logger.error("[GoogleAds::LeadService] Error with search_stream: #{e.class} - #{e.message}")
         Rails.logger.error("[GoogleAds::LeadService] Backtrace: #{e.backtrace.first(5).join("\n")}")
@@ -152,7 +153,7 @@ module GoogleAds
 
     attr_reader :google_account, :customer_id
 
-    def list_leads_via_rest(query, page_size_int, page_token = nil)
+    def list_leads_via_rest(query, page_size_int, page_token = nil, filters = {})
       require "net/http"
       require "uri"
       require "json"
@@ -231,6 +232,9 @@ module GoogleAds
         lead_obj = hash_to_openstruct(lead_data_hash)
         LocalServicesLeadPresenter.new(lead_obj).as_json
       end.compact
+
+      # Apply client-side filtering for not_charged if needed
+      leads = apply_client_side_filters(leads, filters)
 
       Rails.logger.info("[GoogleAds::LeadService] Found #{leads.count} leads")
 
@@ -315,6 +319,30 @@ module GoogleAds
       else
         obj
       end
+    end
+
+    def apply_client_side_filters(leads, filters)
+      return leads unless filters[:charge_status]&.include?("not_charged")
+      
+      Rails.logger.info("[GoogleAds::LeadService] Applying client-side not_charged filter")
+      
+      # Filter leads that are not charged
+      filtered_leads = leads.select do |lead|
+        # A lead is "not charged" if:
+        # 1. lead_charged is false/nil AND
+        # 2. credit_state is nil/empty (not credited, not under review, not rejected)
+        lead_charged = lead[:lead_charged] || lead["lead_charged"]
+        credit_state = lead[:credit_state] || lead["credit_state"]
+        
+        is_not_charged = !lead_charged && (credit_state.nil? || credit_state.empty? || credit_state == "UNSPECIFIED")
+        
+        Rails.logger.debug("[GoogleAds::LeadService] Lead #{lead[:id]}: charged=#{lead_charged}, credit_state=#{credit_state}, not_charged=#{is_not_charged}")
+        
+        is_not_charged
+      end
+      
+      Rails.logger.info("[GoogleAds::LeadService] Filtered from #{leads.size} to #{filtered_leads.size} leads")
+      filtered_leads
     end
   end
 end

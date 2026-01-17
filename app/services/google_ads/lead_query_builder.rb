@@ -94,16 +94,22 @@ module GoogleAds
         when "rejected"
           "local_services_lead.credit_details.credit_state = \"CREDIT_INELIGIBLE\""
         when "not_charged"
-          # Lead was never charged - only check lead_charged field
-          "local_services_lead.lead_charged = FALSE"
+          # Skip filtering in GAQL - we'll filter client-side
+          nil
         end
       end.compact
       
       return nil if conditions.empty?
       
-      # If only one condition, return it as-is (no parentheses)
+      # If only one condition, check if it needs parentheses
       if conditions.size == 1
-        conditions.first
+        condition = conditions.first
+        # Always wrap conditions with OR to ensure proper precedence
+        if condition.include?(' OR ')
+          "(#{condition})"
+        else
+          condition
+        end
       else
         # Multiple conditions: wrap each complex condition and join with OR
         wrapped_conditions = conditions.map do |condition|
