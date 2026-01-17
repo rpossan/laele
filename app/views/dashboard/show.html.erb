@@ -446,7 +446,7 @@
     .then(data => {
       if (data.success || data.message) {
         closeAccountSwitcherModal();
-        
+      
         // Check if were on the Leads tab
         const leadsTab = document.querySelector('[data-tab="leads"]');
         const isLeadsTabActive = leadsTab && leadsTab.classList.contains('active-tab');
