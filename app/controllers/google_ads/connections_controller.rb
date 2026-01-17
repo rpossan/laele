@@ -234,7 +234,8 @@ module GoogleAds
       return "N/A" unless customer_id.present?
       
       # Format customer_id: 9604421505 -> 960-442-1505
-      customer_id.to_s.gsub(/\D/, "").chars.each_slice(3).map(&:join).join("-")
+      digits = customer_id.to_s.gsub(/\D/, "")
+      "#{digits[0..2]}-#{digits[3..5]}-#{digits[6..-1]}"
     end
 
     private
