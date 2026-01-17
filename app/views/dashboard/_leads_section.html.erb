@@ -10,6 +10,60 @@
       <p class="text-sm text-slate-600"><%= t('leads.filters_description') %></p>
     </div>
   </div>
+
+  <!-- Account Selector -->
+  <% all_customers = (@google_accounts || []).flat_map(&:accessible_customers) %>
+  <div class="bg-white rounded-xl border-2 border-slate-200 p-6 mb-6 shadow-sm">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1"><%= t('account.select_account_title') %></p>
+        <p class="text-sm text-slate-600"><%= t('account.select_account_description') %></p>
+      </div>
+      <button 
+        onclick="openAccountSwitcherModal()" 
+        class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+        </svg>
+        <span><%= t('account.switch') %></span>
+      </button>
+    </div>
+    
+    <% if @active_selection.present? %>
+      <% selected_customer = all_customers.find { |c| c.customer_id == @active_selection.customer_id } %>
+      <div class="flex items-center gap-4 rounded-xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1"><%= t('account.active') %></p>
+          <p class="text-lg font-bold text-slate-900">
+            <%= format_customer_id(@active_selection.customer_id) %>
+          </p>
+          <% if selected_customer&.display_name.present? %>
+            <p class="text-sm text-slate-600"><%= selected_customer.display_name %></p>
+          <% end %>
+        </div>
+        <span class="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700 uppercase tracking-wide">
+          <%= t('account.active') %>
+        </span>
+      </div>
+    <% else %>
+      <div class="text-center py-8 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50">
+        <svg class="mx-auto h-10 w-10 text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        <p class="text-sm font-medium text-slate-600 mb-2"><%= t('account.no_account_selected') %></p>
+        <button 
+          onclick="openAccountSwitcherModal()" 
+          class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2 text-sm font-semibold text-white transition-all">
+          <span><%= t('account.select_account') %></span>
+        </button>
+      </div>
+    <% end %>
+  </div>
   
   <div class="bg-slate-50 rounded-xl p-6 mb-6">
     <div class="space-y-6">
