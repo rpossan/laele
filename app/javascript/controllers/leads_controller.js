@@ -236,6 +236,9 @@ export default class extends Controller {
       button.style.cursor = 'not-allowed'
     }
     
+    // Show loading state in table
+    this.showLoadingState()
+    
     try {
       const period = this.hasPeriodTarget ? this.periodTarget.value : "last_30_days"
       
@@ -301,6 +304,7 @@ export default class extends Controller {
       this.renderLeads(data.leads || [], period, chargeStatusValues, feedbackStatusValues)
     } catch (error) {
       console.error("Error fetching leads:", error)
+      this.showErrorState(error.message)
       if (window.showError) {
         window.showError(`Erro ao buscar leads: ${error.message}`)
       } else {
@@ -315,6 +319,58 @@ export default class extends Controller {
         button.style.cursor = 'pointer'
       }
     }
+  }
+
+  showLoadingState() {
+    if (!this.hasTableBodyTarget) return
+    
+    const tbody = this.tableBodyTarget
+    tbody.innerHTML = `
+      <tr>
+        <td class="px-6 py-8 text-center text-sm text-slate-500" colspan="7">
+          <div class="flex flex-col items-center gap-4">
+            <div class="relative">
+              <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <p class="font-medium text-slate-700">Buscando leads...</p>
+              <p class="text-xs text-slate-500">Isso pode levar alguns segundos</p>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `
+  }
+
+  showErrorState(errorMessage) {
+    if (!this.hasTableBodyTarget) return
+    
+    const tbody = this.tableBodyTarget
+    tbody.innerHTML = `
+      <tr>
+        <td class="px-6 py-8 text-center text-sm text-slate-500" colspan="7">
+          <div class="flex flex-col items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center">
+              <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <p class="font-medium text-rose-700">Erro ao buscar leads</p>
+              <p class="text-xs text-slate-500">${errorMessage}</p>
+              <button 
+                onclick="if (window.leadsController) { window.leadsController.fetchLeads(); }"
+                class="mt-2 inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2 text-sm font-semibold text-white transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `
   }
 
   renderLeads(leads, period, chargeStatusValues, feedbackStatusValues) {
@@ -347,8 +403,18 @@ export default class extends Controller {
     if (leads.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td class="py-4 pr-4 text-sm text-slate-500" colspan="7">
-            Nenhum lead encontrado para os filtros selecionados.
+          <td class="px-6 py-8 text-center text-sm text-slate-500" colspan="7">
+            <div class="flex flex-col items-center gap-4">
+              <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+                <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              <div class="flex flex-col items-center gap-2">
+                <p class="font-medium text-slate-700">Nenhum lead encontrado</p>
+                <p class="text-xs text-slate-500">Tente ajustar os filtros ou período selecionado</p>
+              </div>
+            </div>
           </td>
         </tr>
       `
