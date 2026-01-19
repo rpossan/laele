@@ -105,13 +105,13 @@ class LocalServicesLeadPresenter
   def charge_status
     return "Charged" if charged?
     case lead.credit_details&.credit_state
-    when "CREDIT_GRANTED"
+    when "CREDITED"
       "Credited"
-    when "UNDER_REVIEW"
+    when "PENDING"
       "In review"
-    when "CREDIT_INELIGIBLE"
-      "Rejected"
     else
+      # For v22 API: UNKNOWN, UNSPECIFIED, or nil means not charged
+      # There's no specific "rejected" state in v22
       "Not charged"
     end
   end

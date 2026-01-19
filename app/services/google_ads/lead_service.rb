@@ -62,7 +62,7 @@ module GoogleAds
           LocalServicesLeadPresenter.new(lead_data).as_json
         end
 
-        # Apply client-side filtering for not_charged if needed
+        # Apply client-side filtering for charge statuses if needed
         leads = apply_client_side_filters(leads, filters)
 
         Rails.logger.info("[GoogleAds::LeadService] Found #{leads.count} leads after filtering")
@@ -233,7 +233,7 @@ module GoogleAds
         LocalServicesLeadPresenter.new(lead_obj).as_json
       end.compact
 
-      # Apply client-side filtering for not_charged if needed
+      # Apply client-side filtering for charge statuses if needed
       leads = apply_client_side_filters(leads, filters)
 
       Rails.logger.info("[GoogleAds::LeadService] Found #{leads.count} leads")
@@ -322,23 +322,52 @@ module GoogleAds
     end
 
     def apply_client_side_filters(leads, filters)
-      return leads unless filters[:charge_status]&.include?("not_charged")
+      return leads unless filters[:charge_status]
       
-      Rails.logger.info("[GoogleAds::LeadService] Applying client-side not_charged filter")
+      charge_statuses = Array(filters[:charge_status])
+      return leads if charge_statuses.empty?
       
-      # Filter leads that are not charged
+      # Check if we need client-side filtering
+      needs_client_filtering = charge_statuses.any? { |status| ["not_charged", "rejected", "credited", "in_review"].include?(status) }
+      return leads unless needs_client_filtering
+      
+      Rails.logger.info("[GoogleAds::LeadService] Applying client-side filtering for: #{charge_statuses.join(', ')}")
+      
+      # Filter leads based on charge status
       filtered_leads = leads.select do |lead|
-        # A lead is "not charged" if:
-        # 1. lead_charged is false/nil AND
-        # 2. credit_state is nil/empty (not credited, not under review, not rejected)
         lead_charged = lead[:lead_charged] || lead["lead_charged"]
         credit_state = lead[:credit_state] || lead["credit_state"]
         
-        is_not_charged = !lead_charged && (credit_state.nil? || credit_state.empty? || credit_state == "UNSPECIFIED")
+        # Determine the actual status of this lead
+        actual_status = if lead_charged
+          "charged"
+        elsif credit_state == "CREDITED"
+          "credited"
+        elsif credit_state == "PENDING"
+          "in_review"
+        elsif credit_state == "UNKNOWN"
+          # In v22, UNKNOWN could be considered as "rejected" in some contexts
+          # But we'll treat it as "not_charged" for now since there's no clear "rejected" state
+          "not_charged"
+        else
+          # nil, empty, or UNSPECIFIED
+          "not_charged"
+        end
         
-        Rails.logger.debug("[GoogleAds::LeadService] Lead #{lead[:id]}: charged=#{lead_charged}, credit_state=#{credit_state}, not_charged=#{is_not_charged}")
+        # Check if this lead matches any of the requested statuses
+        matches = charge_statuses.include?(actual_status)
         
-        is_not_charged
+        # Special handling for "rejected" - since there's no clear rejected state in v22,
+        # we might need to infer it from other conditions
+        if charge_statuses.include?("rejected") && !matches
+          # A lead could be considered "rejected" if it's not charged and has UNKNOWN state
+          # This is an assumption - you may need to adjust based on actual business logic
+          matches = !lead_charged && credit_state == "UNKNOWN"
+        end
+        
+        Rails.logger.debug("[GoogleAds::LeadService] Lead #{lead[:id]}: charged=#{lead_charged}, credit_state=#{credit_state}, actual_status=#{actual_status}, matches=#{matches}")
+        
+        matches
       end
       
       Rails.logger.info("[GoogleAds::LeadService] Filtered from #{leads.size} to #{filtered_leads.size} leads")

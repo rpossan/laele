@@ -87,12 +87,10 @@ module GoogleAds
         case status
         when "charged"
           "local_services_lead.lead_charged = TRUE"
-        when "credited"
-          "local_services_lead.credit_details.credit_state = \"CREDIT_GRANTED\""
-        when "in_review"
-          "local_services_lead.credit_details.credit_state = \"UNDER_REVIEW\""
-        when "rejected"
-          "local_services_lead.credit_details.credit_state = \"CREDIT_INELIGIBLE\""
+        when "credited", "in_review", "rejected"
+          # Move all credit_details.credit_state filtering to client-side
+          # The API seems to have issues with filtering by credit_state
+          nil
         when "not_charged"
           # Skip filtering in GAQL - we'll filter client-side
           nil
@@ -126,12 +124,17 @@ module GoogleAds
 
     def feedback_status_clause(statuses)
       # Handle multiple feedback statuses with OR logic
+
+      if statuses.include?("with_feedback") and statuses.include?("without_feedback")
+        return nil
+      end
+
       conditions = Array(statuses).map do |status|
         case status
         when "with_feedback"
           "local_services_lead.lead_feedback_submitted = TRUE"
         when "without_feedback"
-          "local_services_lead.lead_feedback_submitted = FALSE OR local_services_lead.lead_feedback_submitted IS NULL"
+          "local_services_lead.lead_feedback_submitted = FALSE"
         end
       end.compact
       
