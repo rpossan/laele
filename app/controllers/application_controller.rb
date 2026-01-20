@@ -2,6 +2,9 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
+  # Include Pagy Backend
+  include Pagy::Backend
+
   before_action :set_locale
   before_action :set_active_customer_context
   # Block access for users that are not explicitly allowed (admin controls `allowed` flag in DB)

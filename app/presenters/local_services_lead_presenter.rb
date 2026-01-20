@@ -22,7 +22,7 @@ class LocalServicesLeadPresenter
       lead_status: lead.lead_status,
       creation_date_time: lead.creation_date_time,
       locale: lead.locale,
-      lead_charged: lead.lead_charged || false,
+      lead_charged: lead_charged_value,
       # lead_feedback_submitted: if field doesn't exist, treat as false
       # When true, it appears in JSON. When false, field often doesn't exist
       lead_feedback_submitted: lead_feedback_submitted_value,
@@ -105,13 +105,13 @@ class LocalServicesLeadPresenter
   def charge_status
     return "Charged" if charged?
     case lead.credit_details&.credit_state
-    when "CREDIT_GRANTED"
+    when "CREDITED"
       "Credited"
-    when "UNDER_REVIEW"
+    when "PENDING"
       "In review"
-    when "CREDIT_INELIGIBLE"
-      "Rejected"
     else
+      # For v22 API: UNKNOWN, UNSPECIFIED, or nil means not charged
+      # There's no specific "rejected" state in v22
       "Not charged"
     end
   end
@@ -250,6 +250,25 @@ class LocalServicesLeadPresenter
       end
     end
     nil
+  end
+
+  def lead_charged_value
+    # Debug the actual value of lead_charged
+    raw_value = lead.lead_charged
+    Rails.logger.debug("[LocalServicesLeadPresenter] lead_charged raw value: #{raw_value.inspect} (class: #{raw_value.class})")
+    
+    # Return the actual value, don't default to false
+    case raw_value
+    when true, "true"
+      true
+    when false, "false"
+      false
+    when nil
+      nil
+    else
+      Rails.logger.warn("[LocalServicesLeadPresenter] Unexpected lead_charged value: #{raw_value.inspect}")
+      raw_value
+    end
   end
 
   private

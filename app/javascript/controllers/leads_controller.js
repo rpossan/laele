@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["tableBody", "period", "chargeStatus", "feedbackStatus", "chargeStatusContainer", "feedbackStatusContainer", "lastSync", "bulkActionBar"]
+  static targets = ["tableBody", "period", "chargeStatus", "feedbackStatus", "chargeStatusContainer", "feedbackStatusContainer", "lastSync", "bulkActionBar", "customDateRange", "startDate", "endDate", "paginationContainer", "paginationInfo", "paginationNav"]
 
   connect() {
     console.log("✅ Leads controller connected")
@@ -9,11 +9,19 @@ export default class extends Controller {
     // Make controller accessible globally for inline onclick handlers
     window.leadsController = this
     
+    // Initialize pagination state
+    this.currentPage = 1
+    this.totalPages = 1
+    this.totalCount = 0
+    
     // Setup checkbox toggles for charge status
     this.setupCheckboxToggles('charge-status-filter', 'charge-status-checkbox')
     
     // Setup checkbox toggles for feedback status
     this.setupCheckboxToggles('feedback-status-filter', 'feedback-status-checkbox')
+    
+    // Setup initial period state
+    this.handlePeriodChange()
     
     // Load saved filters and leads after DOM is ready
     // Use requestAnimationFrame to ensure DOM is fully rendered
@@ -36,6 +44,87 @@ export default class extends Controller {
     }
   }
 
+  handlePeriodChange() {
+    if (!this.hasPeriodTarget || !this.hasCustomDateRangeTarget) return
+    
+    const selectedPeriod = this.periodTarget.value
+    const customDateRange = this.customDateRangeTarget
+    
+    if (selectedPeriod === 'custom') {
+      customDateRange.classList.remove('hidden')
+      // Set default dates if not already set
+      if (this.hasStartDateTarget && !this.startDateTarget.value) {
+        // Default to last 30 days
+        const endDate = new Date()
+        const startDate = new Date()
+        startDate.setDate(startDate.getDate() - 30)
+        
+        this.startDateTarget.value = startDate.toISOString().split('T')[0]
+        this.endDateTarget.value = endDate.toISOString().split('T')[0]
+      }
+      
+      // Add date validation listeners
+      if (this.hasStartDateTarget && this.hasEndDateTarget) {
+        this.startDateTarget.addEventListener('change', () => this.validateDateRange())
+        this.endDateTarget.addEventListener('change', () => this.validateDateRange())
+      }
+    } else {
+      customDateRange.classList.add('hidden')
+    }
+  }
+
+  validateDateRange() {
+    if (!this.hasStartDateTarget || !this.hasEndDateTarget) return
+    
+    const startDate = new Date(this.startDateTarget.value)
+    const endDate = new Date(this.endDateTarget.value)
+    const today = new Date()
+    
+    // Remove any existing error styling
+    this.startDateTarget.classList.remove('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+    this.endDateTarget.classList.remove('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+    
+    // Remove existing error message
+    const existingError = this.customDateRangeTarget.querySelector('.date-error')
+    if (existingError) existingError.remove()
+    
+    let errorMessage = null
+    
+    // Validate that start date is not in the future
+    if (startDate > today) {
+      errorMessage = 'A data de início não pode ser no futuro'
+      this.startDateTarget.classList.add('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+    }
+    
+    // Validate that end date is not in the future
+    if (endDate > today) {
+      errorMessage = 'A data de fim não pode ser no futuro'
+      this.endDateTarget.classList.add('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+    }
+    
+    // Validate that start date is before end date
+    if (startDate > endDate) {
+      errorMessage = 'A data de início deve ser anterior à data de fim'
+      this.startDateTarget.classList.add('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+      this.endDateTarget.classList.add('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+    }
+    
+    // Show error message if any
+    if (errorMessage) {
+      const errorDiv = document.createElement('div')
+      errorDiv.className = 'date-error mt-2 text-xs text-rose-600 flex items-center gap-1'
+      errorDiv.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        ${errorMessage}
+      `
+      this.customDateRangeTarget.appendChild(errorDiv)
+    }
+    
+    return !errorMessage
+  }
+
   loadSavedState() {
     try {
       const savedData = localStorage.getItem('leads_filters')
@@ -50,6 +139,13 @@ export default class extends Controller {
         // Restore period
         if (this.hasPeriodTarget && filters.period) {
           this.periodTarget.value = filters.period
+          this.handlePeriodChange() // Show/hide custom date range
+        }
+        
+        // Restore custom dates if period is custom
+        if (filters.period === 'custom' && filters.startDate && filters.endDate) {
+          if (this.hasStartDateTarget) this.startDateTarget.value = filters.startDate
+          if (this.hasEndDateTarget) this.endDateTarget.value = filters.endDate
         }
         
         // Restore charge status checkboxes
@@ -223,8 +319,8 @@ export default class extends Controller {
     this.fetchLeads()
   }
 
-  async fetchLeads() {
-    console.log("📡 Fetching leads...")
+  async fetchLeads(page = 1) {
+    console.log("📡 Fetching leads for page:", page)
     
     // Get the button and disable it
     const button = document.getElementById('fetch-leads-btn')
@@ -236,8 +332,29 @@ export default class extends Controller {
       button.style.cursor = 'not-allowed'
     }
     
+    // Show loading state in table
+    this.showLoadingState()
+    
     try {
       const period = this.hasPeriodTarget ? this.periodTarget.value : "last_30_days"
+      
+      // Get custom dates if period is custom
+      let startDate = null
+      let endDate = null
+      if (period === 'custom') {
+        startDate = this.hasStartDateTarget ? this.startDateTarget.value : null
+        endDate = this.hasEndDateTarget ? this.endDateTarget.value : null
+        
+        // Validate custom dates
+        if (!startDate || !endDate) {
+          throw new Error('Por favor, selecione as datas de início e fim para o período customizado')
+        }
+        
+        // Use the validation method
+        if (!this.validateDateRange()) {
+          throw new Error('Por favor, corrija os erros nas datas antes de continuar')
+        }
+      }
       
       // Collect multiple charge status values
       const chargeStatusCheckboxes = this.element.querySelectorAll('.charge-status-checkbox:checked')
@@ -247,11 +364,14 @@ export default class extends Controller {
       const feedbackStatusCheckboxes = this.element.querySelectorAll('.feedback-status-checkbox:checked')
       const feedbackStatusValues = Array.from(feedbackStatusCheckboxes).map(cb => cb.value)
 
-      console.log("Filters:", { period, chargeStatus: chargeStatusValues, feedbackStatus: feedbackStatusValues })
+      console.log("Filters:", { period, startDate, endDate, chargeStatus: chargeStatusValues, feedbackStatus: feedbackStatusValues, page })
 
       // Update URL with current filters (without reloading)
       const urlParams = new URLSearchParams()
       if (period) urlParams.set('period', period)
+      if (startDate) urlParams.set('start_date', startDate)
+      if (endDate) urlParams.set('end_date', endDate)
+      if (page > 1) urlParams.set('page', page)
       chargeStatusValues.forEach(status => urlParams.append('charge_status[]', status))
       feedbackStatusValues.forEach(status => urlParams.append('feedback_status[]', status))
       
@@ -261,9 +381,12 @@ export default class extends Controller {
 
       const params = new URLSearchParams({
         period: period,
-        page_size: 25
+        page_size: 25,
+        page: page
       })
 
+      if (startDate) params.append("start_date", startDate)
+      if (endDate) params.append("end_date", endDate)
       chargeStatusValues.forEach(status => params.append("charge_status[]", status))
       feedbackStatusValues.forEach(status => params.append("feedback_status[]", status))
 
@@ -288,9 +411,16 @@ export default class extends Controller {
       const data = await response.json()
       console.log("Leads data:", data)
       
+      // Update pagination state
+      this.currentPage = data.current_page || page
+      this.totalPages = data.total_pages || 1
+      this.totalCount = data.total_count || 0
+      
       // Save state to localStorage
       const filters = {
         period: period,
+        startDate: startDate,
+        endDate: endDate,
         chargeStatus: chargeStatusValues,
         feedbackStatus: feedbackStatusValues
       }
@@ -299,8 +429,10 @@ export default class extends Controller {
       this.updateLastSyncDisplay(timestamp)
       
       this.renderLeads(data.leads || [], period, chargeStatusValues, feedbackStatusValues)
+      this.renderPagination()
     } catch (error) {
       console.error("Error fetching leads:", error)
+      this.showErrorState(error.message)
       if (window.showError) {
         window.showError(`Erro ao buscar leads: ${error.message}`)
       } else {
@@ -315,6 +447,64 @@ export default class extends Controller {
         button.style.cursor = 'pointer'
       }
     }
+  }
+
+  showLoadingState() {
+    if (!this.hasTableBodyTarget) return
+    
+    const tbody = this.tableBodyTarget
+    tbody.innerHTML = `
+      <tr>
+        <td class="px-6 py-8 text-center text-sm text-slate-500" colspan="7">
+          <div class="flex flex-col items-center gap-4">
+            <div class="relative">
+              <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <p class="font-medium text-slate-700">Buscando leads...</p>
+              <p class="text-xs text-slate-500">Isso pode levar alguns segundos</p>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `
+    
+    // Hide pagination during loading
+    this.hidePagination()
+  }
+
+  showErrorState(errorMessage) {
+    if (!this.hasTableBodyTarget) return
+    
+    const tbody = this.tableBodyTarget
+    tbody.innerHTML = `
+      <tr>
+        <td class="px-6 py-8 text-center text-sm text-slate-500" colspan="7">
+          <div class="flex flex-col items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center">
+              <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <p class="font-medium text-rose-700">Erro ao buscar leads</p>
+              <p class="text-xs text-slate-500">${errorMessage}</p>
+              <button 
+                onclick="if (window.leadsController) { window.leadsController.fetchLeads(); }"
+                class="mt-2 inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2 text-sm font-semibold text-white transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `
+    
+    // Hide pagination on error
+    this.hidePagination()
   }
 
   renderLeads(leads, period, chargeStatusValues, feedbackStatusValues) {
@@ -347,12 +537,23 @@ export default class extends Controller {
     if (leads.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td class="py-4 pr-4 text-sm text-slate-500" colspan="7">
-            Nenhum lead encontrado para os filtros selecionados.
+          <td class="px-6 py-8 text-center text-sm text-slate-500" colspan="7">
+            <div class="flex flex-col items-center gap-4">
+              <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+                <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              <div class="flex flex-col items-center gap-2">
+                <p class="font-medium text-slate-700">Nenhum lead encontrado</p>
+                <p class="text-xs text-slate-500">Tente ajustar os filtros ou período selecionado</p>
+              </div>
+            </div>
           </td>
         </tr>
       `
       this.updateBulkActionBar()
+      this.hidePagination()
       return
     }
 
@@ -636,6 +837,120 @@ export default class extends Controller {
       ${icon}
       ${statusFormatted}
     </span>`
+  }
+
+  renderPagination() {
+    if (!this.hasPaginationContainerTarget || !this.hasPaginationInfoTarget || !this.hasPaginationNavTarget) {
+      return
+    }
+
+    // Show pagination container
+    this.paginationContainerTarget.classList.remove('hidden')
+
+    // Update pagination info
+    const startItem = this.totalCount === 0 ? 0 : ((this.currentPage - 1) * 25) + 1
+    const endItem = Math.min(this.currentPage * 25, this.totalCount)
+    this.paginationInfoTarget.textContent = `Mostrando ${startItem}-${endItem} de ${this.totalCount} leads`
+
+    // Generate pagination buttons
+    const nav = this.paginationNavTarget
+    nav.innerHTML = ''
+
+    if (this.totalPages <= 1) {
+      return // No pagination needed
+    }
+
+    // Previous button
+    const prevButton = this.createPaginationButton(
+      '‹',
+      this.currentPage - 1,
+      this.currentPage <= 1,
+      'Página anterior'
+    )
+    nav.appendChild(prevButton)
+
+    // Page numbers
+    const startPage = Math.max(1, this.currentPage - 2)
+    const endPage = Math.min(this.totalPages, this.currentPage + 2)
+
+    // First page + ellipsis
+    if (startPage > 1) {
+      nav.appendChild(this.createPaginationButton('1', 1))
+      if (startPage > 2) {
+        nav.appendChild(this.createEllipsis())
+      }
+    }
+
+    // Page numbers around current page
+    for (let i = startPage; i <= endPage; i++) {
+      nav.appendChild(this.createPaginationButton(i.toString(), i, false, `Página ${i}`, i === this.currentPage))
+    }
+
+    // Ellipsis + last page
+    if (endPage < this.totalPages) {
+      if (endPage < this.totalPages - 1) {
+        nav.appendChild(this.createEllipsis())
+      }
+      nav.appendChild(this.createPaginationButton(this.totalPages.toString(), this.totalPages))
+    }
+
+    // Next button
+    const nextButton = this.createPaginationButton(
+      '›',
+      this.currentPage + 1,
+      this.currentPage >= this.totalPages,
+      'Próxima página'
+    )
+    nav.appendChild(nextButton)
+  }
+
+  createPaginationButton(text, page, disabled = false, title = '', active = false) {
+    const button = document.createElement('button')
+    button.textContent = text
+    button.title = title
+    
+    let classes = 'px-3 py-2 text-sm font-medium rounded-lg transition-all'
+    
+    if (disabled) {
+      classes += ' text-slate-400 cursor-not-allowed'
+    } else if (active) {
+      classes += ' bg-indigo-600 text-white shadow-sm'
+    } else {
+      classes += ' text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+    }
+    
+    button.className = classes
+    button.disabled = disabled
+    
+    if (!disabled) {
+      button.addEventListener('click', (e) => {
+        e.preventDefault()
+        this.goToPage(page)
+      })
+    }
+    
+    return button
+  }
+
+  createEllipsis() {
+    const span = document.createElement('span')
+    span.textContent = '…'
+    span.className = 'px-3 py-2 text-sm text-slate-400'
+    return span
+  }
+
+  goToPage(page) {
+    if (page < 1 || page > this.totalPages || page === this.currentPage) {
+      return
+    }
+    
+    this.fetchLeads(page)
+  }
+
+  hidePagination() {
+    if (this.hasPaginationContainerTarget) {
+      this.paginationContainerTarget.classList.add('hidden')
+    }
   }
 }
 

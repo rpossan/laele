@@ -446,7 +446,17 @@
     .then(data => {
       if (data.success || data.message) {
         closeAccountSwitcherModal();
-        window.location.reload();
+      
+        // Check if were on the Leads tab
+        const leadsTab = document.querySelector('[data-tab="leads"]');
+        const isLeadsTabActive = leadsTab && leadsTab.classList.contains('active-tab');
+        
+        if (isLeadsTabActive && window.leadsController) {
+          // Reload the page to update the account selector in leads section
+          window.location.reload();
+        } else {
+          window.location.reload();
+        }
       } else {
         const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_selecting : 'Error selecting account';
         showError(data.error || errorMsg);
