@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["tableBody", "period", "chargeStatus", "feedbackStatus", "chargeStatusContainer", "feedbackStatusContainer", "lastSync", "bulkActionBar"]
+  static targets = ["tableBody", "period", "chargeStatus", "feedbackStatus", "chargeStatusContainer", "feedbackStatusContainer", "lastSync", "bulkActionBar", "customDateRange", "startDate", "endDate"]
 
   connect() {
     console.log("✅ Leads controller connected")
@@ -14,6 +14,9 @@ export default class extends Controller {
     
     // Setup checkbox toggles for feedback status
     this.setupCheckboxToggles('feedback-status-filter', 'feedback-status-checkbox')
+    
+    // Setup initial period state
+    this.handlePeriodChange()
     
     // Load saved filters and leads after DOM is ready
     // Use requestAnimationFrame to ensure DOM is fully rendered
@@ -36,6 +39,87 @@ export default class extends Controller {
     }
   }
 
+  handlePeriodChange() {
+    if (!this.hasPeriodTarget || !this.hasCustomDateRangeTarget) return
+    
+    const selectedPeriod = this.periodTarget.value
+    const customDateRange = this.customDateRangeTarget
+    
+    if (selectedPeriod === 'custom') {
+      customDateRange.classList.remove('hidden')
+      // Set default dates if not already set
+      if (this.hasStartDateTarget && !this.startDateTarget.value) {
+        // Default to last 30 days
+        const endDate = new Date()
+        const startDate = new Date()
+        startDate.setDate(startDate.getDate() - 30)
+        
+        this.startDateTarget.value = startDate.toISOString().split('T')[0]
+        this.endDateTarget.value = endDate.toISOString().split('T')[0]
+      }
+      
+      // Add date validation listeners
+      if (this.hasStartDateTarget && this.hasEndDateTarget) {
+        this.startDateTarget.addEventListener('change', () => this.validateDateRange())
+        this.endDateTarget.addEventListener('change', () => this.validateDateRange())
+      }
+    } else {
+      customDateRange.classList.add('hidden')
+    }
+  }
+
+  validateDateRange() {
+    if (!this.hasStartDateTarget || !this.hasEndDateTarget) return
+    
+    const startDate = new Date(this.startDateTarget.value)
+    const endDate = new Date(this.endDateTarget.value)
+    const today = new Date()
+    
+    // Remove any existing error styling
+    this.startDateTarget.classList.remove('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+    this.endDateTarget.classList.remove('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+    
+    // Remove existing error message
+    const existingError = this.customDateRangeTarget.querySelector('.date-error')
+    if (existingError) existingError.remove()
+    
+    let errorMessage = null
+    
+    // Validate that start date is not in the future
+    if (startDate > today) {
+      errorMessage = 'A data de início não pode ser no futuro'
+      this.startDateTarget.classList.add('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+    }
+    
+    // Validate that end date is not in the future
+    if (endDate > today) {
+      errorMessage = 'A data de fim não pode ser no futuro'
+      this.endDateTarget.classList.add('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+    }
+    
+    // Validate that start date is before end date
+    if (startDate > endDate) {
+      errorMessage = 'A data de início deve ser anterior à data de fim'
+      this.startDateTarget.classList.add('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+      this.endDateTarget.classList.add('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-200')
+    }
+    
+    // Show error message if any
+    if (errorMessage) {
+      const errorDiv = document.createElement('div')
+      errorDiv.className = 'date-error mt-2 text-xs text-rose-600 flex items-center gap-1'
+      errorDiv.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        ${errorMessage}
+      `
+      this.customDateRangeTarget.appendChild(errorDiv)
+    }
+    
+    return !errorMessage
+  }
+
   loadSavedState() {
     try {
       const savedData = localStorage.getItem('leads_filters')
@@ -50,6 +134,13 @@ export default class extends Controller {
         // Restore period
         if (this.hasPeriodTarget && filters.period) {
           this.periodTarget.value = filters.period
+          this.handlePeriodChange() // Show/hide custom date range
+        }
+        
+        // Restore custom dates if period is custom
+        if (filters.period === 'custom' && filters.startDate && filters.endDate) {
+          if (this.hasStartDateTarget) this.startDateTarget.value = filters.startDate
+          if (this.hasEndDateTarget) this.endDateTarget.value = filters.endDate
         }
         
         // Restore charge status checkboxes
@@ -242,6 +333,24 @@ export default class extends Controller {
     try {
       const period = this.hasPeriodTarget ? this.periodTarget.value : "last_30_days"
       
+      // Get custom dates if period is custom
+      let startDate = null
+      let endDate = null
+      if (period === 'custom') {
+        startDate = this.hasStartDateTarget ? this.startDateTarget.value : null
+        endDate = this.hasEndDateTarget ? this.endDateTarget.value : null
+        
+        // Validate custom dates
+        if (!startDate || !endDate) {
+          throw new Error('Por favor, selecione as datas de início e fim para o período customizado')
+        }
+        
+        // Use the validation method
+        if (!this.validateDateRange()) {
+          throw new Error('Por favor, corrija os erros nas datas antes de continuar')
+        }
+      }
+      
       // Collect multiple charge status values
       const chargeStatusCheckboxes = this.element.querySelectorAll('.charge-status-checkbox:checked')
       const chargeStatusValues = Array.from(chargeStatusCheckboxes).map(cb => cb.value)
@@ -250,11 +359,13 @@ export default class extends Controller {
       const feedbackStatusCheckboxes = this.element.querySelectorAll('.feedback-status-checkbox:checked')
       const feedbackStatusValues = Array.from(feedbackStatusCheckboxes).map(cb => cb.value)
 
-      console.log("Filters:", { period, chargeStatus: chargeStatusValues, feedbackStatus: feedbackStatusValues })
+      console.log("Filters:", { period, startDate, endDate, chargeStatus: chargeStatusValues, feedbackStatus: feedbackStatusValues })
 
       // Update URL with current filters (without reloading)
       const urlParams = new URLSearchParams()
       if (period) urlParams.set('period', period)
+      if (startDate) urlParams.set('start_date', startDate)
+      if (endDate) urlParams.set('end_date', endDate)
       chargeStatusValues.forEach(status => urlParams.append('charge_status[]', status))
       feedbackStatusValues.forEach(status => urlParams.append('feedback_status[]', status))
       
@@ -267,6 +378,8 @@ export default class extends Controller {
         page_size: 25
       })
 
+      if (startDate) params.append("start_date", startDate)
+      if (endDate) params.append("end_date", endDate)
       chargeStatusValues.forEach(status => params.append("charge_status[]", status))
       feedbackStatusValues.forEach(status => params.append("feedback_status[]", status))
 
@@ -294,6 +407,8 @@ export default class extends Controller {
       // Save state to localStorage
       const filters = {
         period: period,
+        startDate: startDate,
+        endDate: endDate,
         chargeStatus: chargeStatusValues,
         feedbackStatus: feedbackStatusValues
       }

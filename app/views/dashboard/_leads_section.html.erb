@@ -70,7 +70,7 @@
       <!-- Período (único) -->
       <div>
         <label class="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2"><%= t('leads.period') %></label>
-        <select data-leads-target="period" class="w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm">
+        <select data-leads-target="period" data-action="change->leads#handlePeriodChange" class="w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm">
           <option value="this_week"><%= t('leads.this_week') %></option>
           <option value="last_week"><%= t('leads.last_week') %></option>
           <option value="this_month"><%= t('leads.this_month') %></option>
@@ -79,6 +79,37 @@
           <option value="all_time"><%= t('leads.all_time') %></option>
           <option value="custom"><%= t('leads.custom') %></option>
         </select>
+      </div>
+
+      <!-- Custom Date Range (hidden by default) -->
+      <div id="custom-date-range" data-leads-target="customDateRange" class="hidden">
+        <label class="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-3"><%= t('leads.custom_date_range') %></label>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-2"><%= t('leads.start_date') %></label>
+            <input 
+              type="date" 
+              data-leads-target="startDate"
+              class="w-full rounded-lg border-2 border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm"
+              max="<%= Date.current.strftime('%Y-%m-%d') %>"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-2"><%= t('leads.end_date') %></label>
+            <input 
+              type="date" 
+              data-leads-target="endDate"
+              class="w-full rounded-lg border-2 border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm"
+              max="<%= Date.current.strftime('%Y-%m-%d') %>"
+            >
+          </div>
+        </div>
+        <div class="mt-2 text-xs text-slate-500">
+          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <%= t('leads.custom_date_help') %>
+        </div>
       </div>
 
       <!-- Charge Status (múltiplo) -->
