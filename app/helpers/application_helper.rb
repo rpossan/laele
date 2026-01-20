@@ -1,4 +1,7 @@
 module ApplicationHelper
+  # Include Pagy Frontend
+  include Pagy::Frontend
+
   def navigation_link_to(label, path, **options)
     active = current_page?(path)
     base_classes = "px-4 py-2 rounded-lg text-sm font-semibold transition-all"

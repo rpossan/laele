@@ -56,12 +56,8 @@ module GoogleAds
         clauses << feedback_clause if feedback_clause
       end
 
-      if filters[:start_date].present? && filters[:end_date].present?
-        start_date = format_timestamp(parse_date(filters[:start_date]).beginning_of_day)
-        end_date = format_timestamp(parse_date(filters[:end_date]).end_of_day)
-        clauses << "local_services_lead.creation_date_time >= \"#{start_date}\""
-        clauses << "local_services_lead.creation_date_time <= \"#{end_date}\""
-      end
+      # Note: Date filtering is already handled by resolve_period above
+      # No need to add start_date/end_date conditions again
 
       query = BASE_SELECT.dup
       query << "WHERE #{clauses.compact.join(' AND ')}\n" if clauses.any?

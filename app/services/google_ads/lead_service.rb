@@ -42,34 +42,48 @@ module GoogleAds
           query: query
         )
 
-        # Collect results up to page_size
+        # Collect all results first (Google Ads API doesn't support server-side pagination with search_stream)
         all_results = []
         response_enum.each do |response|
           # Each response contains results array
           if response.respond_to?(:results) && response.results
             response.results.each do |row|
               all_results << row
-              break if all_results.size >= page_size_int
             end
           end
-          break if all_results.size >= page_size_int
         end
         
-        Rails.logger.info("[GoogleAds::LeadService] Response received, processing #{all_results.size} leads...")
-        leads = all_results.map do |row|
+        Rails.logger.info("[GoogleAds::LeadService] Response received, processing #{all_results.size} total leads...")
+        
+        # Convert all results to lead objects
+        all_leads = all_results.map do |row|
           # Each row has a local_services_lead field
           lead_data = row.local_services_lead
           LocalServicesLeadPresenter.new(lead_data).as_json
         end
 
         # Apply client-side filtering for charge statuses if needed
-        leads = apply_client_side_filters(leads, filters)
+        filtered_leads = apply_client_side_filters(all_leads, filters)
 
-        Rails.logger.info("[GoogleAds::LeadService] Found #{leads.count} leads after filtering")
+        Rails.logger.info("[GoogleAds::LeadService] Found #{filtered_leads.count} leads after filtering")
+
+        # Implement manual pagination since Google Ads API doesn't support it directly
+        page = (page_token&.to_i || 1)
+        total_count = filtered_leads.size
+        start_index = (page - 1) * page_size_int
+        end_index = start_index + page_size_int - 1
+        
+        paginated_leads = filtered_leads[start_index..end_index] || []
+        
+        # Calculate next page token
+        next_page = (end_index < total_count - 1) ? (page + 1).to_s : nil
 
         {
-          leads: leads,
-          next_page_token: nil, # search_stream doesn't support pagination tokens
+          leads: paginated_leads,
+          next_page_token: next_page,
+          total_count: total_count,
+          current_page: page,
+          total_pages: (total_count.to_f / page_size_int).ceil,
           gaql: query
         }
       rescue GRPC::Unimplemented => e
@@ -178,13 +192,12 @@ module GoogleAds
       # POST https://googleads.googleapis.com/v22/customers/{customerId}/googleAds:search
       uri = URI("https://googleads.googleapis.com/v22/customers/#{customer_id}/googleAds:search")
       
-      # Note: pageSize is deprecated, don't include it
+      # Don't use pageToken for manual pagination - just get all results
       request_body = {
         query: query
       }
       
-      # Add page_token if provided
-      request_body[:pageToken] = page_token if page_token.present?
+      # Note: We don't use pageToken here since we're doing manual pagination
       
       req = Net::HTTP::Post.new(uri)
       req["Authorization"] = "Bearer #{access_token}"
@@ -207,13 +220,10 @@ module GoogleAds
       
       results = data["results"] || []
       
-      # Limit results to page_size_int
-      limited_results = results.first(page_size_int)
-      
-      Rails.logger.info("[GoogleAds::LeadService] Response received, processing #{limited_results.size} leads...")
+      Rails.logger.info("[GoogleAds::LeadService] Response received, processing #{results.size} total leads...")
 
       # Convert REST API response to lead objects
-      leads = limited_results.map do |result|
+      all_leads = results.map do |result|
         # REST API returns GoogleAdsRow: { "localServicesLead": { ... } }
         lead_data_hash = result["localServicesLead"] || result["local_services_lead"]
         
@@ -234,13 +244,27 @@ module GoogleAds
       end.compact
 
       # Apply client-side filtering for charge statuses if needed
-      leads = apply_client_side_filters(leads, filters)
+      filtered_leads = apply_client_side_filters(all_leads, filters)
 
-      Rails.logger.info("[GoogleAds::LeadService] Found #{leads.count} leads")
+      Rails.logger.info("[GoogleAds::LeadService] Found #{filtered_leads.count} leads after filtering")
+
+      # Implement manual pagination
+      page = (page_token&.to_i || 1)
+      total_count = filtered_leads.size
+      start_index = (page - 1) * page_size_int
+      end_index = start_index + page_size_int - 1
+      
+      paginated_leads = filtered_leads[start_index..end_index] || []
+      
+      # Calculate next page token
+      next_page = (end_index < total_count - 1) ? (page + 1).to_s : nil
 
       {
-        leads: leads,
-        next_page_token: data["nextPageToken"],
+        leads: paginated_leads,
+        next_page_token: next_page,
+        total_count: total_count,
+        current_page: page,
+        total_pages: (total_count.to_f / page_size_int).ceil,
         gaql: query
       }
     end

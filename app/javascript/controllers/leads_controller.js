@@ -1,13 +1,18 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["tableBody", "period", "chargeStatus", "feedbackStatus", "chargeStatusContainer", "feedbackStatusContainer", "lastSync", "bulkActionBar", "customDateRange", "startDate", "endDate"]
+  static targets = ["tableBody", "period", "chargeStatus", "feedbackStatus", "chargeStatusContainer", "feedbackStatusContainer", "lastSync", "bulkActionBar", "customDateRange", "startDate", "endDate", "paginationContainer", "paginationInfo", "paginationNav"]
 
   connect() {
     console.log("✅ Leads controller connected")
     
     // Make controller accessible globally for inline onclick handlers
     window.leadsController = this
+    
+    // Initialize pagination state
+    this.currentPage = 1
+    this.totalPages = 1
+    this.totalCount = 0
     
     // Setup checkbox toggles for charge status
     this.setupCheckboxToggles('charge-status-filter', 'charge-status-checkbox')
@@ -314,8 +319,8 @@ export default class extends Controller {
     this.fetchLeads()
   }
 
-  async fetchLeads() {
-    console.log("📡 Fetching leads...")
+  async fetchLeads(page = 1) {
+    console.log("📡 Fetching leads for page:", page)
     
     // Get the button and disable it
     const button = document.getElementById('fetch-leads-btn')
@@ -359,13 +364,14 @@ export default class extends Controller {
       const feedbackStatusCheckboxes = this.element.querySelectorAll('.feedback-status-checkbox:checked')
       const feedbackStatusValues = Array.from(feedbackStatusCheckboxes).map(cb => cb.value)
 
-      console.log("Filters:", { period, startDate, endDate, chargeStatus: chargeStatusValues, feedbackStatus: feedbackStatusValues })
+      console.log("Filters:", { period, startDate, endDate, chargeStatus: chargeStatusValues, feedbackStatus: feedbackStatusValues, page })
 
       // Update URL with current filters (without reloading)
       const urlParams = new URLSearchParams()
       if (period) urlParams.set('period', period)
       if (startDate) urlParams.set('start_date', startDate)
       if (endDate) urlParams.set('end_date', endDate)
+      if (page > 1) urlParams.set('page', page)
       chargeStatusValues.forEach(status => urlParams.append('charge_status[]', status))
       feedbackStatusValues.forEach(status => urlParams.append('feedback_status[]', status))
       
@@ -375,7 +381,8 @@ export default class extends Controller {
 
       const params = new URLSearchParams({
         period: period,
-        page_size: 25
+        page_size: 25,
+        page: page
       })
 
       if (startDate) params.append("start_date", startDate)
@@ -404,6 +411,11 @@ export default class extends Controller {
       const data = await response.json()
       console.log("Leads data:", data)
       
+      // Update pagination state
+      this.currentPage = data.current_page || page
+      this.totalPages = data.total_pages || 1
+      this.totalCount = data.total_count || 0
+      
       // Save state to localStorage
       const filters = {
         period: period,
@@ -417,6 +429,7 @@ export default class extends Controller {
       this.updateLastSyncDisplay(timestamp)
       
       this.renderLeads(data.leads || [], period, chargeStatusValues, feedbackStatusValues)
+      this.renderPagination()
     } catch (error) {
       console.error("Error fetching leads:", error)
       this.showErrorState(error.message)
@@ -455,6 +468,9 @@ export default class extends Controller {
         </td>
       </tr>
     `
+    
+    // Hide pagination during loading
+    this.hidePagination()
   }
 
   showErrorState(errorMessage) {
@@ -486,6 +502,9 @@ export default class extends Controller {
         </td>
       </tr>
     `
+    
+    // Hide pagination on error
+    this.hidePagination()
   }
 
   renderLeads(leads, period, chargeStatusValues, feedbackStatusValues) {
@@ -534,6 +553,7 @@ export default class extends Controller {
         </tr>
       `
       this.updateBulkActionBar()
+      this.hidePagination()
       return
     }
 
@@ -817,6 +837,120 @@ export default class extends Controller {
       ${icon}
       ${statusFormatted}
     </span>`
+  }
+
+  renderPagination() {
+    if (!this.hasPaginationContainerTarget || !this.hasPaginationInfoTarget || !this.hasPaginationNavTarget) {
+      return
+    }
+
+    // Show pagination container
+    this.paginationContainerTarget.classList.remove('hidden')
+
+    // Update pagination info
+    const startItem = this.totalCount === 0 ? 0 : ((this.currentPage - 1) * 25) + 1
+    const endItem = Math.min(this.currentPage * 25, this.totalCount)
+    this.paginationInfoTarget.textContent = `Mostrando ${startItem}-${endItem} de ${this.totalCount} leads`
+
+    // Generate pagination buttons
+    const nav = this.paginationNavTarget
+    nav.innerHTML = ''
+
+    if (this.totalPages <= 1) {
+      return // No pagination needed
+    }
+
+    // Previous button
+    const prevButton = this.createPaginationButton(
+      '‹',
+      this.currentPage - 1,
+      this.currentPage <= 1,
+      'Página anterior'
+    )
+    nav.appendChild(prevButton)
+
+    // Page numbers
+    const startPage = Math.max(1, this.currentPage - 2)
+    const endPage = Math.min(this.totalPages, this.currentPage + 2)
+
+    // First page + ellipsis
+    if (startPage > 1) {
+      nav.appendChild(this.createPaginationButton('1', 1))
+      if (startPage > 2) {
+        nav.appendChild(this.createEllipsis())
+      }
+    }
+
+    // Page numbers around current page
+    for (let i = startPage; i <= endPage; i++) {
+      nav.appendChild(this.createPaginationButton(i.toString(), i, false, `Página ${i}`, i === this.currentPage))
+    }
+
+    // Ellipsis + last page
+    if (endPage < this.totalPages) {
+      if (endPage < this.totalPages - 1) {
+        nav.appendChild(this.createEllipsis())
+      }
+      nav.appendChild(this.createPaginationButton(this.totalPages.toString(), this.totalPages))
+    }
+
+    // Next button
+    const nextButton = this.createPaginationButton(
+      '›',
+      this.currentPage + 1,
+      this.currentPage >= this.totalPages,
+      'Próxima página'
+    )
+    nav.appendChild(nextButton)
+  }
+
+  createPaginationButton(text, page, disabled = false, title = '', active = false) {
+    const button = document.createElement('button')
+    button.textContent = text
+    button.title = title
+    
+    let classes = 'px-3 py-2 text-sm font-medium rounded-lg transition-all'
+    
+    if (disabled) {
+      classes += ' text-slate-400 cursor-not-allowed'
+    } else if (active) {
+      classes += ' bg-indigo-600 text-white shadow-sm'
+    } else {
+      classes += ' text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+    }
+    
+    button.className = classes
+    button.disabled = disabled
+    
+    if (!disabled) {
+      button.addEventListener('click', (e) => {
+        e.preventDefault()
+        this.goToPage(page)
+      })
+    }
+    
+    return button
+  }
+
+  createEllipsis() {
+    const span = document.createElement('span')
+    span.textContent = '…'
+    span.className = 'px-3 py-2 text-sm text-slate-400'
+    return span
+  }
+
+  goToPage(page) {
+    if (page < 1 || page > this.totalPages || page === this.currentPage) {
+      return
+    }
+    
+    this.fetchLeads(page)
+  }
+
+  hidePagination() {
+    if (this.hasPaginationContainerTarget) {
+      this.paginationContainerTarget.classList.add('hidden')
+    }
   }
 }
 
