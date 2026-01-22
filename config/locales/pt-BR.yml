@@ -132,6 +132,8 @@ pt-BR:
     update_table: "Atualizar tabela"
     type: "Tipo"
     contact: "Contato"
+    name: "Nome"
+    phone: "Telefone"
     status: "Status"
     charge: "Cobrança"
     created_at: "Criado em"

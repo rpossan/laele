@@ -132,6 +132,8 @@ en:
     update_table: "Update Table"
     type: "Type"
     contact: "Contact"
+    name: "Name"
+    phone: "Phone"
     status: "Status"
     charge: "Charge"
     created_at: "Created At"
