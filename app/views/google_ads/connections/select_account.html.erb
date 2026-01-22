@@ -3,7 +3,6 @@
     <h2 class="text-2xl font-semibold text-slate-900 mb-2">Escolha a conta Google Ads</h2>
     <p class="text-sm text-slate-500 mb-6">
       Encontramos <%= pluralize(@customer_ids.count, 'conta acessível', 'contas acessíveis') %>.
-      Esta seleção define o <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">login_customer_id</code> utilizado em todo o produto.
     </p>
 
     <%= form_with url: google_ads_auth_select_path, method: :post, local: true, class: "space-y-4" do |f| %>
@@ -21,11 +20,6 @@
                 <div class="mt-1 text-sm text-slate-500">
                   <%= @customer_names[customer_id] %>
                 </div>
-              <% end %>
-              <% if index == 0 %>
-                <span class="mt-2 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-                  Recomendado
-                </span>
               <% end %>
             </div>
           </label>
