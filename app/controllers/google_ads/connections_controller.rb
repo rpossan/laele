@@ -230,7 +230,7 @@ module GoogleAds
         request: request
       )
 
-      redirect_to dashboard_path, notice: "Conta Google Ads conectada com sucesso!"
+      redirect_to leads_path, notice: "Conta Google Ads conectada com sucesso!"
     end
 
     def destroy
