@@ -90,31 +90,108 @@
 
       <!-- Pagination -->
       <% if defined?(@pagy) && @pagy %>
-        <div class="mt-8 flex items-center justify-between border-t border-slate-200 pt-6">
-          <div class="text-sm text-slate-600">
-            <%= t('dashboard.showing_activities', from: @pagy.from, to: @pagy.to, count: @pagy.count) %>
+        <div class="mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-slate-200 pt-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div class="flex items-center gap-2 text-sm text-slate-600">
+              <div class="flex items-center gap-1.5">
+                <div class="w-2 h-2 bg-indigo-600 rounded-full"></div>
+                <span class="font-medium"><%= t('dashboard.showing_activities', from: @pagy.from, to: @pagy.to, count: @pagy.count) %></span>
+              </div>
+            </div>
+            <% if @pagy.count > 0 %>
+              <div class="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-full">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+                <span><%= @pagy.pages %> páginas</span>
+              </div>
+            <% end %>
           </div>
+          
           <% if @pagy.pages > 1 %>
-            <div class="flex items-center gap-2" id="activity-pagination">
-              <% @pagy.series.each do |item| %>
-                <% case item %>
-                <% when Integer %>
-                  <% if item == @pagy.page %>
-                    <span class="px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white shadow-sm"><%= item %></span>
-                  <% else %>
-                    <a href="#" class="px-3 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100" onclick="loadActivityPage(event); return false;" data-page="<%= item %>"><%= item %></a>
-                  <% end %>
-                <% when String %>
-                  <% case item %>
-                  <% when 'prev' %>
-                    <a href="#" class="px-3 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100" onclick="loadActivityPage(event); return false;" data-page="<%= @pagy.prev %>">‹ Anterior</a>
-                  <% when 'next' %>
-                    <a href="#" class="px-3 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100" onclick="loadActivityPage(event); return false;" data-page="<%= @pagy.next %>">Próxima ›</a>
-                  <% when 'gap' %>
-                    <span class="px-3 py-2 text-sm font-medium text-slate-400">…</span>
-                  <% end %>
+            <nav class="flex items-center" id="activity-pagination" aria-label="Paginação do histórico de atividades">
+              <div class="flex items-center bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <!-- Previous Button -->
+                <% if @pagy.prev %>
+                  <a href="#" 
+                     class="group relative inline-flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 border-r border-slate-200" 
+                     onclick="loadActivityPage(event); return false;" 
+                     data-page="<%= @pagy.prev %>"
+                     aria-label="Página anterior">
+                    <svg class="w-4 h-4 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    <span class="hidden sm:inline">Anterior</span>
+                  </a>
+                <% else %>
+                  <span class="relative inline-flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-400 bg-slate-50 border-r border-slate-200 cursor-not-allowed">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    <span class="hidden sm:inline">Anterior</span>
+                  </span>
                 <% end %>
-              <% end %>
+
+                <!-- Page Numbers -->
+                <div class="flex items-center">
+                  <% @pagy.series.each_with_index do |item, index| %>
+                    <% case item %>
+                    <% when Integer %>
+                      <% if item == @pagy.page %>
+                        <span class="relative inline-flex items-center px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 shadow-sm ring-1 ring-indigo-600 focus:z-10"
+                              aria-current="page"
+                              aria-label="Página <%= item %>, atual">
+                          <%= item %>
+                        </span>
+                      <% else %>
+                        <a href="#" 
+                           class="relative inline-flex items-center px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset transition-all duration-200" 
+                           onclick="loadActivityPage(event); return false;" 
+                           data-page="<%= item %>"
+                           aria-label="Ir para página <%= item %>">
+                          <%= item %>
+                        </a>
+                      <% end %>
+                    <% when String %>
+                      <% if item == 'gap' %>
+                        <span class="relative inline-flex items-center px-4 py-2.5 text-sm font-medium text-slate-400" aria-hidden="true">
+                          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 6a2 2 0 110-4 2 2 0 010 4zM12 14a2 2 0 110-4 2 2 0 010 4zM12 22a2 2 0 110-4 2 2 0 010 4z"/>
+                          </svg>
+                        </span>
+                      <% end %>
+                    <% end %>
+                  <% end %>
+                </div>
+
+                <!-- Next Button -->
+                <% if @pagy.next %>
+                  <a href="#" 
+                     class="group relative inline-flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 border-l border-slate-200" 
+                     onclick="loadActivityPage(event); return false;" 
+                     data-page="<%= @pagy.next %>"
+                     aria-label="Próxima página">
+                    <span class="hidden sm:inline">Próxima</span>
+                    <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </a>
+                <% else %>
+                  <span class="relative inline-flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-400 bg-slate-50 border-l border-slate-200 cursor-not-allowed">
+                    <span class="hidden sm:inline">Próxima</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </span>
+                <% end %>
+              </div>
+            </nav>
+          <% else %>
+            <div class="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 px-3 py-2 rounded-lg">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <span>Página única</span>
             </div>
           <% end %>
         </div>
