@@ -231,6 +231,7 @@ pt-BR:
     activity_log: "Histórico de Atividades"
     activity_log_description: "Registro de todas as ações realizadas na plataforma"
     no_activity: "Nenhuma atividade registrada ainda. Suas ações serão registradas aqui."
+    showing_activities: "Mostrando %{from}-%{to} de %{count} atividades"
 
   # Landing Page
   landing:

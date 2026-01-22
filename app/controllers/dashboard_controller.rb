@@ -6,10 +6,8 @@ class DashboardController < ApplicationController
   def show
     @google_accounts = current_user.google_accounts.includes(:accessible_customers)
     @active_selection = current_user.active_customer_selection
-    @activity_logs = current_user.activity_logs.recent.limit(50)
+    @pagy, @activity_logs = pagy(current_user.activity_logs.recent, items: 5)
     
-    Rails.logger.info("[DashboardController] Active selection: #{@active_selection.inspect}")
-    Rails.logger.info("[DashboardController] Google accounts count: #{@google_accounts.count}")
     
     # Automatically fetch customer names if any are missing
     fetch_missing_customer_names if @google_accounts.any?
@@ -17,7 +15,7 @@ class DashboardController < ApplicationController
 
   # Endpoint para retornar conteúdo da aba Dashboard (activity log)
   def activity_log
-    @activity_logs = current_user.activity_logs.recent.limit(50)
+    @pagy, @activity_logs = pagy(current_user.activity_logs.recent, limit: 5)
     render partial: 'dashboard/activity_log', layout: false
   end
 

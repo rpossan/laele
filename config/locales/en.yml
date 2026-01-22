@@ -231,6 +231,7 @@ en:
     activity_log: "Activity History"
     activity_log_description: "Record of all actions performed on the platform"
     no_activity: "No activity recorded yet. Your actions will be recorded here."
+    showing_activities: "Showing %{from}-%{to} of %{count} activities"
 
   # Landing Page
   landing:

@@ -41,7 +41,7 @@
 # Instance variables
 # See https://ddnexus.github.io/pagy/docs/api/pagy#instance-variables
 Pagy::DEFAULT[:page]   = 1                                  # default
-Pagy::DEFAULT[:items]  = 25                                 # default
+Pagy::DEFAULT[:items]  = 10                                 # changed from 25 to 10
 Pagy::DEFAULT[:outset] = 0                                  # default
 
 # Other Variables
@@ -50,8 +50,8 @@ Pagy::DEFAULT[:size]       = 7                              # default
 Pagy::DEFAULT[:page_param] = :page                          # default
 # The :params can be also set as a lambda e.g ->(params){ params.exclude('useless').merge!('custom' => 'useful') }
 Pagy::DEFAULT[:params]     = {}                             # default
-Pagy::DEFAULT[:fragment]   = '#fragment'                    # example
-Pagy::DEFAULT[:link_extra] = 'data-remote="true"'          # example
+Pagy::DEFAULT[:fragment]   = ''                             # removed fragment
+# Pagy::DEFAULT[:link_extra] = 'data-remote="true"'        # removed global link_extra
 Pagy::DEFAULT[:i18n_key]   = 'pagy.item_name'              # default
 Pagy::DEFAULT[:cycle]      = true                           # example
 
@@ -74,6 +74,3 @@ Pagy::DEFAULT[:overflow] = :last_page                       # default  (other op
 # See https://ddnexus.github.io/pagy/docs/api/frontend#i18n
 # For performance reasons, please set it explicitly only if you are going to use it
 # I18n::Backend::Simple.include I18n::Backend::Pluralization
-
-# When you are done setting your own default freeze it, so it will not get changed accidentally
-Pagy::DEFAULT.freeze

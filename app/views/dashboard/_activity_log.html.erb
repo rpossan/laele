@@ -25,6 +25,12 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                   </div>
+                <% when ActivityLog::ACTIONS[:bulk_lead_feedback] %>
+                  <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5-6l2 2-6 6-2-2"/>
+                    </svg>
+                  </div>
                 <% when ActivityLog::ACTIONS[:account_switched] %>
                   <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
                     <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,6 +53,13 @@
                   <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
                     <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                  </div>
+                <% when ActivityLog::ACTIONS[:geo_targets_updated] %>
+                  <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
                   </div>
                 <% else %>
@@ -74,6 +87,38 @@
           </div>
         <% end %>
       </div>
+
+      <!-- Pagination -->
+      <% if defined?(@pagy) && @pagy %>
+        <div class="mt-8 flex items-center justify-between border-t border-slate-200 pt-6">
+          <div class="text-sm text-slate-600">
+            <%= t('dashboard.showing_activities', from: @pagy.from, to: @pagy.to, count: @pagy.count) %>
+          </div>
+          <% if @pagy.pages > 1 %>
+            <div class="flex items-center gap-2" id="activity-pagination">
+              <% @pagy.series.each do |item| %>
+                <% case item %>
+                <% when Integer %>
+                  <% if item == @pagy.page %>
+                    <span class="px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white shadow-sm"><%= item %></span>
+                  <% else %>
+                    <a href="#" class="px-3 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100" onclick="loadActivityPage(event); return false;" data-page="<%= item %>"><%= item %></a>
+                  <% end %>
+                <% when String %>
+                  <% case item %>
+                  <% when 'prev' %>
+                    <a href="#" class="px-3 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100" onclick="loadActivityPage(event); return false;" data-page="<%= @pagy.prev %>">‹ Anterior</a>
+                  <% when 'next' %>
+                    <a href="#" class="px-3 py-2 text-sm font-medium rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100" onclick="loadActivityPage(event); return false;" data-page="<%= @pagy.next %>">Próxima ›</a>
+                  <% when 'gap' %>
+                    <span class="px-3 py-2 text-sm font-medium text-slate-400">…</span>
+                  <% end %>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
     <% else %>
       <div class="text-center py-12">
         <svg class="mx-auto h-12 w-12 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
