@@ -97,29 +97,48 @@ module GoogleAds
       @google_account = current_user.google_accounts.find(google_account_id)
       @customer_ids = customer_ids
       
-      # Fetch customer names for display
-      # Use each customer_id as its own login_customer_id to avoid permission issues
+      # Fetch customer names for display using batch request for better performance
       @customer_names = {}
       
-      customer_ids.each do |customer_id|
+      if customer_ids.any?
         begin
-          # Create a temporary account using the customer_id itself as login_customer_id
-          # This allows querying the account directly without permission issues
+          # Try batch request first - much faster than individual requests
           temp_account = OpenStruct.new(
             refresh_token: @google_account.refresh_token,
-            login_customer_id: customer_id
+            login_customer_id: @google_account.login_customer_id
           )
           
           temp_service = GoogleAds::CustomerService.new(google_account: temp_account)
-          details = temp_service.fetch_customer_details(customer_id)
+          batch_results = temp_service.fetch_multiple_customer_details(customer_ids)
           
-          if details && details[:descriptive_name].present?
-            @customer_names[customer_id] = details[:descriptive_name]
-            Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Fetched name for #{customer_id}: #{details[:descriptive_name]}")
+          if batch_results.any?
+            @customer_names = batch_results
+            Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Batch fetched #{batch_results.count} customer names")
+          else
+            Rails.logger.warn("[GoogleAds::ConnectionsController] ⚠️ Batch request returned no results, falling back to individual requests")
+            # The service will automatically fall back to individual requests
           end
         rescue => e
-          Rails.logger.warn("[GoogleAds::ConnectionsController] ⚠️ Could not fetch name for #{customer_id}: #{e.message}")
-          # Don't fail - just continue without the name
+          Rails.logger.warn("[GoogleAds::ConnectionsController] ⚠️ Batch request failed: #{e.message}")
+          # Fallback to individual requests (the old way)
+          customer_ids.each do |customer_id|
+            begin
+              temp_account = OpenStruct.new(
+                refresh_token: @google_account.refresh_token,
+                login_customer_id: customer_id
+              )
+              
+              temp_service = GoogleAds::CustomerService.new(google_account: temp_account)
+              details = temp_service.fetch_customer_details(customer_id)
+              
+              if details && details[:descriptive_name].present?
+                @customer_names[customer_id] = details[:descriptive_name]
+                Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Individual fetch for #{customer_id}: #{details[:descriptive_name]}")
+              end
+            rescue => e
+              Rails.logger.warn("[GoogleAds::ConnectionsController] ⚠️ Could not fetch name for #{customer_id}: #{e.message}")
+            end
+          end
         end
       end
     end

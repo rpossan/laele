@@ -29,25 +29,47 @@ module Api
           service = ::GoogleAds::CustomerService.new(google_account: google_account)
           customer_ids = service.list_accessible_customers
           
-          # Update or create AccessibleCustomer records and fetch descriptive_name
-          customer_ids.each_with_index do |customer_id, index|
-            Rails.logger.info("[Api::GoogleAds::CustomersController] Processing customer #{index + 1}/#{customer_ids.count}: #{customer_id}")
-            accessible_customer = google_account.accessible_customers.find_or_create_by(customer_id: customer_id)
+          Rails.logger.info("[Api::GoogleAds::CustomersController] Processing #{customer_ids.count} customers in batch")
+          
+          # Try batch processing first for better performance
+          begin
+            batch_results = service.fetch_multiple_customer_details(customer_ids)
             
-            # Always try to fetch customer details (even if display_name exists, to update it)
-            begin
-              details = service.fetch_customer_details(customer_id)
-              Rails.logger.info("[Api::GoogleAds::CustomersController] Details for #{customer_id}: #{details.inspect}")
+            # Update or create AccessibleCustomer records with batch results
+            customer_ids.each_with_index do |customer_id, index|
+              Rails.logger.info("[Api::GoogleAds::CustomersController] Processing customer #{index + 1}/#{customer_ids.count}: #{customer_id}")
+              accessible_customer = google_account.accessible_customers.find_or_create_by(customer_id: customer_id)
               
-              if details && details[:descriptive_name].present?
-                accessible_customer.update(display_name: details[:descriptive_name])
-                Rails.logger.info("[Api::GoogleAds::CustomersController] ✅ Updated display_name for #{customer_id}: #{details[:descriptive_name]}")
+              if batch_results[customer_id].present?
+                accessible_customer.update(display_name: batch_results[customer_id])
+                Rails.logger.info("[Api::GoogleAds::CustomersController] ✅ Updated display_name for #{customer_id}: #{batch_results[customer_id]}")
               else
-                Rails.logger.warn("[Api::GoogleAds::CustomersController] ⚠️ No descriptive_name found for #{customer_id}. Details: #{details.inspect}")
+                Rails.logger.warn("[Api::GoogleAds::CustomersController] ⚠️ No descriptive_name found for #{customer_id} in batch results")
               end
-            rescue => e
-              Rails.logger.error("[Api::GoogleAds::CustomersController] ❌ Could not fetch details for #{customer_id}: #{e.class} - #{e.message}")
-              Rails.logger.error("[Api::GoogleAds::CustomersController] Backtrace: #{e.backtrace.first(5).join("\n")}")
+            end
+          rescue => batch_error
+            Rails.logger.warn("[Api::GoogleAds::CustomersController] Batch processing failed: #{batch_error.message}")
+            Rails.logger.info("[Api::GoogleAds::CustomersController] Falling back to individual requests")
+            
+            # Fallback to individual processing
+            customer_ids.each_with_index do |customer_id, index|
+              Rails.logger.info("[Api::GoogleAds::CustomersController] Processing customer #{index + 1}/#{customer_ids.count}: #{customer_id}")
+              accessible_customer = google_account.accessible_customers.find_or_create_by(customer_id: customer_id)
+              
+              begin
+                details = service.fetch_customer_details(customer_id)
+                Rails.logger.info("[Api::GoogleAds::CustomersController] Details for #{customer_id}: #{details.inspect}")
+                
+                if details && details[:descriptive_name].present?
+                  accessible_customer.update(display_name: details[:descriptive_name])
+                  Rails.logger.info("[Api::GoogleAds::CustomersController] ✅ Updated display_name for #{customer_id}: #{details[:descriptive_name]}")
+                else
+                  Rails.logger.warn("[Api::GoogleAds::CustomersController] ⚠️ No descriptive_name found for #{customer_id}. Details: #{details.inspect}")
+                end
+              rescue => e
+                Rails.logger.error("[Api::GoogleAds::CustomersController] ❌ Could not fetch details for #{customer_id}: #{e.class} - #{e.message}")
+                Rails.logger.error("[Api::GoogleAds::CustomersController] Backtrace: #{e.backtrace.first(5).join("\n")}")
+              end
             end
           end
 
