@@ -29,6 +29,13 @@ Rails.application.routes.draw do
       get "customers", to: "customers#index"
       post "customers/refresh", to: "customers#refresh"
       post "customers/select", to: "customers#select"
+      post "customers/fetch_names", to: "customers#fetch_names"
+      
+      # Customer names management
+      patch "customers/:customer_id/name", to: "customer_names#update"
+      post "customers/names/bulk_update", to: "customer_names#bulk_update"
+      post "customers/names/smart_fetch", to: "customer_names#smart_fetch"
+      
       get "campaigns", to: "campaigns#index"
       get "campaign_locations", to: "campaigns#locations"
     end

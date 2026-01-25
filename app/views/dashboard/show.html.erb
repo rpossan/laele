@@ -77,48 +77,68 @@
 <div id="account-switcher-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
   <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeAccountSwitcherModal()"></div>
   <div class="fixed inset-0 flex items-center justify-center p-4">
-    <div class="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
-    <div class="px-6 pt-6 pb-4">
-      <div class="mb-4 flex items-center justify-between">
+    <div class="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-6">
+        <div class="flex items-center justify-between">
           <div>
-            <h3 class="text-xl font-bold text-slate-900" id="modal-title"><%= t('account.switch_account') %></h3>
-            <p class="mt-1 text-sm text-slate-600"><%= t('account.switch_description') %></p>
+            <h3 class="text-2xl font-bold text-white" id="modal-title"><%= t('account.switch_account') %></h3>
+            <p class="mt-1 text-indigo-100"><%= t('account.switch_description') %></p>
           </div>
-          <button onclick="closeAccountSwitcherModal()" class="text-slate-400 hover:text-slate-900 transition">
-          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
+          <button onclick="closeAccountSwitcherModal()" class="text-indigo-200 hover:text-white transition">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
       </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-slate-700 mb-2"><%= t('account.managed_account') %></label>
-          <select id="modal-customer-select" class="w-full">
+      <!-- Content -->
+      <div class="px-6 py-6">
+        <div class="mb-6">
+          <label class="block text-sm font-semibold text-slate-700 mb-3"><%= t('account.managed_account') %></label>
+          <select id="modal-customer-select" class="w-full appearance-none rounded-xl border-2 border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all">
             <option value=""><%= t('account.select_account') %></option>
             <% if all_customers.any? %>
               <% all_customers.each do |customer| %>
                 <option value="<%= customer.customer_id %>"
                         data-google-account-id="<%= customer.google_account_id %>"
                         <%= "selected" if @active_selection&.customer_id == customer.customer_id %>>
-                  <%= format_customer_id(customer.customer_id) %> — <%= customer.display_name || t('account.no_name') %>
+                  <%= format_customer_id(customer.customer_id) %> — <%= customer.effective_display_name %>
                 </option>
               <% end %>
             <% end %>
           </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 mt-3">
+            <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
         </div>
 
-        <div class="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
-          <button 
-            type="button" 
-            onclick="closeAccountSwitcherModal()" 
-            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:border-slate-300 transition">
-            <%= t('common.cancel') %>
+        <div class="mb-4 flex justify-end">
+          <button id="modal-fetch-names-btn" class="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 hover:text-amber-900 hover:border-amber-300 hover:bg-amber-100 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+            <span>Busca inteligente</span>
           </button>
-          <button 
-            type="button" 
-            id="modal-save-btn"
-            onclick="saveAccountSelection()" 
-            class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition">
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
+        <button 
+          type="button" 
+          onclick="closeAccountSwitcherModal()" 
+          class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:border-slate-300 transition">
+          <%= t('common.cancel') %>
+        </button>
+        <button 
+          type="button" 
+          id="modal-save-btn"
+          onclick="saveAccountSelection()" 
+          class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition">
             <%= t('common.save') %>
           </button>
         </div>
@@ -370,6 +390,50 @@
               }
             };
           }
+
+          // Initialize fetch names button (now smart fetch)
+          const fetchNamesBtn = document.getElementById('fetch-names-btn');
+          if (fetchNamesBtn) {
+            fetchNamesBtn.onclick = async function() {
+              fetchNamesBtn.disabled = true;
+              const fetchingText = 'Busca inteligente...';
+              fetchNamesBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + fetchingText + '</span>';
+              
+              try {
+                const response = await fetch('/api/google_ads/customers/names/smart_fetch', {
+                  method: 'POST',
+                  headers: {
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    'Accept': 'application/json'
+                  },
+                  credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                  if (data.updated_count > 0) {
+                    showSuccess(`${data.updated_count} nomes foram obtidos da API com sucesso!`);
+                    // Reload page to show updated names
+                    setTimeout(() => window.location.reload(), 1500);
+                  } else {
+                    showInfo(data.message || 'Nenhum nome novo foi encontrado.');
+                  }
+                } else {
+                  showError(data.error || 'Erro na busca inteligente');
+                }
+              } catch (error) {
+                console.error('Error in smart fetch:', error);
+                showError('Erro na busca inteligente');
+              } finally {
+                fetchNamesBtn.disabled = false;
+                fetchNamesBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg><span>Busca inteligente</span>';
+              }
+            };
+          }
+
+          // Initialize names management section
+          initializeNamesManagement();
         }
       } else {
         const errorLoadingText = window.I18n && window.I18n.account ? window.I18n.account.error_loading : 'Error loading content. Please reload the page.';
@@ -397,6 +461,8 @@
         placeholder: selectPlaceholder,
         allowClear: true,
         width: '100%',
+        containerCssClass: 'select2-container--modal',
+        dropdownCssClass: 'select2-dropdown--modal',
         language: {
           noResults: function() {
             return noResultsText;
@@ -406,6 +472,48 @@
           }
         }
       });
+    }
+
+    // Initialize modal fetch names button
+    const modalFetchNamesBtn = document.getElementById('modal-fetch-names-btn');
+    if (modalFetchNamesBtn) {
+      modalFetchNamesBtn.onclick = async function() {
+        modalFetchNamesBtn.disabled = true;
+        const fetchingText = 'Buscando nomes...';
+        modalFetchNamesBtn.innerHTML = '<svg class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + fetchingText + '</span>';
+        
+        try {
+          const response = await fetch('/api/google_ads/customers/names/smart_fetch', {
+            method: 'POST',
+            headers: {
+              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+              'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            if (data.updated_count > 0) {
+              showSuccess(`${data.updated_count} nomes foram obtidos da API com sucesso!`);
+              // Close modal and reload page to show updated names
+              closeAccountSwitcherModal();
+              setTimeout(() => window.location.reload(), 1500);
+            } else {
+              showInfo(data.message || 'Nenhum nome novo foi encontrado.');
+            }
+          } else {
+            showError(data.error || 'Erro ao buscar nomes das contas');
+          }
+        } catch (error) {
+          console.error('Error fetching names:', error);
+          showError('Erro ao buscar nomes das contas');
+        } finally {
+          modalFetchNamesBtn.disabled = false;
+          modalFetchNamesBtn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg><span>Buscar nomes das contas</span>';
+        }
+      };
     }
   }
 
@@ -964,4 +1072,132 @@
       });
     };
   })();
+
+  // Names management functions
+  function initializeNamesManagement() {
+    // Toggle names section
+    const toggleBtn = document.getElementById('toggle-names-section');
+    const namesSection = document.getElementById('names-management');
+    
+    if (toggleBtn && namesSection) {
+      toggleBtn.onclick = function() {
+        const isHidden = namesSection.classList.contains('hidden');
+        const toggleText = toggleBtn.querySelector('.toggle-text');
+        const toggleIcon = toggleBtn.querySelector('.toggle-icon');
+        
+        if (isHidden) {
+          namesSection.classList.remove('hidden');
+          toggleText.textContent = 'Ocultar';
+          toggleIcon.style.transform = 'rotate(180deg)';
+        } else {
+          namesSection.classList.add('hidden');
+          toggleText.textContent = 'Mostrar';
+          toggleIcon.style.transform = 'rotate(0deg)';
+        }
+      };
+    }
+
+    // Initialize inline editing
+    document.querySelectorAll('.editable-name').forEach(element => {
+      element.onclick = function() {
+        startInlineEdit(this);
+      };
+    });
+
+    document.querySelectorAll('.edit-name-btn').forEach(button => {
+      button.onclick = function(e) {
+        e.stopPropagation();
+        const customerId = this.dataset.customerId;
+        const editableElement = document.querySelector(`.editable-name[data-customer-id="${customerId}"]`);
+        if (editableElement) {
+          startInlineEdit(editableElement);
+        }
+      };
+    });
+  }
+
+  function startInlineEdit(element) {
+    const customerId = element.dataset.customerId;
+    const currentName = element.dataset.currentName;
+    const nameDisplay = element.querySelector('.name-display');
+    
+    // Create input element
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentName;
+    input.className = 'w-full px-2 py-1 text-sm border border-indigo-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-200';
+    input.placeholder = 'Digite um nome para esta conta...';
+    
+    // Replace display with input
+    const originalContent = nameDisplay.innerHTML;
+    nameDisplay.innerHTML = '';
+    nameDisplay.appendChild(input);
+    
+    // Focus and select
+    input.focus();
+    input.select();
+    
+    // Save function
+    const saveEdit = async function() {
+      const newName = input.value.trim();
+      
+      try {
+        const response = await fetch(`/api/google_ads/customers/${customerId}/name`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            'Accept': 'application/json'
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({ custom_name: newName })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          // Update the display
+          element.dataset.currentName = newName;
+          nameDisplay.innerHTML = originalContent;
+          nameDisplay.querySelector('span').textContent = data.effective_name;
+          
+          // Update the select dropdown
+          const selectOption = document.querySelector(`#customer-select option[value="${customerId}"]`);
+          if (selectOption) {
+            const formattedId = selectOption.textContent.split(' — ')[0];
+            selectOption.textContent = `${formattedId} — ${data.effective_name}`;
+          }
+          
+          showSuccess('Nome atualizado com sucesso!');
+          
+          // Reload to update badges and other UI elements
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          nameDisplay.innerHTML = originalContent;
+          showError(data.error || 'Erro ao atualizar nome');
+        }
+      } catch (error) {
+        console.error('Error updating name:', error);
+        nameDisplay.innerHTML = originalContent;
+        showError('Erro ao atualizar nome');
+      }
+    };
+    
+    // Cancel function
+    const cancelEdit = function() {
+      nameDisplay.innerHTML = originalContent;
+    };
+    
+    // Event listeners
+    input.onblur = saveEdit;
+    input.onkeydown = function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveEdit();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelEdit();
+      }
+    };
+  }
 </script>

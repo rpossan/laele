@@ -1,1 +1,4 @@
 @import "tailwindcss";
+
+/* Custom Select2 Styles */
+@import "../stylesheets/select2-custom.css";

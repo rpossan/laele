@@ -9,7 +9,8 @@ class GoogleAccount < ApplicationRecord
   # Plain text refresh token for now (encrypt later)
 
   def login_customer_id_formatted
-    login_customer_id.to_s.gsub(/\D/, "").chars.each_slice(3).map(&:join).join("-")
+    digits = login_customer_id.to_s
+    "#{digits[0..2]}-#{digits[3..5]}-#{digits[6..-1]}"
   end
 
   def access_token_cache_key

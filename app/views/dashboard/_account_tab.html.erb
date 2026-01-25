@@ -170,12 +170,20 @@
           O contexto fica fixo até você alterar manualmente. Todos os filtros usam esta conta.
         </p>
       </div>
-      <button id="refresh-customers-btn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        <span>Atualizar lista</span>
-      </button>
+      <div class="flex gap-2">
+        <button id="fetch-names-btn" class="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 hover:text-amber-900 hover:border-amber-300 hover:bg-amber-100 transition-all shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+          </svg>
+          <span>Busca inteligente</span>
+        </button>
+        <button id="refresh-customers-btn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <span>Atualizar lista</span>
+        </button>
+      </div>
     </div>
 
     <% if all_customers.any? %>
@@ -186,7 +194,7 @@
             <option value="<%= customer.customer_id %>"
                     data-google-account-id="<%= customer.google_account_id %>"
                     <%= "selected" if @active_selection&.customer_id == customer.customer_id %>>
-              <%= format_customer_id(customer.customer_id) %> — <%= customer.display_name || "Sem nome" %>
+              <%= format_customer_id(customer.customer_id) %> — <%= customer.effective_display_name %>
             </option>
           <% end %>
         </select>
@@ -194,6 +202,54 @@
           <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
           </svg>
+        </div>
+      </div>
+
+      <!-- Account Names Management Section -->
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-slate-700">Gerenciar Nomes das Contas</h3>
+          <button id="toggle-names-section" class="text-xs text-slate-500 hover:text-slate-700">
+            <span class="toggle-text">Mostrar</span>
+            <svg class="w-4 h-4 inline ml-1 transform transition-transform toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <div id="names-management" class="hidden">
+          <p class="text-xs text-slate-600 mb-4">
+            Clique no nome de uma conta para editá-lo. Nomes personalizados têm prioridade sobre nomes da API.
+          </p>
+          
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+            <% all_customers.each do |customer| %>
+              <div class="flex items-center justify-between bg-white rounded-lg p-3 border border-slate-200">
+                <div class="flex-1">
+                  <div class="text-xs font-mono text-slate-500"><%= format_customer_id(customer.customer_id) %></div>
+                  <div class="editable-name cursor-pointer hover:bg-slate-50 rounded px-2 py-1 -mx-2" 
+                       data-customer-id="<%= customer.customer_id %>"
+                       data-current-name="<%= customer.custom_name || customer.display_name || '' %>">
+                    <span class="name-display text-sm font-medium text-slate-900">
+                      <%= customer.effective_display_name %>
+                    </span>
+                    <% if customer.custom_name.present? %>
+                      <span class="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Personalizado</span>
+                    <% elsif customer.display_name.present? %>
+                      <span class="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">API</span>
+                    <% else %>
+                      <span class="ml-2 text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">Sem nome</span>
+                    <% end %>
+                  </div>
+                </div>
+                <button class="edit-name-btn text-slate-400 hover:text-slate-600 ml-2" data-customer-id="<%= customer.customer_id %>">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+              </div>
+            <% end %>
+          </div>
         </div>
       </div>
 
@@ -208,7 +264,7 @@
                   <%= format_customer_id(selected_customer.customer_id) %>
                 </p>
                 <p class="text-sm text-slate-600">
-                  <%= selected_customer.display_name || "Sem nome" %>
+                  <%= selected_customer.effective_display_name %>
                 </p>
               </div>
               <span class="rounded-full bg-indigo-100 px-4 py-1.5 text-xs font-bold text-indigo-700 uppercase tracking-wide">

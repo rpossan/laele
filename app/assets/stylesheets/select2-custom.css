@@ -1,0 +1,84 @@
+/* ============================================
+   Select2 Custom Styles
+   ============================================ */
+
+/* Modal Select2 Container */
+.select2-container--modal .select2-selection--single {
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 0.75rem !important;
+  padding: 0.5rem 0.75rem !important;
+  height: auto !important;
+  min-height: 2.75rem !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Modal Select2 Focus State */
+.select2-container--modal .select2-selection--single:focus,
+.select2-container--modal.select2-container--focus .select2-selection--single {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1) !important;
+  outline: none !important;
+}
+
+/* Modal Select2 Selected Text */
+.select2-container--modal .select2-selection--single .select2-selection__rendered {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  padding: 0.5rem 0 !important;
+}
+
+/* Modal Select2 Arrow */
+.select2-container--modal .select2-selection--single .select2-selection__arrow {
+  height: 100% !important;
+  right: 0.75rem !important;
+}
+
+.select2-container--modal .select2-selection--single .select2-selection__arrow b {
+  border-color: #94a3b8 transparent transparent transparent !important;
+  margin-top: -0.375rem !important;
+}
+
+/* Modal Select2 Dropdown */
+.select2-dropdown--modal {
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+  margin-top: 0.5rem !important;
+}
+
+/* Modal Select2 Options */
+.select2-dropdown--modal .select2-results__option {
+  padding: 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  color: #475569 !important;
+}
+
+/* Modal Select2 Option Highlighted */
+.select2-dropdown--modal .select2-results__option--highlighted {
+  background-color: #e0e7ff !important;
+  color: #1e293b !important;
+}
+
+/* Modal Select2 Option Selected */
+.select2-dropdown--modal .select2-results__option--selected {
+  background-color: #4f46e5 !important;
+  color: #ffffff !important;
+}
+
+/* Modal Select2 Search Field */
+.select2-container--modal .select2-search__field {
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Modal Select2 Search Field Focus */
+.select2-container--modal .select2-search__field:focus {
+  border-color: #4f46e5 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1) !important;
+}
