@@ -97,33 +97,43 @@ module GoogleAds
       @google_account = current_user.google_accounts.find(google_account_id)
       @customer_ids = customer_ids
       
-      # Fetch customer names for display - each customer needs to be queried with its own ID
+      # Fetch customer names in parallel for performance
       @customer_names = {}
       
       if customer_ids.any?
-        Rails.logger.info("[GoogleAds::ConnectionsController] Fetching names for #{customer_ids.count} customers")
+        Rails.logger.info("[GoogleAds::ConnectionsController] Fetching names for #{customer_ids.count} customers in parallel")
+        
+        threads = []
+        mutex = Mutex.new
         
         customer_ids.each do |customer_id|
-          begin
-            # Each customer can only be queried using its own ID as login_customer_id
-            temp_account = OpenStruct.new(
-              refresh_token: @google_account.refresh_token,
-              login_customer_id: customer_id
-            )
-            
-            temp_service = GoogleAds::CustomerService.new(google_account: temp_account)
-            details = temp_service.fetch_customer_details(customer_id)
-            
-            if details && details[:descriptive_name].present?
-              @customer_names[customer_id] = details[:descriptive_name]
-              Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Fetched name for #{customer_id}: #{details[:descriptive_name]}")
-            else
-              Rails.logger.warn("[GoogleAds::ConnectionsController] No name found for #{customer_id}")
+          threads << Thread.new(customer_id) do |cid|
+            begin
+              # Each customer can only be queried using its own ID as login_customer_id
+              temp_account = OpenStruct.new(
+                refresh_token: @google_account.refresh_token,
+                login_customer_id: cid
+              )
+              
+              temp_service = GoogleAds::CustomerService.new(google_account: temp_account)
+              details = temp_service.fetch_customer_details(cid)
+              
+              if details && details[:descriptive_name].present?
+                mutex.synchronize do
+                  @customer_names[cid] = details[:descriptive_name]
+                  Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Fetched name for #{cid}: #{details[:descriptive_name]}")
+                end
+              else
+                Rails.logger.warn("[GoogleAds::ConnectionsController] No name found for #{cid}")
+              end
+            rescue => e
+              Rails.logger.warn("[GoogleAds::ConnectionsController] Failed to fetch name for #{cid}: #{e.message}")
             end
-          rescue => e
-            Rails.logger.warn("[GoogleAds::ConnectionsController] Failed to fetch name for #{customer_id}: #{e.message}")
           end
         end
+        
+        # Wait for all threads to complete
+        threads.each(&:join)
         
         Rails.logger.info("[GoogleAds::ConnectionsController] Successfully fetched #{@customer_names.count} names out of #{customer_ids.count}")
       end
