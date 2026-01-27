@@ -9,14 +9,24 @@ module Api
       end
 
       def refresh
-        service = ::GoogleAds::CustomerRefreshService.new(current_user)
-        result = service.refresh_customers
-
-        if result[:success]
-          render json: result
-        else
-          render json: { error: result[:error] }, status: :not_found
+        # Get all google accounts for the user
+        google_accounts = current_user.google_accounts
+        
+        if google_accounts.empty?
+          return render json: { error: "Nenhuma conta Google Ads conectada" }, status: :not_found
         end
+        
+        # Enqueue job to fetch names for each account in background
+        google_accounts.each do |google_account|
+          FetchCustomerNamesJob.perform_later(google_account.id)
+        end
+        
+        # Return success immediately (job will run in background)
+        render json: {
+          success: true,
+          message: "Sincronização iniciada. Os nomes serão atualizados em breve.",
+          note: "A busca está acontecendo em background"
+        }
       end
 
       def select

@@ -7,6 +7,7 @@
 
     <%= form_with url: google_ads_auth_select_path, method: :post, local: true, class: "space-y-4" do |f| %>
       <%= hidden_field_tag :google_account_id, @google_account.id %>
+      <%= hidden_field_tag :customer_names, @customer_names.to_json %>
       
       <div class="space-y-3">
         <% @customer_ids.each_with_index do |customer_id, index| %>
