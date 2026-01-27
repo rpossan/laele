@@ -10,6 +10,12 @@ module ApplicationHelper
     link_to label, path, options.merge(class: "#{base_classes} #{state_classes}")
   end
 
+  def clear_leads_cache_script
+    tag.script do
+      "localStorage.removeItem('leads_filters'); localStorage.removeItem('leads_data'); localStorage.removeItem('leads_last_sync');".html_safe
+    end
+  end
+
   def js_translations
     {
       messages: {
