@@ -350,46 +350,6 @@
               }
             });
           }
-          
-          // Reinitialize refresh button
-          const refreshBtn = document.getElementById('refresh-customers-btn');
-          if (refreshBtn) {
-            refreshBtn.onclick = async function() {
-              refreshBtn.disabled = true;
-              const refreshingText = window.I18n && window.I18n.account ? window.I18n.account.refreshing : 'Refreshing...';
-              refreshBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + refreshingText + '</span>';
-              
-              try {
-                const response = await fetch('/api/google_ads/customers/refresh', {
-                  method: 'POST',
-                  headers: {
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                    'Accept': 'application/json'
-                  },
-                  credentials: 'same-origin'
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                  window.location.reload();
-                } else {
-                  const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_refreshing : 'Error refreshing accounts';
-                  showError(data.error || errorMsg);
-                  refreshBtn.disabled = false;
-                  const refreshText = window.I18n && window.I18n.account ? window.I18n.account.refresh_list : 'Refresh List';
-                  refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + refreshText + '</span>';
-                }
-              } catch (error) {
-                console.error('Error refreshing customers:', error);
-                const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_refreshing : 'Error refreshing accounts';
-                showError(errorMsg);
-                refreshBtn.disabled = false;
-                const refreshText = window.I18n && window.I18n.account ? window.I18n.account.refresh_list : 'Refresh List';
-                refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + refreshText + '</span>';
-              }
-            };
-          }
 
           // Initialize fetch names button (now smart fetch)
           const fetchNamesBtn = document.getElementById('fetch-names-btn');
@@ -693,44 +653,6 @@
 
   // Initialize Select2 for main customer select and refresh button
   document.addEventListener('DOMContentLoaded', function() {
-    // Refresh customers button
-    const refreshBtn = document.getElementById('refresh-customers-btn');
-    if (refreshBtn) {
-      refreshBtn.addEventListener('click', async function() {
-        refreshBtn.disabled = true;
-        const refreshingText = window.I18n && window.I18n.account ? window.I18n.account.refreshing : 'Refreshing...';
-        refreshBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + refreshingText + '</span>';
-        
-        try {
-          const response = await fetch('/api/google_ads/customers/refresh', {
-            method: 'POST',
-            headers: {
-              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
-              'Accept': 'application/json'
-            },
-            credentials: 'same-origin'
-          });
-          
-          const data = await response.json();
-          
-          if (response.ok) {
-            window.location.reload();
-          } else {
-            const errorMsg = window.I18n && window.I18n.account ? window.I18n.account.error_refreshing : 'Error refreshing accounts';
-            showError(data.error || errorMsg);
-            refreshBtn.disabled = false;
-            const refreshText = window.I18n && window.I18n.account ? window.I18n.account.refresh_list : 'Refresh List';
-            refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + refreshText + '</span>';
-          }
-        } catch (error) {
-          console.error('Error refreshing customers:', error);
-          showError('Erro ao atualizar contas');
-          refreshBtn.disabled = false;
-          refreshBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Atualizar lista</span>';
-        }
-      });
-    }
-
     // Initialize Select2 for customer select
     if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
       const selectPlaceholder = window.I18n && window.I18n.account ? window.I18n.account.select_account : 'Select an account...';
