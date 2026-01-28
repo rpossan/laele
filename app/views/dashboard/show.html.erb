@@ -1064,6 +1064,7 @@
       const newName = input.value.trim();
       
       try {
+        
         const response = await fetch(`/api/google_ads/customers/${customerId}/name`, {
           method: 'PATCH',
           headers: {
@@ -1075,19 +1076,34 @@
           body: JSON.stringify({ custom_name: newName })
         });
         
-        const data = await response.json();
         
-        if (response.ok) {
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          const text = await response.text();
+          throw new Error('Invalid JSON response: ' + text);
+        }
+        
+        // Check if response is successful (200-299 status or success flag)
+        const isSuccess = response.ok && (data.success !== false);
+        
+        if (isSuccess) {
           // Update the display
           element.dataset.currentName = newName;
           nameDisplay.innerHTML = originalContent;
-          nameDisplay.querySelector('span').textContent = data.effective_name;
+          
+          // Find the first span which contains the name (not the badge)
+          const nameSpan = nameDisplay.querySelector('span:first-of-type');
+          if (nameSpan) {
+            nameSpan.textContent = data.effective_name || data.custom_name || newName;
+          }
           
           // Update the select dropdown
           const selectOption = document.querySelector(`#customer-select option[value="${customerId}"]`);
           if (selectOption) {
             const formattedId = selectOption.textContent.split(' — ')[0];
-            selectOption.textContent = `${formattedId} — ${data.effective_name}`;
+            selectOption.textContent = `${formattedId} — ${data.effective_name || data.custom_name || newName}`;
           }
           
           showSuccess('Nome atualizado com sucesso!');
@@ -1096,7 +1112,8 @@
           setTimeout(() => window.location.reload(), 1000);
         } else {
           nameDisplay.innerHTML = originalContent;
-          showError(data.error || 'Erro ao atualizar nome');
+          const errorMsg = data.error || data.message || 'Erro ao atualizar nome';
+          showError(errorMsg);
         }
       } catch (error) {
         console.error('Error updating name:', error);

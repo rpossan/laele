@@ -5,11 +5,8 @@ module Api
         service = ::GoogleAds::CustomerNameService.new(current_user)
         result = service.update_custom_name(params[:customer_id], params[:custom_name])
 
-        if result[:success]
-          render json: result
-        else
-          render json: { error: result[:error] }, status: :unprocessable_entity
-        end
+        # Always return the full result with success flag
+        render json: result, status: result[:success] ? :ok : :unprocessable_entity
       end
 
       def bulk_update
