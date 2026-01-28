@@ -97,36 +97,52 @@ module GoogleAds
       @google_account = current_user.google_accounts.find(google_account_id)
       @customer_ids = customer_ids
       
-      # Fetch customer names for display
-      # Use each customer_id as its own login_customer_id to avoid permission issues
+      # Fetch customer names in parallel for performance
       @customer_names = {}
       
-      customer_ids.each do |customer_id|
-        begin
-          # Create a temporary account using the customer_id itself as login_customer_id
-          # This allows querying the account directly without permission issues
-          temp_account = OpenStruct.new(
-            refresh_token: @google_account.refresh_token,
-            login_customer_id: customer_id
-          )
-          
-          temp_service = GoogleAds::CustomerService.new(google_account: temp_account)
-          details = temp_service.fetch_customer_details(customer_id)
-          
-          if details && details[:descriptive_name].present?
-            @customer_names[customer_id] = details[:descriptive_name]
-            Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Fetched name for #{customer_id}: #{details[:descriptive_name]}")
+      if customer_ids.any?
+        Rails.logger.info("[GoogleAds::ConnectionsController] Fetching names for #{customer_ids.count} customers in parallel")
+        
+        threads = []
+        mutex = Mutex.new
+        
+        customer_ids.each do |customer_id|
+          threads << Thread.new(customer_id) do |cid|
+            begin
+              # Each customer can only be queried using its own ID as login_customer_id
+              temp_account = OpenStruct.new(
+                refresh_token: @google_account.refresh_token,
+                login_customer_id: cid
+              )
+              
+              temp_service = GoogleAds::CustomerService.new(google_account: temp_account)
+              details = temp_service.fetch_customer_details(cid)
+              
+              if details && details[:descriptive_name].present?
+                mutex.synchronize do
+                  @customer_names[cid] = details[:descriptive_name]
+                  Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Fetched name for #{cid}: #{details[:descriptive_name]}")
+                end
+              else
+                Rails.logger.warn("[GoogleAds::ConnectionsController] No name found for #{cid}")
+              end
+            rescue => e
+              Rails.logger.warn("[GoogleAds::ConnectionsController] Failed to fetch name for #{cid}: #{e.message}")
+            end
           end
-        rescue => e
-          Rails.logger.warn("[GoogleAds::ConnectionsController] ⚠️ Could not fetch name for #{customer_id}: #{e.message}")
-          # Don't fail - just continue without the name
         end
+        
+        # Wait for all threads to complete
+        threads.each(&:join)
+        
+        Rails.logger.info("[GoogleAds::ConnectionsController] Successfully fetched #{@customer_names.count} names out of #{customer_ids.count}")
       end
     end
 
     def save_account_selection
       google_account_id = params[:google_account_id]
       selected_customer_id = params[:login_customer_id]
+      customer_names_json = params[:customer_names]
 
       unless google_account_id.present? && selected_customer_id.present?
         redirect_to dashboard_path, alert: "Parâmetros inválidos."
@@ -134,6 +150,14 @@ module GoogleAds
       end
 
       google_account = current_user.google_accounts.find(google_account_id)
+      
+      # Parse customer names from form
+      customer_names = {}
+      begin
+        customer_names = JSON.parse(customer_names_json) if customer_names_json.present?
+      rescue => e
+        Rails.logger.warn("[GoogleAds::ConnectionsController] Failed to parse customer_names: #{e.message}")
+      end
       
       # Check if account with this login_customer_id already exists
       existing_account = current_user.google_accounts.where(login_customer_id: selected_customer_id).where.not(id: google_account.id).first
@@ -163,41 +187,28 @@ module GoogleAds
       session[:active_customer_id] = selection.customer_id
       session[:active_google_account_id] = selection.google_account_id
 
-      # Try to fetch accessible customers (but don't fetch names for all - too slow and may have permission issues)
+      # Try to fetch accessible customers and save them with names
       begin
         service = GoogleAds::CustomerService.new(google_account: google_account)
-        customer_ids = service.list_accessible_customers
+        fetched_customer_ids = service.list_accessible_customers
         
-        # Create AccessibleCustomer records (without fetching names for all)
-        customer_ids.each do |customer_id|
-          google_account.accessible_customers.find_or_create_by(customer_id: customer_id)
-        end
+        Rails.logger.info("[GoogleAds::ConnectionsController] Creating #{fetched_customer_ids.count} AccessibleCustomer records")
         
-        # Only fetch the name for the SELECTED account
-        begin
-          # Create a temporary google_account with the selected customer_id as login_customer_id
-          # This allows us to query the account directly without permission issues
-          temp_account = OpenStruct.new(
-            refresh_token: google_account.refresh_token,
-            login_customer_id: selected_customer_id
-          )
+        # Create AccessibleCustomer records with names from form
+        fetched_customer_ids.each do |customer_id|
+          display_name = customer_names[customer_id]
+          accessible_customer = google_account.accessible_customers.find_or_create_by(customer_id: customer_id)
           
-          temp_service = GoogleAds::CustomerService.new(google_account: temp_account)
-          details = temp_service.fetch_customer_details(selected_customer_id)
-          
-          if details && details[:descriptive_name].present?
-            accessible_customer = google_account.accessible_customers.find_by(customer_id: selected_customer_id)
-            if accessible_customer
-              accessible_customer.update(display_name: details[:descriptive_name])
-              Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Fetched name for selected account #{selected_customer_id}: #{details[:descriptive_name]}")
-            end
+          if display_name.present? && accessible_customer.display_name.blank?
+            accessible_customer.update(display_name: display_name)
+            Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Saved name for #{customer_id}: #{display_name}")
+          elsif display_name.blank?
+            Rails.logger.warn("[GoogleAds::ConnectionsController] No name available for #{customer_id}")
           end
-        rescue => e
-          Rails.logger.warn("[GoogleAds::ConnectionsController] Could not fetch name for selected account #{selected_customer_id}: #{e.message}")
         end
+        
       rescue => e
         Rails.logger.warn("[GoogleAds::ConnectionsController] Could not fetch accessible customers: #{e.message}")
-        # Don't fail the whole process if we can't fetch accessible customers
       end
 
       # Clear session data
@@ -211,7 +222,7 @@ module GoogleAds
         request: request
       )
 
-      redirect_to dashboard_path, notice: "Conta Google Ads conectada com sucesso!"
+      redirect_to leads_path, notice: "Conta Google Ads conectada com sucesso!"
     end
 
     def destroy

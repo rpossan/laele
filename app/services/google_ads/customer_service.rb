@@ -82,6 +82,42 @@ module GoogleAds
       end
     end
 
+    def fetch_multiple_customer_details(customer_ids)
+      return {} if customer_ids.empty?
+      
+      Rails.logger.info("[GoogleAds::CustomerService] Batch fetching #{customer_ids.count} customers in parallel")
+      
+      results = {}
+      mutex = Mutex.new
+      threads = []
+      
+      # Fetch up to 10 customers in parallel for performance
+      customer_ids.each_slice(10) do |batch|
+        batch.each do |customer_id|
+          threads << Thread.new(customer_id) do |cid|
+            begin
+              details = fetch_customer_details_via_rest(cid, "SELECT customer.id, customer.descriptive_name FROM customer")
+              if details && details[:descriptive_name].present?
+                mutex.synchronize do
+                  results[cid] = details[:descriptive_name]
+                  Rails.logger.info("[GoogleAds::CustomerService] ✅ Fetched name for #{cid}: #{details[:descriptive_name]}")
+                end
+              end
+            rescue => e
+              Rails.logger.warn("[GoogleAds::CustomerService] Failed to fetch details for #{cid}: #{e.message}")
+            end
+          end
+        end
+        
+        # Wait for this batch to complete before starting next
+        threads.each(&:join)
+        threads = []
+      end
+      
+      Rails.logger.info("[GoogleAds::CustomerService] Successfully fetched #{results.count} customer names out of #{customer_ids.count}")
+      results
+    end
+
     def fetch_customer_details(customer_id)
       query = <<~GAQL
         SELECT
@@ -139,9 +175,6 @@ module GoogleAds
     def fetch_customer_details_via_rest(customer_id, query)
       require "signet/oauth_2/client"
 
-      Rails.logger.info("[GoogleAds::CustomerService] fetch_customer_details_via_rest for customer_id: #{customer_id}")
-      Rails.logger.info("[GoogleAds::CustomerService] Using google_account login_customer_id: #{@google_account.login_customer_id}")
-
       # Get access token
       oauth_client = Signet::OAuth2::Client.new(
         client_id: ENV["GOOGLE_ADS_CLIENT_ID"],
@@ -154,13 +187,10 @@ module GoogleAds
       access_token = oauth_client.access_token
 
       unless access_token
-        Rails.logger.error("[GoogleAds::CustomerService] Failed to get access token")
+        Rails.logger.error("[GoogleAds::CustomerService] Failed to get access token for #{customer_id}")
         return nil
       end
 
-      Rails.logger.info("[GoogleAds::CustomerService] Got access token, making request to customer #{customer_id}")
-
-      # Use the customer_id directly in the URL - this is the account we want to query
       uri = URI("https://googleads.googleapis.com/v22/customers/#{customer_id}/googleAds:search")
       
       request_body = { query: query }
@@ -170,60 +200,34 @@ module GoogleAds
       req["developer-token"] = ENV["GOOGLE_ADS_DEVELOPER_TOKEN"]
       req["Content-Type"] = "application/json"
       
-      # Add login-customer-id header if we have one (for MCC accounts)
       if @google_account.login_customer_id.present?
         req["login-customer-id"] = @google_account.login_customer_id
-        Rails.logger.info("[GoogleAds::CustomerService] Added login-customer-id header: #{@google_account.login_customer_id}")
       end
       
       req.body = request_body.to_json
-      
-      Rails.logger.debug("[GoogleAds::CustomerService] Request body: #{request_body.to_json}")
 
       res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
 
       unless res.code.to_i == 200
         error_body = res.body.force_encoding("UTF-8") rescue res.body
-        Rails.logger.error("[GoogleAds::CustomerService] REST API error: #{res.code} - #{error_body[0..200]}")
+        Rails.logger.warn("[GoogleAds::CustomerService] REST API error for #{customer_id}: #{res.code}")
         return nil
       end
 
       data = JSON.parse(res.body)
       results = data["results"] || []
       
-      Rails.logger.info("[GoogleAds::CustomerService] REST API response: #{results.count} results")
-      
       return nil if results.empty?
 
-      # Log the first result structure for debugging
       first_result = results.first
-      Rails.logger.info("[GoogleAds::CustomerService] First result keys: #{first_result.keys.inspect}")
-      Rails.logger.info("[GoogleAds::CustomerService] First result (full): #{first_result.inspect[0..1000]}")
-      
-      # The REST API returns results in GoogleAdsRow format
-      # Each row has a "customer" field
       customer_data = first_result["customer"]
       
-      if customer_data.nil?
-        Rails.logger.warn("[GoogleAds::CustomerService] No customer field in result. Available keys: #{first_result.keys.inspect}")
-        Rails.logger.warn("[GoogleAds::CustomerService] Full result structure: #{JSON.pretty_generate(first_result)[0..1000]}")
-        return nil
-      end
+      return nil if customer_data.nil?
       
-      Rails.logger.info("[GoogleAds::CustomerService] Customer data keys: #{customer_data.keys.inspect}")
-      Rails.logger.info("[GoogleAds::CustomerService] Customer data (full): #{customer_data.inspect[0..1000]}")
-      
-      # Try multiple possible field names
       descriptive_name = customer_data["descriptiveName"] || 
                          customer_data["descriptive_name"] || 
                          customer_data[:descriptive_name] ||
                          customer_data[:descriptiveName]
-      
-      Rails.logger.info("[GoogleAds::CustomerService] Found descriptive_name: #{descriptive_name.inspect}")
-      
-      if descriptive_name.blank?
-        Rails.logger.warn("[GoogleAds::CustomerService] descriptive_name is blank. Customer data: #{JSON.pretty_generate(customer_data)[0..500]}")
-      end
 
       {
         id: customer_data["id"] || customer_id,

@@ -455,7 +455,7 @@ export default class extends Controller {
     const tbody = this.tableBodyTarget
     tbody.innerHTML = `
       <tr>
-        <td class="px-6 py-8 text-center text-sm text-slate-500" colspan="7">
+        <td class="px-4 py-8 text-center text-sm text-slate-500" colspan="9">
           <div class="flex flex-col items-center gap-4">
             <div class="relative">
               <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
@@ -479,7 +479,7 @@ export default class extends Controller {
     const tbody = this.tableBodyTarget
     tbody.innerHTML = `
       <tr>
-        <td class="px-6 py-8 text-center text-sm text-slate-500" colspan="7">
+        <td class="px-4 py-8 text-center text-sm text-slate-500" colspan="9">
           <div class="flex flex-col items-center gap-4">
             <div class="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center">
               <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -537,7 +537,7 @@ export default class extends Controller {
     if (leads.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td class="px-6 py-8 text-center text-sm text-slate-500" colspan="7">
+          <td class="px-4 py-8 text-center text-sm text-slate-500" colspan="9">
             <div class="flex flex-col items-center gap-4">
               <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
                 <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -578,8 +578,8 @@ export default class extends Controller {
 
       // Feedback column: show status and button if no feedback
       const feedbackCell = lead.lead_feedback_submitted 
-        ? `<td class="px-6 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">${leadFeedbackStatusTag}</td>`
-        : `<td class="px-6 py-4 align-top">
+        ? `<td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">${leadFeedbackStatusTag}</td>`
+        : `<td class="px-4 py-4 align-top">
             <div class="flex items-center gap-2">
               ${leadFeedbackStatusTag}
               <button 
@@ -596,7 +596,7 @@ export default class extends Controller {
 
       return `
         <tr class="hover:bg-slate-50 transition-colors" data-lead-id="${lead.id}">
-          <td class="px-6 py-4 align-top">
+          <td class="px-4 py-4 align-top">
             <input 
               type="checkbox" 
               class="lead-checkbox w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" 
@@ -604,23 +604,27 @@ export default class extends Controller {
               onclick="event.stopPropagation(); if (window.leadsController) { window.leadsController.handleCheckboxChange(); }"
             >
           </td>
-          <td class="px-6 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
+          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
+            <div class="text-sm font-mono text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg">${lead.id || "N/A"}</div>
+          </td>
+          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
             <div class="mb-2">${leadTypeTag}</div>
-            <div class="text-xs text-slate-500 font-mono">${lead.id || "N/A"}</div>
           </td>
-          <td class="px-6 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
+          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
             <div class="text-sm font-semibold text-slate-900">${consumerName}</div>
-            <div class="text-xs text-slate-500 mt-1">${phoneNumber}</div>
-            <div class="text-xs text-slate-400 mt-0.5">${consumerEmail}</div>
+            ${consumerEmail !== 'N/A' ? `<div class="text-xs text-slate-400 mt-0.5">${consumerEmail}</div>` : ''}
           </td>
-          <td class="px-6 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
+          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
+            <div class="text-sm text-slate-700">${phoneNumber}</div>
+          </td>
+          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
             ${leadStatusTag}
           </td>
-          <td class="px-6 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
+          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
             ${leadChargeStatusTag}
           </td>
           ${feedbackCell}
-          <td class="px-6 py-4 cursor-pointer align-top text-slate-500" onclick="window.location='${leadUrl}'">
+          <td class="px-4 py-4 cursor-pointer align-top text-slate-500" onclick="window.location='${leadUrl}'">
             <div class="text-sm">${creationDate}</div>
           </td>
         </tr>

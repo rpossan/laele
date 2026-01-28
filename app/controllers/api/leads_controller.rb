@@ -14,7 +14,7 @@ module Api
       
       result = service.list_leads(
         filters: permitted_filters,
-        page_size: params[:page_size] || 25,
+        page_size: params[:page_size] || 20,
         page_token: page.to_s
       )
 
@@ -22,7 +22,7 @@ module Api
       pagy = Pagy.new(
         count: result[:total_count] || 0,
         page: result[:current_page] || 1,
-        items: params[:page_size]&.to_i || 25
+        items: params[:page_size]&.to_i || 20
       )
 
       render json: {

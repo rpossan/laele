@@ -1,0 +1,292 @@
+/* ============================================
+   Select2 Custom Styles - Modern & Smooth
+   ============================================ */
+
+/* ============================================
+   Modal Select2 Styles
+   ============================================ */
+
+/* Modal Select2 Container */
+.select2-container--modal .select2-selection--single {
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 1rem !important;
+  padding: 0.75rem 1rem !important;
+  height: auto !important;
+  min-height: 3.25rem !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  font-size: 0.9375rem !important;
+}
+
+/* Modal Select2 Hover State */
+.select2-container--modal .select2-selection--single:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Modal Select2 Focus State */
+.select2-container--modal .select2-selection--single:focus,
+.select2-container--modal.select2-container--focus .select2-selection--single {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+  outline: none !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%) !important;
+}
+
+/* Modal Select2 Selected Text */
+.select2-container--modal .select2-selection--single .select2-selection__rendered {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+  font-size: 0.9375rem !important;
+  padding: 0.375rem 0 !important;
+  line-height: 1.6 !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* Modal Select2 Placeholder */
+.select2-container--modal .select2-selection--single .select2-selection__placeholder {
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.2px !important;
+}
+
+/* Modal Select2 Arrow */
+.select2-container--modal .select2-selection--single .select2-selection__arrow {
+  height: 100% !important;
+  right: 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: transform 0.3s ease !important;
+}
+
+.select2-container--modal .select2-selection--single .select2-selection__arrow b {
+  border-color: #94a3b8 transparent transparent transparent !important;
+  margin-top: -0.25rem !important;
+  border-width: 6px 5px 0 5px !important;
+  transition: border-color 0.3s ease !important;
+}
+
+.select2-container--modal.select2-container--open .select2-selection--single .select2-selection__arrow b {
+  border-color: #6366f1 transparent transparent transparent !important;
+}
+
+/* Modal Select2 Clear Button */
+.select2-container--modal .select2-selection__clear {
+  color: #cbd5e1 !important;
+  cursor: pointer !important;
+  font-weight: bold !important;
+  margin-right: 0.75rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.select2-container--modal .select2-selection__clear:hover {
+  color: #ef4444 !important;
+  transform: scale(1.1) !important;
+}
+
+/* Modal Select2 Dropdown */
+.select2-dropdown--modal {
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12) !important;
+  margin-top: 0.75rem !important;
+  background-color: #ffffff !important;
+  overflow: hidden !important;
+  animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal Select2 Search Container */
+.select2-dropdown--modal .select2-search {
+  padding: 1rem !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  background-color: #f8fafc !important;
+}
+
+/* Modal Select2 Search Field */
+.select2-container--modal .select2-search__field {
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 0.75rem !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.9375rem !important;
+  background-color: #ffffff !important;
+  transition: all 0.2s ease !important;
+  font-weight: 500 !important;
+}
+
+.select2-container--modal .select2-search__field::placeholder {
+  color: #cbd5e1 !important;
+}
+
+.select2-container--modal .select2-search__field:focus {
+  border-color: #6366f1 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+  background-color: #ffffff !important;
+}
+
+/* Modal Select2 Results Container */
+.select2-dropdown--modal .select2-results {
+  max-height: 350px !important;
+}
+
+/* Modal Select2 Options */
+.select2-dropdown--modal .select2-results__option {
+  padding: 1rem !important;
+  font-size: 0.9375rem !important;
+  color: #475569 !important;
+  transition: all 0.15s ease !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.select2-dropdown--modal .select2-results__option:last-child {
+  border-bottom: none !important;
+}
+
+/* Modal Select2 Option Hover */
+.select2-dropdown--modal .select2-results__option:hover {
+  background-color: #f0f4f8 !important;
+  color: #1e293b !important;
+  padding-left: 1.25rem !important;
+}
+
+/* Modal Select2 Option Highlighted (Keyboard Navigation) */
+.select2-dropdown--modal .select2-results__option--highlighted {
+  background-color: #e0e7ff !important;
+  color: #1e293b !important;
+  padding-left: 1.25rem !important;
+}
+
+/* Modal Select2 Option Selected */
+.select2-dropdown--modal .select2-results__option--selected {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+.select2-dropdown--modal .select2-results__option--selected:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Modal Select2 No Results */
+.select2-dropdown--modal .select2-results__option--disabled {
+  color: #cbd5e1 !important;
+  background-color: #f8fafc !important;
+  padding: 1.5rem !important;
+  text-align: center !important;
+  font-style: italic !important;
+}
+
+/* Modal Select2 Group */
+.select2-dropdown--modal .select2-results__group {
+  padding: 0.875rem 1rem !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  font-size: 0.8125rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+/* Modal Select2 Disabled State */
+.select2-container--modal.select2-container--disabled .select2-selection--single {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+/* Modal Select2 Loading */
+.select2-dropdown--modal .select2-results__option.loading-results {
+  text-align: center !important;
+  padding: 1.5rem !important;
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+}
+
+/* Scrollbar Styling */
+.select2-dropdown--modal .select2-results::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.select2-dropdown--modal .select2-results::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 4px !important;
+}
+
+.select2-dropdown--modal .select2-results::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%) !important;
+  border-radius: 4px !important;
+  transition: background 0.3s ease !important;
+}
+
+.select2-dropdown--modal .select2-results::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%) !important;
+}
+
+/* ============================================
+   Native Select Styles (Account Tab)
+   ============================================ */
+
+/* Native Select Container */
+#customer-select {
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 1rem !important;
+  padding: 0.875rem 1rem !important;
+  height: auto !important;
+  min-height: 3.25rem !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+}
+
+/* Native Select Hover */
+#customer-select:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Native Select Focus */
+#customer-select:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+  outline: none !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%) !important;
+}
+
+/* Native Select Options */
+#customer-select option {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  padding: 0.75rem !important;
+  font-weight: 500 !important;
+}
+
+#customer-select option:checked {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}

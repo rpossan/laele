@@ -69,6 +69,11 @@ pt-BR:
     disconnect_note: "Desconectar a conta principal removerá todas as sub-contas associadas. Você precisará conectar novamente para acessar suas contas Google Ads."
     refresh_list: "Atualizar lista"
     refreshing: "Atualizando..."
+    fetch_names: "Buscar nomes"
+    fetching_names: "Buscando nomes..."
+    names_updated: "nomes de contas foram atualizados com sucesso!"
+    all_names_present: "Todas as contas já possuem nomes definidos."
+    error_fetching_names: "Erro ao buscar nomes das contas"
     select_managed_account: "Escolha uma conta administrada"
     select_description: "O contexto fica fixo até você alterar manualmente. Todos os filtros usam esta conta."
     no_account_selected: "Nenhuma conta selecionada. Clique em \"Trocar\" para selecionar uma conta."
@@ -132,6 +137,8 @@ pt-BR:
     update_table: "Atualizar tabela"
     type: "Tipo"
     contact: "Contato"
+    name: "Nome"
+    phone: "Telefone"
     status: "Status"
     charge: "Cobrança"
     created_at: "Criado em"
@@ -231,6 +238,7 @@ pt-BR:
     activity_log: "Histórico de Atividades"
     activity_log_description: "Registro de todas as ações realizadas na plataforma"
     no_activity: "Nenhuma atividade registrada ainda. Suas ações serão registradas aqui."
+    showing_activities: "Mostrando %{from}-%{to} de %{count} atividades"
 
   # Landing Page
   landing:

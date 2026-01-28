@@ -1,4 +1,32 @@
 <section class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 shadow-lg" data-controller="leads" data-leads-target="container">
+  <script>
+    // Clear leads cache when account changes or disconnects
+    (function() {
+      const currentCustomerId = '<%= @active_selection&.customer_id %>';
+      const savedCustomerId = localStorage.getItem('leads_current_customer_id');
+      
+      // If no active selection (disconnected), clear cache
+      if (!currentCustomerId) {
+        console.log('🔄 No active account, clearing leads cache');
+        localStorage.removeItem('leads_filters');
+        localStorage.removeItem('leads_data');
+        localStorage.removeItem('leads_last_sync');
+        localStorage.removeItem('leads_current_customer_id');
+      }
+      // If account changed, clear cache
+      else if (currentCustomerId !== savedCustomerId) {
+        console.log('🔄 Account changed, clearing leads cache');
+        localStorage.removeItem('leads_filters');
+        localStorage.removeItem('leads_data');
+        localStorage.removeItem('leads_last_sync');
+        localStorage.setItem('leads_current_customer_id', currentCustomerId);
+      } 
+      // Save current customer ID for next check
+      else if (currentCustomerId) {
+        localStorage.setItem('leads_current_customer_id', currentCustomerId);
+      }
+    })();
+  </script>
   <div class="flex items-center gap-3 mb-6">
     <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,29 +241,32 @@
     </div>
   </div>
 
-  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-    <table class="min-w-full text-left text-sm">
-      <thead class="bg-slate-50 border-b-2 border-slate-200">
-        <tr>
-          <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-700">
-            <input 
-              type="checkbox" 
-              id="select-all-leads"
-              class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
-              title="<%= t('leads.select_all') %>"
-            >
-          </th>
-          <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-700"><%= t('leads.type') %></th>
-          <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-700"><%= t('leads.contact') %></th>
-          <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-700"><%= t('leads.status') %></th>
-          <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-700"><%= t('leads.charge') %></th>
-          <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-700"><%= t('leads.feedback') %></th>
-          <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-700"><%= t('leads.created_at') %></th>
-        </tr>
-      </thead>
-      <tbody data-leads-target="tableBody" class="divide-y divide-slate-100 bg-white">
-        <tr>
-          <td class="px-6 py-8 text-center text-sm text-slate-500" colspan="7">
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-slate-50 border-b-2 border-slate-200">
+          <tr>
+            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-12">
+              <input 
+                type="checkbox" 
+                id="select-all-leads"
+                class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                title="<%= t('leads.select_all') %>"
+              >
+            </th>
+            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-32">ID</th>
+            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-24"><%= t('leads.type') %></th>
+            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 min-w-[140px]"><%= t('leads.name') %></th>
+            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-32"><%= t('leads.phone') %></th>
+            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-24"><%= t('leads.status') %></th>
+            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-24"><%= t('leads.charge') %></th>
+            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-32"><%= t('leads.feedback') %></th>
+            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-32"><%= t('leads.created_at') %></th>
+          </tr>
+        </thead>
+        <tbody data-leads-target="tableBody" class="divide-y divide-slate-100 bg-white">
+          <tr>
+            <td class="px-4 py-8 text-center text-sm text-slate-500" colspan="9">
             <% if @active_selection.present? %>
               <div class="flex flex-col items-center gap-2">
                 <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,6 +286,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
 
   <!-- Pagination Container -->
