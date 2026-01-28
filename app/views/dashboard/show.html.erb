@@ -1107,9 +1107,6 @@
           }
           
           showSuccess('Nome atualizado com sucesso!');
-          
-          // Reload to update badges and other UI elements
-          setTimeout(() => window.location.reload(), 1000);
         } else {
           nameDisplay.innerHTML = originalContent;
           const errorMsg = data.error || data.message || 'Erro ao atualizar nome';
