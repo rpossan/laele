@@ -381,8 +381,8 @@ export default class extends Controller {
 
       const params = new URLSearchParams({
         period: period,
-        page_size: 25,
-        page: page
+        page_size: 500,
+        page: '1'
       })
 
       if (startDate) params.append("start_date", startDate)
@@ -429,7 +429,6 @@ export default class extends Controller {
       this.updateLastSyncDisplay(timestamp)
       
       this.renderLeads(data.leads || [], period, chargeStatusValues, feedbackStatusValues)
-      this.renderPagination()
     } catch (error) {
       console.error("Error fetching leads:", error)
       this.showErrorState(error.message)
@@ -449,13 +448,23 @@ export default class extends Controller {
     }
   }
 
+  destroyDataTableIfExists() {
+    if (!this.leadsDataTable) return
+    try {
+      this.leadsDataTable.destroy()
+    } catch (e) {
+      console.warn('DataTables destroy:', e)
+    }
+    this.leadsDataTable = null
+  }
+
   showLoadingState() {
     if (!this.hasTableBodyTarget) return
-    
+    this.destroyDataTableIfExists()
     const tbody = this.tableBodyTarget
     tbody.innerHTML = `
       <tr>
-        <td class="px-4 py-8 text-center text-sm text-slate-500" colspan="9">
+        <td class="px-4 py-8 text-center text-sm text-slate-500" colspan="10">
           <div class="flex flex-col items-center gap-4">
             <div class="relative">
               <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
@@ -475,11 +484,11 @@ export default class extends Controller {
 
   showErrorState(errorMessage) {
     if (!this.hasTableBodyTarget) return
-    
+    this.destroyDataTableIfExists()
     const tbody = this.tableBodyTarget
     tbody.innerHTML = `
       <tr>
-        <td class="px-4 py-8 text-center text-sm text-slate-500" colspan="9">
+        <td class="px-4 py-8 text-center text-sm text-slate-500" colspan="10">
           <div class="flex flex-col items-center gap-4">
             <div class="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center">
               <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -533,6 +542,18 @@ export default class extends Controller {
 
     // Store leads data for checkbox management
     this.leadsData = leads
+
+    const tableEl = this.tableBodyTarget.closest('table')
+    if (typeof jQuery !== 'undefined' && jQuery.fn.DataTable && tableEl && jQuery(tableEl).length) {
+      if (this.leadsDataTable) {
+        try {
+          this.leadsDataTable.destroy()
+        } catch (e) {
+          console.warn('DataTables destroy:', e)
+        }
+        this.leadsDataTable = null
+      }
+    }
 
     if (leads.length === 0) {
       tbody.innerHTML = `
@@ -640,8 +661,35 @@ export default class extends Controller {
         </tr>
       `
     }).join("")
-    
-    // Setup checkbox handlers after rendering
+
+    if (typeof jQuery !== 'undefined' && jQuery.fn.DataTable && tableEl) {
+      try {
+        this.leadsDataTable = jQuery(tableEl).DataTable({
+          paging: true,
+          searching: true,
+          ordering: true,
+          pageLength: 25,
+          lengthMenu: [[10, 25, 50, 100, 250], [10, 25, 50, 100, 250]],
+          order: [[1, 'asc']],
+          columnDefs: [
+            { orderable: false, targets: [0, 8] }
+          ],
+          language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+          },
+          drawCallback: () => {
+            if (window.leadsController) {
+              window.leadsController.setupCheckboxHandlers()
+              window.leadsController.updateBulkActionBar()
+            }
+          }
+        })
+        this.hidePagination()
+      } catch (e) {
+        console.warn('DataTables init:', e)
+      }
+    }
+
     this.setupCheckboxHandlers()
     this.updateBulkActionBar()
   }

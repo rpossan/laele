@@ -9,31 +9,18 @@ module Api
         customer_id: selection.customer_id
       )
 
-      # Get page from params (default to 1)
-      page = params[:page]&.to_i || 1
-
       result = service.list_leads(
         filters: permitted_filters,
-        page_size: params[:page_size] || 20,
-        page_token: page.to_s
+        page_size: nil,
+        page_token: nil
       )
 
       # Override feedback status from local table so "Com feedback" shows immediately (Google API can lag)
       leads = merge_local_feedback_status(result[:leads], selection.google_account_id)
 
-      # Create Pagy object for frontend pagination
-      pagy = Pagy.new(
-        count: result[:total_count] || 0,
-        page: result[:current_page] || 1,
-        items: params[:page_size]&.to_i || 20
-      )
-
       render json: {
         leads: leads,
-        pagy: pagy_metadata(pagy),
         total_count: result[:total_count],
-        current_page: result[:current_page],
-        total_pages: result[:total_pages],
         gaql: result[:gaql]
       }
     end
@@ -57,14 +44,10 @@ module Api
     end
 
     def permitted_filters
-      # Permitir todos os filtros necessários, incluindo arrays
       filters = params.permit(
         :period,
         :start_date,
         :end_date,
-        :page_size,
-        :page_token,
-        :page,
         charge_status: [],
         feedback_status: []
       ).to_h.symbolize_keys

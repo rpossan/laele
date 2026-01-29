@@ -67,23 +67,14 @@ module GoogleAds
 
         Rails.logger.info("[GoogleAds::LeadService] Found #{filtered_leads.count} leads after filtering")
 
-        # Implement manual pagination since Google Ads API doesn't support it directly
-        page = (page_token&.to_i || 1)
+        # Return all leads (no backend pagination; DataTables handles paging/search/sort on the client)
         total_count = filtered_leads.size
-        start_index = (page - 1) * page_size_int
-        end_index = start_index + page_size_int - 1
-
-        paginated_leads = filtered_leads[start_index..end_index] || []
-
-        # Calculate next page token
-        next_page = (end_index < total_count - 1) ? (page + 1).to_s : nil
-
         {
-          leads: paginated_leads,
-          next_page_token: next_page,
+          leads: filtered_leads,
+          next_page_token: nil,
           total_count: total_count,
-          current_page: page,
-          total_pages: (total_count.to_f / page_size_int).ceil,
+          current_page: 1,
+          total_pages: 1,
           gaql: query
         }
       rescue GRPC::Unimplemented => e
@@ -248,23 +239,13 @@ module GoogleAds
 
       Rails.logger.info("[GoogleAds::LeadService] Found #{filtered_leads.count} leads after filtering")
 
-      # Implement manual pagination
-      page = (page_token&.to_i || 1)
       total_count = filtered_leads.size
-      start_index = (page - 1) * page_size_int
-      end_index = start_index + page_size_int - 1
-
-      paginated_leads = filtered_leads[start_index..end_index] || []
-
-      # Calculate next page token
-      next_page = (end_index < total_count - 1) ? (page + 1).to_s : nil
-
       {
-        leads: paginated_leads,
-        next_page_token: next_page,
+        leads: filtered_leads,
+        next_page_token: nil,
         total_count: total_count,
-        current_page: page,
-        total_pages: (total_count.to_f / page_size_int).ceil,
+        current_page: 1,
+        total_pages: 1,
         gaql: query
       }
     end
