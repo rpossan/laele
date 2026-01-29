@@ -221,32 +221,32 @@
     </div>
   </div>
 
-  <!-- Bulk Action Bar -->
-  <div data-leads-target="bulkActionBar" class="hidden mb-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
+  <!-- Bulk Action Bar (floating at bottom when leads selected) -->
+  <div data-leads-target="bulkActionBar" class="hidden fixed bottom-6 left-1/2 z-40 w-full max-w-md -translate-x-1/2 px-4 sm:px-0">
+    <div class="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-4 shadow-lg ring-4 ring-white/80 backdrop-blur-sm">
+      <div class="flex items-center justify-between gap-4">
         <span class="text-sm font-semibold text-indigo-900">
           <span class="selected-count">0</span> <%= t('leads.selected') %>
         </span>
+        <button 
+          type="button"
+          onclick="if (window.leadsController) { window.leadsController.openBulkFeedbackModal(); }"
+          class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <%= t('leads.evaluate_selected') %>
+        </button>
       </div>
-      <button 
-        type="button"
-        onclick="if (window.leadsController) { window.leadsController.openBulkFeedbackModal(); }"
-        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <%= t('leads.evaluate_selected') %>
-      </button>
     </div>
   </div>
 
   <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
     <div class="overflow-x-auto">
-      <table class="min-w-full text-left text-sm">
+      <table class="w-full text-left text-sm table-fixed lg:table-auto">
         <thead class="bg-slate-50 border-b-2 border-slate-200">
           <tr>
-            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-12">
+            <th class="px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 w-10 lg:w-12 shrink-0">
               <input 
                 type="checkbox" 
                 id="select-all-leads"
@@ -254,19 +254,20 @@
                 title="<%= t('leads.select_all') %>"
               >
             </th>
-            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-32">ID</th>
-            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-24"><%= t('leads.type') %></th>
-            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 min-w-[140px]"><%= t('leads.name') %></th>
-            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-32"><%= t('leads.phone') %></th>
-            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-24"><%= t('leads.status') %></th>
-            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-24"><%= t('leads.charge') %></th>
-            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-32"><%= t('leads.feedback') %></th>
-            <th class="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-700 w-32"><%= t('leads.created_at') %></th>
+            <th class="px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 w-20 lg:w-28 shrink-0"><%= t('leads.id_short') %></th>
+            <th class="px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 hidden md:table-cell w-20 lg:w-24"><%= t('leads.type') %></th>
+            <th class="px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 min-w-0 lg:min-w-[120px]"><%= t('leads.name') %></th>
+            <th class="px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 hidden lg:table-cell w-28"><%= t('leads.phone') %></th>
+            <th class="px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 w-24 shrink-0"><%= t('leads.status') %></th>
+            <th class="px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 w-24 shrink-0"><%= t('leads.charge') %></th>
+            <th class="px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 w-28 lg:w-36 shrink-0"><%= t('leads.feedback') %></th>
+            <th class="px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 w-24 shrink-0"><%= t('lead_feedback_submission.view_feedback') %></th>
+            <th class="px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 w-24 lg:w-28 shrink-0"><%= t('leads.created_at') %></th>
           </tr>
         </thead>
         <tbody data-leads-target="tableBody" class="divide-y divide-slate-100 bg-white">
           <tr>
-            <td class="px-4 py-8 text-center text-sm text-slate-500" colspan="9">
+            <td class="px-3 py-8 text-center text-sm text-slate-500" colspan="10">
             <% if @active_selection.present? %>
               <div class="flex flex-col items-center gap-2">
                 <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -317,6 +318,10 @@
         </button>
       </div>
 
+      <div id="feedback-modal-error" class="hidden mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3" role="alert">
+        <p id="feedback-modal-error-text" class="text-sm text-amber-900"></p>
+      </div>
+
       <form id="feedback-form" onsubmit="handleFeedbackSubmit(event)">
         <input type="hidden" id="feedback-lead-id" name="lead_id">
         <input type="hidden" id="feedback-lead-ids" name="lead_ids">
@@ -338,6 +343,10 @@
               <span class="text-slate-900"><%= t('leads.satisfied') %></span>
             </label>
             <label class="flex items-center rounded-lg border border-slate-200 p-3 hover:bg-slate-50 cursor-pointer transition">
+              <input type="radio" name="survey_answer" value="NEUTRAL" class="mr-3 text-slate-500 focus:ring-slate-500" required>
+              <span class="text-slate-900"><%= t('leads.neutral') %></span>
+            </label>
+            <label class="flex items-center rounded-lg border border-slate-200 p-3 hover:bg-slate-50 cursor-pointer transition">
               <input type="radio" name="survey_answer" value="DISSATISFIED" class="mr-3 text-amber-500 focus:ring-amber-500" required>
               <span class="text-slate-900"><%= t('leads.dissatisfied') %></span>
             </label>
@@ -353,16 +362,18 @@
           <select id="feedback-reason" name="reason" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200">
             <option value=""><%= t('leads.select_reason_optional') %></option>
           </select>
+          <p id="reason-required-hint" class="mt-1 text-xs text-slate-500 hidden"><%= t('leads.reason_required_for_feedback') %></p>
         </div>
 
         <div id="other-reason-section" class="mb-6 hidden">
-          <label class="mb-2 block text-sm font-medium text-slate-700"><%= t('leads.additional_comment') %></label>
+          <label class="mb-2 block text-sm font-medium text-slate-700"><%= t('leads.additional_comment') %> <span class="text-rose-500">*</span></label>
           <textarea 
             id="other-reason-comment" 
             name="other_reason_comment" 
             rows="3" 
             class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
             placeholder="<%= t('leads.describe_reason') %>"></textarea>
+          <p id="other-reason-required-hint" class="mt-1 text-xs text-rose-600 hidden"><%= t('leads.other_reason_comment_required') %></p>
         </div>
 
         <div class="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
@@ -380,6 +391,94 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Stored Feedback Modal (view submitted feedback) -->
+<div id="stored-feedback-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="stored-feedback-modal-title" role="dialog" aria-modal="true" style="display: none;">
+  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="if (window.closeStoredFeedbackModal) window.closeStoredFeedbackModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1;"></div>
+  <div id="stored-feedback-modal-panel" class="relative z-10 mx-4 my-8 max-h-[calc(100vh-4rem)] w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/50" style="position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; margin: 0 !important;">
+    <!-- Header com gradiente e ícone -->
+    <div class="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 px-6 pt-6 pb-5 text-white">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20 shadow-inner">
+            <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white" id="stored-feedback-modal-title"><%= t('lead_feedback_submission.stored_feedback_title') %></h3>
+            <p class="mt-0.5 text-sm text-emerald-100"><%= t('lead_feedback_submission.stored_feedback_subtitle') %></p>
+          </div>
+        </div>
+        <button type="button" onclick="if (window.closeStoredFeedbackModal) window.closeStoredFeedbackModal()" class="rounded-lg p-1.5 text-white/80 hover:bg-white/20 hover:text-white transition">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="overflow-y-auto px-6 pb-6 pt-4" style="max-height: min(60vh, 400px);">
+      <div id="stored-feedback-loading" class="hidden flex flex-col items-center justify-center py-12 text-slate-500">
+        <svg class="mb-3 h-10 w-10 animate-spin text-emerald-500" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-sm"><%= t('common.loading') %></span>
+      </div>
+      <div id="stored-feedback-content" class="hidden space-y-3">
+        <!-- Avaliação -->
+        <div class="flex gap-3 rounded-xl border border-slate-100 bg-gradient-to-br from-emerald-50 to-white p-4">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700/80"><%= t('leads.how_do_you_rate') %></p>
+            <p id="stored-feedback-survey" class="mt-1 text-base font-semibold text-slate-900"></p>
+          </div>
+        </div>
+        <!-- Motivo -->
+        <div id="stored-feedback-reason-wrap" class="hidden flex gap-3 rounded-xl border border-slate-100 bg-gradient-to-br from-indigo-50/80 to-white p-4">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700/80"><%= t('leads.reason') %></p>
+            <p id="stored-feedback-reason" class="mt-1 text-base font-medium text-slate-900"></p>
+          </div>
+        </div>
+        <!-- Comentário -->
+        <div id="stored-feedback-other-wrap" class="hidden flex gap-3 rounded-xl border border-slate-100 bg-gradient-to-br from-amber-50/80 to-white p-4">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700/80"><%= t('lead_feedback_submission.other_comment') %></p>
+            <p id="stored-feedback-other" class="mt-1 text-sm text-slate-700 leading-relaxed"></p>
+          </div>
+        </div>
+        <!-- Decisão de crédito -->
+        <div class="flex gap-3 rounded-xl border border-slate-100 bg-gradient-to-br from-slate-50 to-white p-4">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-600">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500"><%= t('lead_feedback_submission.credit_decision_label') %></p>
+            <p id="stored-feedback-decision" class="mt-1 text-base font-semibold text-slate-900"></p>
+          </div>
+        </div>
+        <!-- Data de envio -->
+        <div class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500"><%= t('lead_feedback_submission.submitted_at') %></p>
+            <p id="stored-feedback-submitted-at" class="mt-1 text-sm font-medium text-slate-600"></p>
+          </div>
+        </div>
+      </div>
+      <div id="stored-feedback-error" class="hidden rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-sm text-rose-700"></div>
     </div>
   </div>
 </div>

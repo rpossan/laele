@@ -10,7 +10,8 @@ module GoogleAds
         success: true,
         processed_count: 0,
         failed_count: 0,
-        errors: []
+        errors: [],
+        lead_results: [] # { lead_id:, credit_issuance_decision: } for each success (for local storage)
       }
 
       lead_ids.each do |lead_id|
@@ -21,13 +22,17 @@ module GoogleAds
             lead_id: lead_id
           )
 
-          service.provide_feedback(
+          single_result = service.provide_feedback(
             survey_answer: survey_answer,
             reason: reason,
             other_reason_comment: other_reason_comment
           )
 
           results[:processed_count] += 1
+          results[:lead_results] << {
+            lead_id: lead_id.to_s,
+            credit_issuance_decision: single_result[:credit_issuance_decision]
+          }
         rescue => e
           results[:failed_count] += 1
           results[:errors] << {
@@ -46,4 +51,3 @@ module GoogleAds
     attr_reader :google_account, :customer_id
   end
 end
-

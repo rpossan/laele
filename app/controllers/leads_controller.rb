@@ -13,12 +13,12 @@ class LeadsController < ApplicationController
 
   def show
     @lead_id = params[:id]
-    
+
     # Preserve query parameters for "Voltar" button
     # Convert to hash and remove nil/empty values
     back_params = params.slice(:period, :charge_status, :feedback_status, :page_size, :page_token).permit!
     @back_params = back_params.to_h.reject { |k, v| v.blank? }.presence
-    
+
     unless @active_selection
       redirect_to dashboard_path, alert: "Selecione uma conta antes de visualizar os detalhes do lead."
       return
@@ -30,14 +30,18 @@ class LeadsController < ApplicationController
     )
 
     lead_data = service.find_lead(@lead_id)
-    
+
     unless lead_data
       redirect_to dashboard_path(@back_params), alert: "Lead não encontrado."
       return
     end
 
     @lead = LocalServicesLeadPresenter.new(lead_data)
-    
+    @stored_feedback = LeadFeedbackSubmission.find_by(
+      google_account_id: @active_selection.google_account_id,
+      lead_id: @lead_id.to_s
+    )
+
     # Debug: Log the raw lead data structure
     Rails.logger.debug("[LeadsController] Lead data class: #{lead_data.class}")
     Rails.logger.debug("[LeadsController] Lead data inspect: #{lead_data.inspect[0..500]}")
@@ -78,7 +82,7 @@ class LeadsController < ApplicationController
 
   def format_category_id(category_id)
     return "N/A" unless category_id.present?
-    
+
     # Remove prefix and format
     # xcat:service_area_business_landscaper -> Landscaper
     if category_id.start_with?("xcat:service_area_business_")
@@ -90,10 +94,9 @@ class LeadsController < ApplicationController
 
   def format_service_id(service_id)
     return "N/A" unless service_id.present?
-    
+
     # Replace underscores with spaces and capitalize each word
     # paving_driveway_walkway -> Paving Driveway Walkway
     service_id.split("_").map(&:capitalize).join(" ")
   end
 end
-

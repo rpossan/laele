@@ -30,12 +30,12 @@ Rails.application.routes.draw do
       post "customers/refresh", to: "customers#refresh"
       post "customers/select", to: "customers#select"
       post "customers/fetch_names", to: "customers#fetch_names"
-      
+
       # Customer names management
       patch "customers/:customer_id/name", to: "customer_names#update"
       post "customers/names/bulk_update", to: "customer_names#bulk_update"
       post "customers/names/smart_fetch", to: "customer_names#smart_fetch"
-      
+
       get "campaigns", to: "campaigns#index"
       get "campaign_locations", to: "campaigns#locations"
     end
@@ -43,6 +43,7 @@ Rails.application.routes.draw do
     resources :leads, only: [ :index ] do
       resources :conversations, only: [ :index ], module: :leads
       member do
+        get :stored_feedback, to: "leads/stored_feedback#show"
         post :feedback, to: "leads/lead_feedback#create"
       end
       collection do

@@ -136,6 +136,7 @@ pt-BR:
     last_sync: "Última sincronização:"
     update_table: "Atualizar tabela"
     type: "Tipo"
+    id_short: "ID"
     contact: "Contato"
     name: "Nome"
     phone: "Telefone"
@@ -172,6 +173,9 @@ pt-BR:
     dissatisfaction_reason: "Motivo da insatisfação"
     satisfaction_reason: "Motivo da satisfação"
     select_reason_optional: "Selecione um motivo (opcional)"
+    select_reason_required: "Selecione um motivo (obrigatório)"
+    reason_required_for_feedback: "Motivo é obrigatório para esta avaliação."
+    other_reason_comment_required: "Comentário é obrigatório quando o motivo é \"Outro\"."
     additional_comment: "Comentário adicional"
     describe_reason: "Descreva o motivo (opcional)"
     send_feedback: "Enviar Feedback"
@@ -199,6 +203,55 @@ pt-BR:
     likely_booked_customer: "Provavelmente cliente agendado"
     high_value_service: "Serviço de alto valor"
     other_satisfied_reason: "Outro motivo"
+    neutral: "Nem satisfeito nem insatisfeito"
+    geo_mismatch: "Fora da área de atendimento"
+    not_ready_to_book: "Cliente não pronto para agendar"
+    solicitation: "Solicitação (venda/emprego etc.)"
+    other_dissatisfied_reason: "Outro motivo"
+    other_reason_comment_required: "Comentário obrigatório quando motivo é \"Outro\""
+    credit_decision_success: "Crédito bônus emitido"
+    credit_decision_fail_not_eligible: "Lead não elegível para crédito bônus"
+    credit_decision_fail_over_threshold: "Limite de crédito bônus atingido"
+    credit_decision_success_not_reached: "Crédito bônus emitido"
+    credit_decision_success_reached: "Crédito bônus emitido (limite atingido)"
+    lead_already_evaluated_title: "Lead já avaliado"
+
+  # Lead Feedback (ProvideLeadFeedback API)
+  lead_feedback:
+    submitted: "Feedback enviado com sucesso"
+    errors:
+      no_account_selected: "Selecione uma conta antes de enviar feedback"
+      lead_id_required: "ID do lead é obrigatório"
+      send_failed: "Erro ao enviar feedback: %{error}"
+      invalid_survey_answer: "survey_answer deve ser um de: %{answers}"
+      satisfied_reason_required: "Motivo da satisfação é obrigatório para Satisfeito / Muito Satisfeito"
+      dissatisfied_reason_required: "Motivo da insatisfação é obrigatório para Insatisfeito / Muito Insatisfeito"
+      invalid_satisfied_reason: "Motivo da satisfação inválido. Deve ser um de: %{reasons}"
+      invalid_dissatisfied_reason: "Motivo da insatisfação inválido. Deve ser um de: %{reasons}"
+      other_satisfied_comment_required: "Comentário é obrigatório quando o motivo é \"Outro motivo\" (satisfeito)"
+      other_dissatisfied_comment_required: "Comentário é obrigatório quando o motivo é \"Outro motivo\" (insatisfeito)"
+      invalid_request_body: "Corpo da requisição inválido"
+      survey_answer_required: "survey_answer é obrigatório"
+      survey_satisfied_required: "surveySatisfied é obrigatório para respostas Satisfeito / Muito Satisfeito"
+      survey_satisfied_reason_required: "surveySatisfiedReason é obrigatório quando surveySatisfied está presente"
+      survey_dissatisfied_required: "surveyDissatisfied é obrigatório para respostas Insatisfeito / Muito Insatisfeito"
+      survey_dissatisfied_reason_required: "surveyDissatisfiedReason é obrigatório quando surveyDissatisfied está presente"
+      failed_access_token: "Falha ao obter token de acesso"
+      already_submitted: "O feedback para este lead já foi enviado. Não é possível enviar novamente."
+
+  # Stored lead feedback (local cache for credit_issuance_decision display)
+  lead_feedback_submission:
+    credit_issuance_decision:
+      success_not_reached_threshold: "Crédito bônus emitido"
+      success_reached_threshold: "Crédito bônus emitido (limite atingido)"
+      fail_over_threshold: "Limite de crédito bônus atingido"
+      fail_not_eligible: "Lead não elegível para crédito bônus"
+    view_feedback: "Ver feedback"
+    stored_feedback_title: "Feedback enviado"
+    stored_feedback_subtitle: "Resumo do que foi enviado para este lead"
+    submitted_at: "Enviado em"
+    credit_decision_label: "Decisão de crédito"
+    other_comment: "Comentário"
 
   # Campaigns
   campaigns:

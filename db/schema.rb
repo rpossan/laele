@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_25_153709) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_29_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -84,6 +84,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_25_153709) do
     t.index ["user_id"], name: "index_google_accounts_on_user_id"
   end
 
+  create_table "lead_feedback_submissions", force: :cascade do |t|
+    t.bigint "google_account_id", null: false
+    t.string "lead_id", null: false
+    t.string "survey_answer", null: false
+    t.string "reason"
+    t.text "other_reason_comment"
+    t.string "credit_issuance_decision", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["google_account_id", "lead_id"], name: "index_lead_feedback_submissions_on_account_and_lead", unique: true
+    t.index ["google_account_id"], name: "index_lead_feedback_submissions_on_google_account_id"
+    t.index ["lead_id"], name: "index_lead_feedback_submissions_on_lead_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -103,4 +117,5 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_25_153709) do
   add_foreign_key "active_customer_selections", "users"
   add_foreign_key "activity_logs", "users"
   add_foreign_key "google_accounts", "users"
+  add_foreign_key "lead_feedback_submissions", "google_accounts"
 end

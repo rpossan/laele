@@ -131,6 +131,7 @@ en:
     last_sync: "Last Sync:"
     update_table: "Update Table"
     type: "Type"
+    id_short: "ID"
     contact: "Contact"
     name: "Name"
     phone: "Phone"
@@ -167,6 +168,9 @@ en:
     dissatisfaction_reason: "Dissatisfaction Reason"
     satisfaction_reason: "Satisfaction Reason"
     select_reason_optional: "Select a reason (optional)"
+    select_reason_required: "Select a reason (required)"
+    reason_required_for_feedback: "Reason is required for this rating."
+    other_reason_comment_required: "Comment is required when reason is \"Other\"."
     additional_comment: "Additional Comment"
     describe_reason: "Describe the reason (optional)"
     send_feedback: "Send Feedback"
@@ -194,6 +198,55 @@ en:
     likely_booked_customer: "Likely Booked Customer"
     high_value_service: "High Value Service"
     other_satisfied_reason: "Other Reason"
+    neutral: "Neither satisfied nor dissatisfied"
+    geo_mismatch: "Service area mismatch"
+    not_ready_to_book: "Customer not ready to book"
+    solicitation: "Solicitation (e.g. job or product pitch)"
+    other_dissatisfied_reason: "Other reason"
+    other_reason_comment_required: "Comment is required when reason is \"Other\""
+    credit_decision_success: "Bonus credit issued"
+    credit_decision_fail_not_eligible: "Lead not eligible for bonus credit"
+    credit_decision_fail_over_threshold: "Bonus credit cap reached"
+    credit_decision_success_not_reached: "Bonus credit issued"
+    credit_decision_success_reached: "Bonus credit issued (cap reached)"
+    lead_already_evaluated_title: "Lead already evaluated"
+
+  # Lead Feedback (ProvideLeadFeedback API)
+  lead_feedback:
+    submitted: "Feedback submitted successfully"
+    errors:
+      no_account_selected: "Select an account before sending feedback"
+      lead_id_required: "Lead ID is required"
+      send_failed: "Error sending feedback: %{error}"
+      invalid_survey_answer: "survey_answer must be one of: %{answers}"
+      satisfied_reason_required: "Satisfaction reason is required for Satisfied / Very Satisfied"
+      dissatisfied_reason_required: "Dissatisfaction reason is required for Dissatisfied / Very Dissatisfied"
+      invalid_satisfied_reason: "Invalid satisfaction reason. Must be one of: %{reasons}"
+      invalid_dissatisfied_reason: "Invalid dissatisfaction reason. Must be one of: %{reasons}"
+      other_satisfied_comment_required: "Comment is required when reason is \"Other\" (satisfied)"
+      other_dissatisfied_comment_required: "Comment is required when reason is \"Other\" (dissatisfied)"
+      invalid_request_body: "Invalid request body"
+      survey_answer_required: "survey_answer is required"
+      survey_satisfied_required: "surveySatisfied is required for Satisfied / Very Satisfied answers"
+      survey_satisfied_reason_required: "surveySatisfiedReason is required when surveySatisfied is present"
+      survey_dissatisfied_required: "surveyDissatisfied is required for Dissatisfied / Very Dissatisfied answers"
+      survey_dissatisfied_reason_required: "surveyDissatisfiedReason is required when surveyDissatisfied is present"
+      failed_access_token: "Failed to obtain access token"
+      already_submitted: "Feedback for this lead has already been submitted. You cannot submit again."
+
+  # Stored lead feedback (local cache for credit_issuance_decision display)
+  lead_feedback_submission:
+    credit_issuance_decision:
+      success_not_reached_threshold: "Bonus credit issued"
+      success_reached_threshold: "Bonus credit issued (cap reached)"
+      fail_over_threshold: "Bonus credit cap reached"
+      fail_not_eligible: "Lead not eligible for bonus credit"
+    view_feedback: "View feedback"
+    stored_feedback_title: "Submitted feedback"
+    stored_feedback_subtitle: "Summary of what was submitted for this lead"
+    submitted_at: "Submitted at"
+    credit_decision_label: "Credit decision"
+    other_comment: "Comment"
 
   # Campaigns
   campaigns:

@@ -537,7 +537,7 @@ export default class extends Controller {
     if (leads.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td class="px-4 py-8 text-center text-sm text-slate-500" colspan="9">
+          <td class="px-3 py-8 text-center text-sm text-slate-500" colspan="10">
             <div class="flex flex-col items-center gap-4">
               <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
                 <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -576,27 +576,36 @@ export default class extends Controller {
       const queryString = queryParams.toString()
       const leadUrl = queryString ? `/leads/${lead.id}?${queryString}` : `/leads/${lead.id}`
 
-      // Feedback column: show status and button if no feedback
-      const feedbackCell = lead.lead_feedback_submitted 
-        ? `<td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">${leadFeedbackStatusTag}</td>`
-        : `<td class="px-4 py-4 align-top">
-            <div class="flex items-center gap-2">
+      // Feedback column: status only; "Submeter" when no feedback
+      const feedbackCell = lead.lead_feedback_submitted
+        ? `<td class="px-3 py-3 cursor-pointer align-top" onclick="window.location='${leadUrl}'">${leadFeedbackStatusTag}</td>`
+        : `<td class="px-3 py-3 align-top" onclick="event.stopPropagation()">
+            <div class="flex flex-col gap-1">
               ${leadFeedbackStatusTag}
               <button 
                 onclick="event.stopPropagation(); event.preventDefault(); if (window.openFeedbackModal) { window.openFeedbackModal('${lead.id}'); } else if (window.submitFeedbackInline) { window.submitFeedbackInline('${lead.id}'); }"
-                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition"
+                class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition w-fit"
                 title="Submeter feedback">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 Submeter
               </button>
             </div>
           </td>`
 
+      // Coluna "Ver feedback": botão só quando tem feedback armazenado localmente
+      const viewFeedbackLabel = (typeof window.I18n !== 'undefined' && window.I18n.lead_feedback_submission?.view_feedback) ? window.I18n.lead_feedback_submission.view_feedback : 'Ver feedback'
+      const viewFeedbackCell = lead.stored_feedback_available
+        ? `<td class="px-3 py-3 align-top" onclick="event.stopPropagation()">
+            <button type="button" onclick="if (window.openStoredFeedbackModal) window.openStoredFeedbackModal('${lead.id}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition border border-emerald-200/60">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              ${viewFeedbackLabel}
+            </button>
+          </td>`
+        : `<td class="px-3 py-3 align-top text-slate-400 text-sm">—</td>`
+
       return `
         <tr class="hover:bg-slate-50 transition-colors" data-lead-id="${lead.id}">
-          <td class="px-4 py-4 align-top">
+          <td class="px-3 py-3 align-top w-10 lg:w-12 shrink-0">
             <input 
               type="checkbox" 
               class="lead-checkbox w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" 
@@ -604,28 +613,29 @@ export default class extends Controller {
               onclick="event.stopPropagation(); if (window.leadsController) { window.leadsController.handleCheckboxChange(); }"
             >
           </td>
-          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
-            <div class="text-sm font-mono text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg">${lead.id || "N/A"}</div>
+          <td class="px-3 py-3 cursor-pointer align-top w-20 lg:w-28 shrink-0" onclick="window.location='${leadUrl}'">
+            <div class="text-xs font-mono text-slate-500 bg-slate-50 px-2 py-1 rounded truncate" title="${lead.id || 'N/A'}">${lead.id || "N/A"}</div>
           </td>
-          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
-            <div class="mb-2">${leadTypeTag}</div>
+          <td class="px-3 py-3 cursor-pointer align-top hidden md:table-cell" onclick="window.location='${leadUrl}'">
+            <div>${leadTypeTag}</div>
           </td>
-          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
-            <div class="text-sm font-semibold text-slate-900">${consumerName}</div>
-            ${consumerEmail !== 'N/A' ? `<div class="text-xs text-slate-400 mt-0.5">${consumerEmail}</div>` : ''}
+          <td class="px-3 py-3 cursor-pointer align-top min-w-0" onclick="window.location='${leadUrl}'">
+            <div class="text-sm font-semibold text-slate-900 truncate" title="${consumerName}">${consumerName}</div>
+            ${consumerEmail !== 'N/A' ? `<div class="text-xs text-slate-400 truncate" title="${consumerEmail}">${consumerEmail}</div>` : ''}
           </td>
-          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
+          <td class="px-3 py-3 cursor-pointer align-top hidden lg:table-cell" onclick="window.location='${leadUrl}'">
             <div class="text-sm text-slate-700">${phoneNumber}</div>
           </td>
-          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
+          <td class="px-3 py-3 cursor-pointer align-top shrink-0" onclick="window.location='${leadUrl}'">
             ${leadStatusTag}
           </td>
-          <td class="px-4 py-4 cursor-pointer align-top" onclick="window.location='${leadUrl}'">
+          <td class="px-3 py-3 cursor-pointer align-top shrink-0" onclick="window.location='${leadUrl}'">
             ${leadChargeStatusTag}
           </td>
           ${feedbackCell}
-          <td class="px-4 py-4 cursor-pointer align-top text-slate-500" onclick="window.location='${leadUrl}'">
-            <div class="text-sm">${creationDate}</div>
+          ${viewFeedbackCell}
+          <td class="px-3 py-3 cursor-pointer align-top text-slate-500 shrink-0" onclick="window.location='${leadUrl}'">
+            <div class="text-xs whitespace-nowrap">${creationDate}</div>
           </td>
         </tr>
       `

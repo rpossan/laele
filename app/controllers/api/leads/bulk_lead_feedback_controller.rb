@@ -27,6 +27,29 @@ module Api
           other_reason_comment: other_reason_comment
         )
 
+        # Store feedback locally for each successfully processed lead (one record per lead in the batch)
+        lead_results = result[:lead_results] || result["lead_results"] || []
+        google_account_id = selection.google_account_id
+
+        Rails.logger.info("[Api::Leads::BulkLeadFeedbackController] Storing LeadFeedbackSubmission for #{lead_results.size} leads (processed_count=#{result[:processed_count]})")
+
+        lead_results.each do |lr|
+          lid = lr[:lead_id] || lr["lead_id"]
+          credit_decision = lr[:credit_issuance_decision] || lr["credit_issuance_decision"]
+          next if lid.blank?
+
+          LeadFeedbackSubmission.upsert_for_lead!(
+            google_account_id: google_account_id,
+            lead_id: lid.to_s,
+            survey_answer: survey_answer.to_s,
+            reason: reason&.to_s,
+            other_reason_comment: other_reason_comment&.to_s,
+            credit_issuance_decision: credit_decision.to_s.presence || "FAIL_NOT_ELIGIBLE"
+          )
+        rescue ActiveRecord::RecordInvalid => e
+          Rails.logger.error("[Api::Leads::BulkLeadFeedbackController] Failed to save LeadFeedbackSubmission for lead #{lid}: #{e.message}")
+        end
+
         # Log activity for bulk feedback
         ActivityLogger.log_bulk_lead_feedback(
           user: current_user,
@@ -57,4 +80,3 @@ module Api
     end
   end
 end
-

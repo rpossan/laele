@@ -709,23 +709,26 @@
 
   // Feedback modal functions (from original dashboard)
   (function() {
+    function leadLabel(key, fallback) {
+      return (window.I18n && window.I18n.leads && window.I18n.leads[key]) || fallback;
+    }
+    // Google Ads API v22 SurveyDissatisfiedReason enum
     const dissatisfiedReasons = [
-      { value: 'SPAM', label: window.I18n && window.I18n.leads ? window.I18n.leads.spam : 'Spam' },
-      { value: 'JOB_TYPE_MISMATCH', label: window.I18n && window.I18n.leads ? window.I18n.leads.job_type_mismatch : 'Job Type Mismatch' },
-      { value: 'DUPLICATE', label: window.I18n && window.I18n.leads ? window.I18n.leads.duplicate : 'Duplicate' },
-      { value: 'NOT_INTERESTED', label: window.I18n && window.I18n.leads ? window.I18n.leads.not_interested : 'Not Interested' },
-      { value: 'WRONG_PHONE_NUMBER', label: window.I18n && window.I18n.leads ? window.I18n.leads.wrong_phone_number : 'Wrong Phone Number' },
-      { value: 'WRONG_EMAIL_ADDRESS', label: window.I18n && window.I18n.leads ? window.I18n.leads.wrong_email_address : 'Wrong Email Address' },
-      { value: 'WRONG_NAME', label: window.I18n && window.I18n.leads ? window.I18n.leads.wrong_name : 'Wrong Name' }
-      // Note: "OTHER" is not a valid value for dissatisfied reasons in Google Ads API v22
+      { value: 'GEO_MISMATCH', label: leadLabel('geo_mismatch', 'Service area mismatch') },
+      { value: 'JOB_TYPE_MISMATCH', label: leadLabel('job_type_mismatch', 'Job Type Mismatch') },
+      { value: 'NOT_READY_TO_BOOK', label: leadLabel('not_ready_to_book', 'Not ready to book') },
+      { value: 'SPAM', label: leadLabel('spam', 'Spam') },
+      { value: 'DUPLICATE', label: leadLabel('duplicate', 'Duplicate') },
+      { value: 'SOLICITATION', label: leadLabel('solicitation', 'Solicitation') },
+      { value: 'OTHER_DISSATISFIED_REASON', label: leadLabel('other_dissatisfied_reason', 'Other reason') }
     ];
     
     const satisfiedReasons = [
-      { value: 'SERVICE_RELATED', label: window.I18n && window.I18n.leads ? window.I18n.leads.service_related : 'Service Related' },
-      { value: 'BOOKED_CUSTOMER', label: window.I18n && window.I18n.leads ? window.I18n.leads.booked_customer : 'Booked Customer' },
-      { value: 'LIKELY_BOOKED_CUSTOMER', label: window.I18n && window.I18n.leads ? window.I18n.leads.likely_booked_customer : 'Likely Booked Customer' },
-      { value: 'HIGH_VALUE_SERVICE', label: window.I18n && window.I18n.leads ? window.I18n.leads.high_value_service : 'High Value Service' },
-      { value: 'OTHER_SATISFIED_REASON', label: window.I18n && window.I18n.leads ? window.I18n.leads.other_satisfied_reason : 'Other Reason' }
+      { value: 'SERVICE_RELATED', label: leadLabel('service_related', 'Service Related') },
+      { value: 'BOOKED_CUSTOMER', label: leadLabel('booked_customer', 'Booked Customer') },
+      { value: 'LIKELY_BOOKED_CUSTOMER', label: leadLabel('likely_booked_customer', 'Likely Booked Customer') },
+      { value: 'HIGH_VALUE_SERVICE', label: leadLabel('high_value_service', 'High Value Service') },
+      { value: 'OTHER_SATISFIED_REASON', label: leadLabel('other_satisfied_reason', 'Other Reason') }
     ];
     
     window.openFeedbackModal = function(leadId, leadIds = null) {
@@ -765,9 +768,29 @@
       
       form.reset();
       const reasonSection = document.getElementById('reason-section');
+      const reasonSelect = document.getElementById('feedback-reason');
       const otherReasonSection = document.getElementById('other-reason-section');
+      const reasonRequiredHint = document.getElementById('reason-required-hint');
+      const otherRequiredHint = document.getElementById('other-reason-required-hint');
       if (reasonSection) reasonSection.classList.add('hidden');
       if (otherReasonSection) otherReasonSection.classList.add('hidden');
+      if (reasonRequiredHint) reasonRequiredHint.classList.add('hidden');
+      if (otherRequiredHint) otherRequiredHint.classList.add('hidden');
+      if (reasonSelect) {
+        const selectOptionalText = (window.I18n && window.I18n.leads && window.I18n.leads.select_reason_optional) || 'Select a reason (optional)';
+        reasonSelect.innerHTML = '<option value="">' + selectOptionalText + '</option>';
+        reasonSelect.removeAttribute('required');
+      }
+      const modalErrorEl = document.getElementById('feedback-modal-error');
+      if (modalErrorEl) modalErrorEl.classList.add('hidden');
+      
+      // Reset submit button to initial state (fixes "Sending..." stuck from previous submit)
+      const submitBtn = document.getElementById('submit-feedback-btn');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        const sendFeedbackText = (window.I18n && window.I18n.leads && window.I18n.leads.send_feedback) || (window.I18n && window.I18n.leads && window.I18n.leads.submit_feedback) || 'Enviar feedback';
+        submitBtn.innerHTML = sendFeedbackText;
+      }
       
       modal.classList.remove('hidden');
       modal.style.display = 'block';
@@ -791,20 +814,103 @@
         modal.setAttribute('aria-hidden', 'true');
       }
     };
-    
+
+    window.openStoredFeedbackModal = function(leadId) {
+      const modal = document.getElementById('stored-feedback-modal');
+      const loading = document.getElementById('stored-feedback-loading');
+      const content = document.getElementById('stored-feedback-content');
+      const errorEl = document.getElementById('stored-feedback-error');
+      if (!modal || !loading || !content) return;
+      content.classList.add('hidden');
+      errorEl.classList.add('hidden');
+      loading.classList.remove('hidden');
+      modal.classList.remove('hidden');
+      modal.style.display = 'block';
+      modal.setAttribute('aria-hidden', 'false');
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      fetch('/api/leads/' + encodeURIComponent(leadId) + '/stored_feedback', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json', 'X-CSRF-Token': csrfToken },
+        credentials: 'same-origin'
+      })
+        .then(function(res) {
+          if (!res.ok) {
+            if (res.status === 404) throw new Error('Feedback não encontrado.');
+            throw new Error('Erro ao carregar feedback.');
+          }
+          return res.json();
+        })
+        .then(function(data) {
+          loading.classList.add('hidden');
+          document.getElementById('stored-feedback-survey').textContent = data.survey_answer_label || data.survey_answer || '—';
+          const reasonWrap = document.getElementById('stored-feedback-reason-wrap');
+          const reasonEl = document.getElementById('stored-feedback-reason');
+          if (data.reason) {
+            reasonWrap.classList.remove('hidden');
+            reasonEl.textContent = data.reason_label || data.reason;
+          } else {
+            reasonWrap.classList.add('hidden');
+          }
+          const otherWrap = document.getElementById('stored-feedback-other-wrap');
+          const otherEl = document.getElementById('stored-feedback-other');
+          if (data.other_reason_comment) {
+            otherWrap.classList.remove('hidden');
+            otherEl.textContent = data.other_reason_comment;
+          } else {
+            otherWrap.classList.add('hidden');
+          }
+          document.getElementById('stored-feedback-decision').textContent = data.credit_issuance_decision_label || data.credit_issuance_decision || '—';
+          const submittedAt = data.submitted_at ? new Date(data.submitted_at).toLocaleString() : '—';
+          document.getElementById('stored-feedback-submitted-at').textContent = submittedAt;
+          content.classList.remove('hidden');
+        })
+        .catch(function(err) {
+          loading.classList.add('hidden');
+          errorEl.textContent = err.message || 'Erro ao carregar feedback.';
+          errorEl.classList.remove('hidden');
+        });
+    };
+
+    window.closeStoredFeedbackModal = function() {
+      const modal = document.getElementById('stored-feedback-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    };
+
     function updateReasonOptions(surveyAnswer) {
       const reasonSection = document.getElementById('reason-section');
       const reasonSelect = document.getElementById('feedback-reason');
       const otherReasonSection = document.getElementById('other-reason-section');
       const reasonLabel = document.getElementById('reason-label');
+      const reasonRequiredHint = document.getElementById('reason-required-hint');
+      const otherRequiredHint = document.getElementById('other-reason-required-hint');
       
       if (!reasonSection || !reasonSelect) return;
       
-      const selectReasonText = window.I18n && window.I18n.leads ? window.I18n.leads.select_reason_optional : 'Select a reason (optional)';
-      reasonSelect.innerHTML = '<option value="">' + selectReasonText + '</option>';
+      // When no survey answer or NEUTRAL, hide reason section and show optional placeholder only
+      if (!surveyAnswer || surveyAnswer === 'NEUTRAL') {
+        const selectOptionalText = (window.I18n && window.I18n.leads && window.I18n.leads.select_reason_optional) || 'Select a reason (optional)';
+        reasonSelect.innerHTML = '<option value="">' + selectOptionalText + '</option>';
+        reasonSection.classList.add('hidden');
+        if (reasonRequiredHint) reasonRequiredHint.classList.add('hidden');
+        if (otherReasonSection) otherReasonSection.classList.add('hidden');
+        if (otherRequiredHint) otherRequiredHint.classList.add('hidden');
+        reasonSelect.removeAttribute('required');
+        return;
+      }
+      
+      if (otherReasonSection) otherReasonSection.classList.add('hidden');
+      if (otherRequiredHint) otherRequiredHint.classList.add('hidden');
+      reasonSelect.removeAttribute('required');
+      
+      const selectReasonRequiredText = (window.I18n && window.I18n.leads && window.I18n.leads.select_reason_required) || 'Select a reason (required)';
+      reasonSelect.innerHTML = '<option value="">' + selectReasonRequiredText + '</option>';
       
       if (surveyAnswer === 'VERY_DISSATISFIED' || surveyAnswer === 'DISSATISFIED') {
-        reasonLabel.textContent = window.I18n && window.I18n.leads ? window.I18n.leads.dissatisfaction_reason : 'Dissatisfaction Reason';
+        reasonLabel.textContent = leadLabel('dissatisfaction_reason', 'Dissatisfaction Reason');
         dissatisfiedReasons.forEach(reason => {
           const option = document.createElement('option');
           option.value = reason.value;
@@ -812,8 +918,10 @@
           reasonSelect.appendChild(option);
         });
         reasonSection.classList.remove('hidden');
+        reasonSelect.setAttribute('required', 'required');
+        if (reasonRequiredHint) reasonRequiredHint.classList.remove('hidden');
       } else if (surveyAnswer === 'SATISFIED' || surveyAnswer === 'VERY_SATISFIED') {
-        reasonLabel.textContent = window.I18n && window.I18n.leads ? window.I18n.leads.satisfaction_reason : 'Satisfaction Reason';
+        reasonLabel.textContent = leadLabel('satisfaction_reason', 'Satisfaction Reason');
         satisfiedReasons.forEach(reason => {
           const option = document.createElement('option');
           option.value = reason.value;
@@ -821,18 +929,24 @@
           reasonSelect.appendChild(option);
         });
         reasonSection.classList.remove('hidden');
+        reasonSelect.setAttribute('required', 'required');
+        if (reasonRequiredHint) reasonRequiredHint.classList.remove('hidden');
       } else {
         reasonSection.classList.add('hidden');
-        otherReasonSection.classList.add('hidden');
+        if (reasonRequiredHint) reasonRequiredHint.classList.add('hidden');
       }
       
-      reasonSelect.addEventListener('change', function() {
-        if (this.value === 'OTHER_SATISFIED_REASON') {
-          otherReasonSection.classList.remove('hidden');
+      function toggleOtherReasonSection() {
+        const val = reasonSelect.value;
+        if (val === 'OTHER_SATISFIED_REASON' || val === 'OTHER_DISSATISFIED_REASON') {
+          if (otherReasonSection) otherReasonSection.classList.remove('hidden');
         } else {
-          otherReasonSection.classList.add('hidden');
+          if (otherReasonSection) otherReasonSection.classList.add('hidden');
+          if (otherRequiredHint) otherRequiredHint.classList.add('hidden');
         }
-      });
+      }
+      
+      reasonSelect.onchange = toggleOtherReasonSection;
     }
     
     window.handleFeedbackSubmit = function(event) {
@@ -842,16 +956,31 @@
       const leadId = document.getElementById('feedback-lead-id').value;
       const leadIdsJson = document.getElementById('feedback-lead-ids').value;
       const submitBtn = document.getElementById('submit-feedback-btn');
-      
       const formData = new FormData(form);
-      const payload = {
-        survey_answer: formData.get('survey_answer')
-      };
-      
+      const surveyAnswer = formData.get('survey_answer');
       const reason = formData.get('reason');
-      if (reason) payload.reason = reason;
+      const otherComment = (formData.get('other_reason_comment') || '').trim();
       
-      const otherComment = formData.get('other_reason_comment');
+      // Validation: reason required when not NEUTRAL
+      if (surveyAnswer !== 'NEUTRAL') {
+        if (!reason) {
+          const msg = leadLabel('reason_required_for_feedback', 'Reason is required for this rating.');
+          showError(msg);
+          return;
+        }
+        if ((reason === 'OTHER_SATISFIED_REASON' || reason === 'OTHER_DISSATISFIED_REASON') && !otherComment) {
+          const msg = leadLabel('other_reason_comment_required', 'Comment is required when reason is "Other".');
+          showError(msg);
+          const otherSection = document.getElementById('other-reason-section');
+          const otherHint = document.getElementById('other-reason-required-hint');
+          if (otherSection) otherSection.classList.remove('hidden');
+          if (otherHint) otherHint.classList.remove('hidden');
+          return;
+        }
+      }
+      
+      const payload = { survey_answer: surveyAnswer };
+      if (reason) payload.reason = reason;
       if (otherComment) payload.other_reason_comment = otherComment;
       
       // Check if it's bulk feedback
@@ -925,44 +1054,78 @@
         body: JSON.stringify(payload)
       })
       .then(async response => {
-        // Check if response is ok
-        if (!response.ok) {
-          // Try to parse error as JSON, fallback to text
-          let errorMessage = `Erro ${response.status}: ${response.statusText}`;
+        const contentType = response.headers.get('content-type');
+        const isJson = contentType && contentType.includes('application/json');
+        let data = null;
+        if (isJson) {
           try {
-            const errorData = await response.json();
-            errorMessage = errorData.error || errorMessage;
+            data = await response.json();
           } catch (e) {
-            // If not JSON, try to get text
-            try {
-              const errorText = await response.text();
-              errorMessage = errorText || errorMessage;
-            } catch (e2) {
-              // Keep default error message
+            data = null;
+          }
+        }
+        
+        if (!response.ok) {
+          const errorMessage = (data && data.error) || `Erro ${response.status}: ${response.statusText}`;
+          const isAlreadySubmitted = (data && data.error_code === 'feedback_already_submitted') ||
+            (errorMessage && (
+              /already\s+submitted|já\s+foi\s+enviado|already exists|já\s+avaliado/i.test(errorMessage)
+            ));
+          // RESOURCE_ALREADY_EXISTS / lead já avaliado: mostrar no modal e exibir alerta
+          if (isAlreadySubmitted) {
+            Swal.close();
+            const errorEl = document.getElementById('feedback-modal-error');
+            const errorTextEl = document.getElementById('feedback-modal-error-text');
+            const msg = (data && data.error) || leadLabel('feedback_already_submitted', 'Este lead já foi avaliado. Não é possível enviar feedback novamente.');
+            const alertTitle = (window.I18n && window.I18n.leads && window.I18n.leads.lead_already_evaluated_title) || 'Lead já avaliado';
+            if (errorEl && errorTextEl) {
+              errorTextEl.textContent = msg;
+              errorEl.classList.remove('hidden');
+              errorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
+            showInfo(msg, alertTitle);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            return;
           }
           throw new Error(errorMessage);
         }
         
-        // Parse JSON response
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
+        if (!isJson || !data) {
           throw new Error('Resposta do servidor não é JSON válido');
         }
         
-        return response.json();
+        return data;
       })
       .then(data => {
-        // Close loading overlay
+        // Early return (e.g. "already submitted" handled in modal) — no data passed
+        if (data == null || data === undefined) return;
+        
         Swal.close();
         
         if (data.success || data.message) {
+          // Restore submit button before closing (fixes "Sending..." stuck on next open)
+          submitBtn.disabled = false;
+          const sendFeedbackText = (window.I18n && window.I18n.leads && window.I18n.leads.send_feedback) || (window.I18n && window.I18n.leads && window.I18n.leads.submit_feedback) || 'Enviar feedback';
+          submitBtn.innerHTML = sendFeedbackText;
           closeFeedbackModal();
           const successText = window.I18n && window.I18n.leads ? window.I18n.leads.feedback_sent_success : 'Feedback sent successfully!';
           const successBulkText = window.I18n && window.I18n.leads ? window.I18n.leads.feedback_sent_success_bulk : 'Feedback sent successfully to %{count} leads!';
-          const message = isBulk 
+          let message = isBulk 
             ? successBulkText.replace('%{count}', data.processed_count || leadIds.length)
             : successText;
+          if (!isBulk && data.credit_issuance_decision) {
+            const creditDecisionKeys = {
+              SUCCESS_NOT_REACHED_THRESHOLD: 'credit_decision_success_not_reached',
+              SUCCESS_REACHED_THRESHOLD: 'credit_decision_success_reached',
+              FAIL_NOT_ELIGIBLE: 'credit_decision_fail_not_eligible',
+              FAIL_OVER_THRESHOLD: 'credit_decision_fail_over_threshold'
+            };
+            const creditKey = creditDecisionKeys[data.credit_issuance_decision];
+            const creditLabel = creditKey && window.I18n && window.I18n.leads ? window.I18n.leads[creditKey] : null;
+            if (creditLabel) message += ' ' + creditLabel;
+            else if (data.charge_status_credited) message += ' ' + (window.I18n && window.I18n.leads ? window.I18n.leads.credit_decision_success : 'Bonus credit issued.');
+          }
           showSuccess(message);
           const button = document.getElementById('fetch-leads-btn');
           if (button) button.click();
