@@ -2,6 +2,7 @@ class GoogleAccount < ApplicationRecord
   belongs_to :user
 
   has_many :accessible_customers, dependent: :destroy
+  has_many :lead_feedback_submissions, dependent: :delete_all
   has_one :active_customer_selection, dependent: :destroy
 
   validates :refresh_token, presence: true
