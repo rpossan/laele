@@ -146,6 +146,107 @@
 <script>
   let selectedCampaignId = null;
 
+  // Função silenciosa para buscar campanhas automaticamente
+  async function autoFetchCampaigns() {
+    const select = document.getElementById('campaign-select');
+    
+    if (!select) {
+      console.error('Select campaign não encontrado');
+      return;
+    }
+
+    try {
+      
+      // Mostrar ícone de carregamento
+      const loadingIcon = document.createElement('span');
+      loadingIcon.id = 'campaign-loading-icon';
+      loadingIcon.innerHTML = '<svg class="inline-block w-4 h-4 mr-2 animate-spin text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>';
+      select.parentElement.appendChild(loadingIcon);
+      select.disabled = true;
+      
+      const response = await fetch('/api/google_ads/campaigns', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        console.error('Erro ao buscar campanhas:', response.status);
+        return;
+      }
+
+      const data = await response.json();
+      const campaigns = data.campaigns || [];
+
+      if (campaigns.length > 0) {
+        // Limpar opções existentes
+        select.innerHTML = '<option value=""><%= t('campaigns.select_campaign_placeholder') %></option>';
+
+        // Adicionar campanhas
+        campaigns.forEach(campaign => {
+          const option = document.createElement('option');
+          option.value = campaign.id;
+          option.textContent = `${campaign.name} (${campaign.status})`;
+          select.appendChild(option);
+        });
+
+
+        // Inicializar Select2 DEPOIS de adicionar as campanhas
+        if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+          
+          const selectPlaceholder = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.select_campaign_placeholder : '<%= t('campaigns.select_campaign_placeholder') %>';
+          const noResultsText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.no_campaigns_found : '<%= t('campaigns.no_campaigns_found') %>';
+          const searchingText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.searching : 'Searching...';
+          
+          jQuery(select).select2({
+            placeholder: selectPlaceholder,
+            allowClear: true,
+            width: '100%',
+            language: {
+              noResults: function() {
+                return noResultsText;
+              },
+              searching: function() {
+                return searchingText;
+              }
+            }
+          });
+          
+          jQuery(select).on('change', function() {
+            selectedCampaignId = this.value;
+            const applyBtn = document.getElementById('apply-locations-btn');
+            const locationManagement = document.getElementById('location-management');
+            
+            if (this.value) {
+              locationManagement.classList.remove('hidden');
+              applyBtn.disabled = false;
+              fetchCurrentLocations();
+              initializeLocationsSelect2();
+            } else {
+              locationManagement.classList.add('hidden');
+              applyBtn.disabled = true;
+            }
+          });
+          
+        }
+      } else {
+        console.log('Nenhuma campanha encontrada');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar campanhas automaticamente:', error);
+    } finally {
+      // Remover ícone de carregamento
+      const loadingIcon = document.getElementById('campaign-loading-icon');
+      if (loadingIcon) {
+        loadingIcon.remove();
+      }
+      select.disabled = false;
+    }
+  }
+
   async function fetchCampaigns() {
     const btn = document.getElementById('fetch-campaigns-btn');
     const select = document.getElementById('campaign-select');
@@ -604,45 +705,7 @@
 
   // Initialize Select2 on page load if campaigns are already loaded
   document.addEventListener('DOMContentLoaded', function() {
-    if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
-      const campaignSelect = document.getElementById('campaign-select');
-      if (campaignSelect && campaignSelect.options.length > 1) {
-        const selectPlaceholder = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.select_campaign_placeholder : '<%= t('campaigns.select_campaign_placeholder') %>';
-        const noResultsText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.no_campaigns_found : '<%= t('campaigns.no_campaigns_found') %>';
-        const searchingText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.searching : 'Searching...';
-        
-        if (!jQuery(campaignSelect).hasClass('select2-hidden-accessible')) {
-          jQuery(campaignSelect).select2({
-            placeholder: selectPlaceholder,
-            allowClear: true,
-            width: '100%',
-            language: {
-              noResults: function() {
-                return noResultsText;
-              },
-              searching: function() {
-                return searchingText;
-              }
-            }
-          });
-          
-          jQuery(campaignSelect).on('change', function() {
-            selectedCampaignId = this.value;
-            const applyBtn = document.getElementById('apply-locations-btn');
-            const locationManagement = document.getElementById('location-management');
-            
-            if (this.value) {
-              locationManagement.classList.remove('hidden');
-              applyBtn.disabled = false;
-              fetchCurrentLocations();
-            } else {
-              locationManagement.classList.add('hidden');
-              applyBtn.disabled = true;
-            }
-          });
-        }
-      }
-    }
+    // Nada aqui - autoFetchCampaigns será chamado quando a aba de campanhas for aberta
   });
 </script>
 
