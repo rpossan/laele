@@ -258,6 +258,7 @@ en:
     campaign: "Campaign"
     select_campaign_placeholder: "Select a campaign..."
     fetch_campaigns: "Fetch Campaigns"
+    view_zip_codes: View ZIP Codes
     fetching: "Fetching..."
     campaigns_fetched: "Campaigns found"
     no_campaigns_found: "No LSA campaigns found"

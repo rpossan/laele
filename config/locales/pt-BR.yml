@@ -264,6 +264,7 @@ pt-BR:
     select_campaign_placeholder: "Selecione uma campanha..."
     fetch_campaigns: "Buscar Campanhas"
     fetching: "Buscando..."
+    view_zip_codes: Consultar ZIP Codes
     campaigns_fetched: "Campanhas encontradas"
     no_campaigns_found: "Nenhuma campanha LSA encontrada"
     error_fetching: "Erro ao buscar campanhas"
