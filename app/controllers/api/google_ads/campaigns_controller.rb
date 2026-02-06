@@ -1,6 +1,8 @@
 module Api
   module GoogleAds
     class CampaignsController < Api::BaseController
+      include EnsureActiveCustomer
+
       def index
         selection = current_user.active_customer_selection
         return render_error("Selecione uma conta antes de consultar as campanhas") unless selection
@@ -43,7 +45,7 @@ module Api
           geo_target_constant = target[:geo_target_constant]
           if geo_target_constant
             # Extract criteria_id from "geoTargetConstants/123456"
-            criteria_id = geo_target_constant.split('/').last
+            criteria_id = geo_target_constant.split("/").last
             geo_target = GeoTarget.find_by(criteria_id: criteria_id)
             {
               resource_name: target[:resource_name],
@@ -55,7 +57,7 @@ module Api
             {
               resource_name: target[:resource_name],
               geo_target_constant: nil,
-              name: 'Unknown',
+              name: "Unknown",
               criteria_id: nil
             }
           end
@@ -74,4 +76,3 @@ module Api
     end
   end
 end
-

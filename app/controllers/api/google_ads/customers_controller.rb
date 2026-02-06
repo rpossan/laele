@@ -11,16 +11,16 @@ module Api
       def refresh
         # Get all google accounts for the user
         google_accounts = current_user.google_accounts
-        
+
         if google_accounts.empty?
           return render json: { error: "Nenhuma conta Google Ads conectada" }, status: :not_found
         end
-        
+
         # Enqueue job to fetch names for each account in background
         google_accounts.each do |google_account|
           FetchCustomerNamesJob.perform_later(google_account.id)
         end
-        
+
         # Return success immediately (job will run in background)
         render json: {
           success: true,
@@ -30,8 +30,22 @@ module Api
       end
 
       def select
+        customer_id = params[:customer_id] || request.params[:customer_id]
+
+        # Check if the customer is active before allowing selection
         service = ::GoogleAds::CustomerListService.new(current_user)
-        result = service.select_customer(params[:customer_id] || request.params[:customer_id])
+        customer = service.find_customer(customer_id)
+
+        if customer && !customer.active?
+          return render json: {
+            error: I18n.t("errors.inactive_account_selection",
+              account: customer.effective_display_name,
+              default: "A conta #{customer.effective_display_name} não está ativa no seu plano. Ative-a nas configurações ou escolha outra conta."),
+            code: "INACTIVE_ACCOUNT"
+          }, status: :forbidden
+        end
+
+        result = service.select_customer(customer_id)
 
         unless result[:success]
           return render json: { error: result[:error] }, status: :not_found

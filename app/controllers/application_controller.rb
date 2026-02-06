@@ -5,10 +5,14 @@ class ApplicationController < ActionController::Base
   # Include Pagy Backend
   include Pagy::Backend
 
+  # Include subscription check concern
+  include RequireActiveSubscription
+
   before_action :set_locale
   before_action :set_active_customer_context
   # Block access for users that are not explicitly allowed (admin controls `allowed` flag in DB)
-  before_action :ensure_allowed_user
+  # DISABLED: Allowing all users to access the system without approval
+  # before_action :ensure_allowed_user
 
   helper_method :active_customer_context
 

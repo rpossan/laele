@@ -17,58 +17,147 @@
   </div>
 
   <div class="grid lg:grid-cols-3 gap-6 items-stretch">
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-lg hover:shadow-xl transition-all flex flex-col">
-      <div class="p-6 flex flex-col h-full space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-semibold text-indigo-600 uppercase tracking-wide"><%= t("pricing.cards.standard.name") %></p>
-            <p class="text-lg font-bold text-slate-900"><%= t("pricing.cards.standard.accounts") %></p>
+    <% @plans.each do |plan| %>
+      <%
+        is_recommended = plan.recommended?
+        card_classes = is_recommended ?
+          "rounded-2xl border-2 border-emerald-200 bg-gradient-to-b from-white via-emerald-50 to-white shadow-xl hover:shadow-2xl" :
+          "rounded-2xl border border-slate-200 bg-white shadow-lg hover:shadow-xl"
+        accent_color = is_recommended ? "emerald" : "indigo"
+      %>
+      <div class="<%= card_classes %> transition-all flex flex-col relative">
+        <% if is_recommended %>
+          <div class="absolute -top-3 right-4 px-3 py-1 rounded-full bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider shadow-md">
+            <%= t('plans.recommended') %>
           </div>
-          <span class="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider"><%= t("pricing.per_month") %></span>
-        </div>
-        <div class="space-y-1">
-          <p class="text-3xl font-bold text-slate-900"><%= number_to_currency(t("pricing.cards.standard.price_brl_amount"), unit: t("pricing.currency.brl_unit"), format: t("pricing.currency.format"), precision: 0) %></p>
-          <p class="text-sm text-slate-500"><%= number_to_currency(t("pricing.cards.standard.price_usd_amount"), unit: t("pricing.currency.usd_unit"), format: t("pricing.currency.format"), precision: 0) %></p>
-        </div>
-        <p class="text-sm text-slate-600 leading-relaxed flex-1"><%= t("pricing.cards.standard.description") %></p>
-        <%= link_to t("pricing.cards.standard.cta"), new_user_registration_path, class: "inline-flex w-full justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all" %>
-      </div>
-    </div>
+        <% end %>
 
-    <div class="rounded-2xl border-2 border-emerald-200 bg-gradient-to-b from-white via-emerald-50 to-white shadow-xl hover:shadow-2xl transition-all flex flex-col relative">
-      <div class="absolute -top-3 right-4 px-3 py-1 rounded-full bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider shadow-md"><%= t("pricing.cards.professional.badge") %></div>
-      <div class="p-6 flex flex-col h-full space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-semibold text-emerald-600 uppercase tracking-wide"><%= t("pricing.cards.professional.name") %></p>
-            <p class="text-lg font-bold text-slate-900"><%= t("pricing.cards.professional.accounts") %></p>
+        <div class="p-6 flex flex-col h-full space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold text-<%= accent_color %>-600 uppercase tracking-wide">
+                <%= t("plans.#{plan.slug}.name", default: plan.name) %>
+              </p>
+              <p class="text-lg font-bold text-slate-900">
+                <% if plan.unlimited? %>
+                  <%= t('plans.unlimited_accounts') %>
+                <% elsif plan.max_accounts %>
+                  <%= t('plans.up_to_accounts', count: plan.max_accounts) %>
+                <% else %>
+                  <%= t('plans.flexible_accounts') %>
+                <% end %>
+              </p>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-<%= accent_color %>-<%= is_recommended ? '100' : '50' %> text-<%= accent_color %>-<%= is_recommended ? '800' : '700' %> text-xs font-bold uppercase tracking-wider">
+              <%= t("pricing.per_month") %>
+            </span>
           </div>
-          <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider"><%= t("pricing.per_month") %></span>
-        </div>
-        <div class="space-y-1">
-          <p class="text-3xl font-bold text-slate-900"><%= number_to_currency(t("pricing.cards.professional.price_brl_amount"), unit: t("pricing.currency.brl_unit"), format: t("pricing.currency.format"), precision: 0) %></p>
-          <p class="text-sm text-slate-500"><%= number_to_currency(t("pricing.cards.professional.price_usd_amount"), unit: t("pricing.currency.usd_unit"), format: t("pricing.currency.format"), precision: 0) %></p>
-        </div>
-        <p class="text-sm text-slate-600 leading-relaxed flex-1"><%= t("pricing.cards.professional.description") %></p>
-        <%= link_to t("pricing.cards.professional.cta"), new_user_registration_path, class: "inline-flex w-full justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-emerald-700 hover:shadow-lg transition-all" %>
-      </div>
-    </div>
 
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-lg hover:shadow-xl transition-all flex flex-col">
-      <div class="p-6 flex flex-col h-full space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-semibold text-slate-700 uppercase tracking-wide"><%= t("pricing.cards.enterprise.name") %></p>
-            <p class="text-lg font-bold text-slate-900"><%= t("pricing.cards.enterprise.accounts") %></p>
+          <div class="space-y-1">
+            <% if plan.per_account? %>
+              <p class="text-3xl font-bold text-slate-900">
+                <%= number_to_currency(plan.price_per_account_brl, unit: t("pricing.currency.brl_unit"), format: t("pricing.currency.format"), precision: 0) %>
+                <span class="text-base font-normal text-slate-500">/ <%= t('plans.per_subaccount') %></span>
+              </p>
+              <p class="text-sm text-slate-500">
+                <%= number_to_currency(plan.price_per_account_usd, unit: t("pricing.currency.usd_unit"), format: t("pricing.currency.format"), precision: 0) %> / <%= t('plans.per_subaccount') %>
+              </p>
+            <% else %>
+              <p class="text-3xl font-bold text-slate-900">
+                <%= number_to_currency(plan.price_brl, unit: t("pricing.currency.brl_unit"), format: t("pricing.currency.format"), precision: 0) %>
+              </p>
+              <p class="text-sm text-slate-500">
+                <%= number_to_currency(plan.price_usd, unit: t("pricing.currency.usd_unit"), format: t("pricing.currency.format"), precision: 0) %>
+              </p>
+            <% end %>
           </div>
-          <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider"><%= t("pricing.custom") %></span>
+
+          <p class="text-sm text-slate-600 leading-relaxed flex-1">
+            <%= t("plans.#{plan.slug}.description", default: plan.description) %>
+          </p>
+
+          <!-- Features List -->
+          <ul class="space-y-2 py-2">
+            <% if plan.per_account? %>
+              <li class="flex items-center gap-2 text-sm text-slate-600">
+                <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <%= t('plans.features.pay_only_used') %>
+              </li>
+              <li class="flex items-center gap-2 text-sm text-slate-600">
+                <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <%= t('plans.features.flexible_scaling') %>
+              </li>
+            <% elsif plan.max_accounts %>
+              <li class="flex items-center gap-2 text-sm text-slate-600">
+                <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <%= t('plans.features.up_to_accounts', count: plan.max_accounts) %>
+              </li>
+              <li class="flex items-center gap-2 text-sm text-slate-600">
+                <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <%= t('plans.features.fixed_monthly') %>
+              </li>
+            <% else %>
+              <li class="flex items-center gap-2 text-sm text-slate-600">
+                <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <%= t('plans.features.unlimited_accounts') %>
+              </li>
+              <li class="flex items-center gap-2 text-sm text-slate-600">
+                <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <%= t('plans.features.best_value') %>
+              </li>
+            <% end %>
+            <li class="flex items-center gap-2 text-sm text-slate-600">
+              <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <%= t('plans.features.full_access') %>
+            </li>
+            <li class="flex items-center gap-2 text-sm text-slate-600">
+              <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <%= t('plans.features.support') %>
+            </li>
+          </ul>
+
+          <%= link_to t("plans.#{plan.slug}.cta", default: t('plans.start_now')), new_user_registration_path,
+              class: "inline-flex w-full justify-center rounded-xl #{is_recommended ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} px-4 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all" %>
         </div>
-        <div class="space-y-1">
-          <p class="text-3xl font-bold text-slate-900"><%= t("pricing.cards.enterprise.price_brl") %></p>
-          <p class="text-sm text-slate-500"><%= t("pricing.cards.enterprise.price_usd") %></p>
-        </div>
-        <p class="text-sm text-slate-600 leading-relaxed flex-1"><%= t("pricing.cards.enterprise.description") %></p>
-        <%= mail_to "contato@lsaescale.com", t("pricing.cards.enterprise.cta"), class: "inline-flex w-full justify-center rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-800 bg-slate-50 hover:bg-slate-100 hover:border-slate-400 transition-all" %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- FAQ Section -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+    <h2 class="text-2xl font-bold text-slate-900 mb-6 text-center"><%= t('pricing.faq.title') %></h2>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="space-y-2">
+        <h3 class="font-semibold text-slate-900"><%= t('pricing.faq.what_is_subaccount.question') %></h3>
+        <p class="text-sm text-slate-600"><%= t('pricing.faq.what_is_subaccount.answer') %></p>
+      </div>
+      <div class="space-y-2">
+        <h3 class="font-semibold text-slate-900"><%= t('pricing.faq.can_change_plan.question') %></h3>
+        <p class="text-sm text-slate-600"><%= t('pricing.faq.can_change_plan.answer') %></p>
+      </div>
+      <div class="space-y-2">
+        <h3 class="font-semibold text-slate-900"><%= t('pricing.faq.payment_methods.question') %></h3>
+        <p class="text-sm text-slate-600"><%= t('pricing.faq.payment_methods.answer') %></p>
+      </div>
+      <div class="space-y-2">
+        <h3 class="font-semibold text-slate-900"><%= t('pricing.faq.trial.question') %></h3>
+        <p class="text-sm text-slate-600"><%= t('pricing.faq.trial.answer') %></p>
       </div>
     </div>
   </div>
