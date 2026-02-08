@@ -324,24 +324,24 @@ export default class extends Controller {
     // Hide no results message
     noResultsMessage.classList.add('hidden')
 
-    // Build results HTML
+    // Build results HTML with remove button for each location
     const resultsHtml = results.map((result, index) => `
-      <div class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition">
-        <input 
-          type="checkbox" 
-          class="search-result-checkbox" 
-          value="${result.zip_code}|${result.city}|${result.state}|${result.county || ''}"
-          data-city="${result.city}"
-          data-state="${result.state}"
-          data-zip="${result.zip_code}"
-          data-county="${result.county || ''}"
-        />
+      <div class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition group">
         <div class="flex-1">
           <div class="text-sm font-medium text-slate-900">
             ${result.city} | ${result.state} | ${result.zip_code}
           </div>
           ${result.county ? `<div class="text-xs text-slate-500">${result.county}</div>` : ''}
         </div>
+        <button 
+          type="button"
+          data-action="click->geographic-search#removeLocation"
+          class="opacity-0 group-hover:opacity-100 transition p-1 text-red-600 hover:bg-red-50 rounded"
+          title="Remover esta localização">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </button>
       </div>
     `).join('')
 
@@ -413,19 +413,25 @@ export default class extends Controller {
 
   // Add selected results to current locations
   addSelectedResults() {
-    const checkboxes = document.querySelectorAll('.search-result-checkbox:checked')
+    const resultsContainer = this.resultsContainerTarget
+    const resultItems = resultsContainer.querySelectorAll('.flex.items-center.gap-3')
     
-    if (checkboxes.length === 0) {
-      alert('Selecione pelo menos um resultado')
+    if (resultItems.length === 0) {
+      alert('Nenhuma localização para processar')
       return
     }
 
-    const selectedLocations = Array.from(checkboxes).map(checkbox => ({
-      city: checkbox.dataset.city,
-      state: checkbox.dataset.state,
-      zip_code: checkbox.dataset.zip,
-      county: checkbox.dataset.county
-    }))
+    const selectedLocations = Array.from(resultItems).map(item => {
+      const text = item.querySelector('.text-sm.font-medium').textContent
+      const parts = text.split('|').map(p => p.trim())
+      
+      return {
+        city: parts[0],
+        state: parts[1],
+        zip_code: parts[2],
+        county: item.querySelector('.text-xs.text-slate-500')?.textContent || ''
+      }
+    })
 
     // Emit event or call parent function to add locations
     this.dispatch('locationsSelected', { detail: { locations: selectedLocations } })
@@ -433,5 +439,27 @@ export default class extends Controller {
     // Clear search
     this.searchInputTarget.value = ''
     this.clearSearchResults()
+  }
+
+  removeLocation(event) {
+    const button = event.target.closest('button')
+    const locationItem = button.closest('.flex.items-center.gap-3')
+    if (locationItem) {
+      locationItem.remove()
+    }
+
+    // Check if there are any locations left
+    const resultsContainer = this.resultsContainerTarget
+    const remainingItems = resultsContainer.querySelectorAll('.flex.items-center.gap-3')
+    
+    if (remainingItems.length === 0) {
+      this.showNoResultsMessage('Nenhuma localização selecionada')
+    }
+  }
+
+  removeAllLocations() {
+    const resultsContainer = this.resultsContainerTarget
+    resultsContainer.innerHTML = ''
+    this.showNoResultsMessage('Nenhuma localização selecionada')
   }
 }
