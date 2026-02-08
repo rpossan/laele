@@ -18,7 +18,7 @@ namespace :geographic do
     state_map[state_name]
   end
 
-  desc "Import geographic data from geo_targets.csv (Google Ads geo-targeting data)"
+  desc "Import geographic data from geo_targets.csv (Google Ads geo-targeting data) - all types"
   task import: :environment do
     file_path = ENV.fetch("FILE", "geo_targets.csv")
 
@@ -62,7 +62,7 @@ namespace :geographic do
           next
         end
 
-        # Parse canonical name format: "City/County,State,Country"
+        # Parse canonical name format: "City/County/Region,State,Country"
         # Example: "Abbeville,Alabama,United States"
         parts = canonical_name.split(",").map(&:strip)
         unless parts.size >= 2
@@ -84,26 +84,25 @@ namespace :geographic do
           next
         end
 
-        # Only process City and County types
-        unless target_type == "City" || target_type == "County"
-          skipped += 1
-          skip_reasons["invalid_target_type_#{target_type}"] += 1
-          next
-        end
-
-        # For cities and counties, we create entries with placeholder zip codes
-        # This allows us to map city/county to state for validation purposes
-        if target_type == "City"
-          city = location_name
-          county = location_name  # Use city name as county placeholder
-          # Create a pseudo zip code based on state and city
-          zip_code = "#{state}#{city.parameterize[0..6]}".ljust(5, "0")[0..4]
-        elsif target_type == "County"
-          city = location_name
-          county = location_name
-          # Create a pseudo zip code based on state and county
-          zip_code = "#{state}#{location_name.parameterize[0..6]}".ljust(5, "1")[0..4]
-        end
+        # Process all target types (City, County, Region, etc.)
+        # Create entries for each type
+        city = location_name
+        county = location_name
+        
+        # Create a pseudo zip code based on state, location name, and target type
+        # This ensures different types get different zip codes
+        type_suffix = case target_type
+                      when "City" then "0"
+                      when "County" then "1"
+                      when "Region" then "2"
+                      when "State" then "3"
+                      when "Postal Code" then "4"
+                      when "Metro" then "5"
+                      when "Neighborhood" then "6"
+                      else "9"
+                      end
+        
+        zip_code = "#{state}#{location_name.parameterize[0..6]}#{type_suffix}".ljust(5, "0")[0..4]
 
         # Find or initialize the record
         mapping = AddressGeographicMapping.find_or_initialize_by(
@@ -128,7 +127,7 @@ namespace :geographic do
             updated += 1
           end
         else
-          puts "Error saving row #{total_rows} (#{location_name}, #{state}): #{mapping.errors.full_messages.join(', ')}"
+          puts "Error saving row #{total_rows} (#{location_name}, #{state}, #{target_type}): #{mapping.errors.full_messages.join(', ')}"
           errors += 1
         end
 
