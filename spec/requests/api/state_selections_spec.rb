@@ -4,7 +4,7 @@ RSpec.describe 'Api::StateSelections', type: :request do
   let(:user) { create(:user) }
 
   before do
-    sign_in_user(user)
+    sign_in user
   end
 
   describe 'GET /api/state_selections' do
