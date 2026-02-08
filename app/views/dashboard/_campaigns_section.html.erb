@@ -68,23 +68,6 @@
       <div class="mb-6">
         <%= render 'dashboard/geographic_search', campaign_id: 'selectedCampaignId' %>
       </div>
-
-      <div class="grid lg:grid-cols-2 gap-6">
-        <!-- Unmatched Locations Panel -->
-        <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <h3 class="mb-2 text-sm font-semibold text-amber-800">
-            <%= t('campaigns.unmatched_locations_title', default: 'Endereços não encontrados') %>
-          </h3>
-          <p class="mb-2 text-xs text-amber-700">
-            <%= t('campaigns.unmatched_locations_hint', default: 'Itens que não foram encontrados na base de GeoTargets aparecerão aqui.') %>
-          </p>
-          <div id="unmatched-locations-list" class="min-h-[40px] rounded-md border border-dashed border-amber-200 bg-white/70 p-2">
-            <p class="text-xs text-amber-500">
-              <%= t('campaigns.unmatched_locations_empty', default: 'Nenhum endereço não encontrado até o momento.') %>
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   <% end %>
 </div>
