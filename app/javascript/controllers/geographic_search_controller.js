@@ -435,15 +435,58 @@ export default class extends Controller {
       }
     })
 
-    // Emit event or call parent function to add locations
-    this.dispatch('locationsSelected', { detail: { locations: selectedLocations } })
+    // Call API to update geo targets
+    this.updateGeoTargets(selectedLocations)
+  }
 
-    // Show success modal
-    this.showSuccessModal(selectedLocations.length)
+  async updateGeoTargets(locations) {
+    try {
+      // Format locations for the API - pass city name only or zip code
+      const formattedLocations = locations.map(loc => {
+        // Try with city name first, or use zip code as fallback
+        return loc.city || loc.zip_code
+      }).filter(Boolean)
 
-    // Clear search
-    this.searchInputTarget.value = ''
-    this.clearSearchResults()
+      if (formattedLocations.length === 0) {
+        alert('Nenhuma localização válida para processar')
+        return
+      }
+
+      const response = await fetch('/api/geo_targets/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+          'Accept': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          campaign_id: this.campaignIdValue,
+          locations: formattedLocations,
+          country_code: 'US'
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        console.error('Error updating geo targets:', error)
+        alert('Erro ao atualizar localizações: ' + (error.error || 'Erro desconhecido'))
+        return
+      }
+
+      const data = await response.json()
+      console.log('Geo targets updated:', data)
+
+      // Show success modal
+      this.showSuccessModal(locations.length)
+
+      // Clear search
+      this.searchInputTarget.value = ''
+      this.clearSearchResults()
+    } catch (error) {
+      console.error('Error updating geo targets:', error)
+      alert('Erro ao atualizar localizações: ' + error.message)
+    }
   }
 
   showSuccessModal(count) {

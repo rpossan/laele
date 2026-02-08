@@ -55,8 +55,8 @@
       </div>
 
       <!-- Geographic Search Component (Two-Stage) -->
-      <div class="mb-6">
-        <%= render 'dashboard/geographic_search', campaign_id: 'selectedCampaignId' %>
+      <div class="mb-6" id="geographic-search-container">
+        <%= render 'dashboard/geographic_search', campaign_id: '' %>
       </div>
     </div>
   <% end %>
@@ -141,6 +141,12 @@
             if (this.value) {
               locationManagement.classList.remove('hidden');
               fetchCurrentLocations();
+              
+              // Update the geographic search controller with the selected campaign ID
+              const geographicSearchComponent = document.getElementById('geographic-search-component');
+              if (geographicSearchComponent) {
+                geographicSearchComponent.setAttribute('data-geographic-search-campaign-id-value', this.value);
+              }
             } else {
               locationManagement.classList.add('hidden');
             }
@@ -243,6 +249,12 @@
         if (this.value) {
           locationManagement.classList.remove('hidden');
           fetchCurrentLocations();
+          
+          // Update the geographic search controller with the selected campaign ID
+          const geographicSearchComponent = document.getElementById('geographic-search-component');
+          if (geographicSearchComponent) {
+            geographicSearchComponent.setAttribute('data-geographic-search-campaign-id-value', this.value);
+          }
         } else {
           locationManagement.classList.add('hidden');
         }
@@ -256,6 +268,12 @@
           if (this.value) {
             locationManagement.classList.remove('hidden');
             fetchCurrentLocations();
+            
+            // Update the geographic search controller with the selected campaign ID
+            const geographicSearchComponent = document.getElementById('geographic-search-component');
+            if (geographicSearchComponent) {
+              geographicSearchComponent.setAttribute('data-geographic-search-campaign-id-value', this.value);
+            }
           } else {
             locationManagement.classList.add('hidden');
           }

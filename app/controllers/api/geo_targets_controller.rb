@@ -22,10 +22,6 @@ module Api
     end
 
     def update
-      selection = current_user.active_customer_selection
-      return render_error("Selecione uma conta antes de atualizar os targets de localização") unless selection
-
-      customer_id = params[:customer_id] || selection.customer_id
       campaign_id = params[:campaign_id]
       locations = params[:locations]
       country_code = params[:country_code] || "US"
@@ -38,6 +34,11 @@ module Api
         return render_error("locations é obrigatório")
       end
 
+      selection = current_user.active_customer_selection
+      return render_error("Selecione uma conta antes de atualizar os targets de localização") unless selection
+
+      customer_id = params[:customer_id] || selection.customer_id
+
       # Normalize locations to array (can be string, array, or array of resource names)
       locations_array = if locations.is_a?(Array)
         locations
@@ -47,6 +48,13 @@ module Api
         locations.include?(',') ? locations.split(',').map(&:strip) : [locations]
       else
         Array(locations)
+      end
+
+      # Filter out empty strings and validate
+      locations_array = locations_array.reject { |loc| loc.to_s.strip.blank? }
+
+      unless locations_array.present?
+        return render_error("locations é obrigatório")
       end
 
       Rails.logger.info("[Api::GeoTargetsController] Updating geo targets for campaign #{campaign_id}")
@@ -62,13 +70,16 @@ module Api
 
         result = service.apply(locations_array, country_code: country_code)
 
+        # Ensure total_count is always present
+        result[:total_count] ||= result[:applied_geo_targets]&.size || 0
+
         # Log activity
         ActivityLogger.log_geo_targets_updated(
           user: current_user,
           campaign_id: campaign_id,
           added_count: result[:added_count] || 0,
           removed_count: result[:removed_count] || 0,
-          total_count: result[:total_count] || result[:applied_geo_targets]&.size || 0,
+          total_count: result[:total_count],
           locations: result[:applied_geo_targets] || [],
           request: request
         )
