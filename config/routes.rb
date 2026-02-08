@@ -51,6 +51,14 @@ Rails.application.routes.draw do
       end
     end
 
+    # State selections management
+    get "state_selections", to: "state_selections#index"
+    post "state_selections", to: "state_selections#update"
+    delete "state_selections", to: "state_selections#clear"
+
+    # Location search with state filtering
+    post "location_search", to: "location_search#search"
+
     get "geo_targets/search", to: "geo_targets#search"
     post "geo_targets/update", to: "geo_targets#update"
   end
