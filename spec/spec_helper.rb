@@ -16,6 +16,11 @@ RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.
+
+  config.before(:each, type: :request) do
+    Rails.application.reload_routes_unless_loaded
+  end
+
   config.expect_with :rspec do |expectations|
     # This option will default to `true` in RSpec 4. It makes the RSpec
     # examples/groups fail if there are any expectations defined outside the
