@@ -282,6 +282,8 @@ en:
     searching: "Searching..."
     paste_locations: "Paste locations"
     paste_placeholder: "Ex: Duluth, 30301, Fulton County"
+    locations_processed: "Locations Processed"
+    locations_processed_message: "Locations have been added successfully!"
 
   # Dashboard
   dashboard:

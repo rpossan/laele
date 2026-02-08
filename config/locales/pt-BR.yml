@@ -287,6 +287,8 @@ pt-BR:
     searching: "Buscando..."
     paste_locations: "Cole as localizações"
     paste_placeholder: "Ex: Duluth, 30301, Fulton County"
+    locations_processed: "Localizações Processadas"
+    locations_processed_message: "As localizações foram adicionadas com sucesso!"
 
   # Dashboard
   dashboard:

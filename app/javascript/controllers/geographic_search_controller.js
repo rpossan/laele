@@ -10,7 +10,9 @@ export default class extends Controller {
     "resultsContainer",
     "noResultsMessage",
     "selectedResultsCheckboxes",
-    "selectedStatesList"
+    "selectedStatesList",
+    "successModal",
+    "successMessage"
   ]
 
   static values = {
@@ -436,9 +438,22 @@ export default class extends Controller {
     // Emit event or call parent function to add locations
     this.dispatch('locationsSelected', { detail: { locations: selectedLocations } })
 
+    // Show success modal
+    this.showSuccessModal(selectedLocations.length)
+
     // Clear search
     this.searchInputTarget.value = ''
     this.clearSearchResults()
+  }
+
+  showSuccessModal(count) {
+    const successMessage = this.successMessageTarget
+    successMessage.textContent = `${count} localização${count !== 1 ? 's' : ''} adicionada${count !== 1 ? 's' : ''} com sucesso!`
+    this.successModalTarget.classList.remove('hidden')
+  }
+
+  closeSuccessModal() {
+    this.successModalTarget.classList.add('hidden')
   }
 
   removeLocation(event) {
