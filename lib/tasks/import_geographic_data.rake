@@ -62,8 +62,10 @@ namespace :geographic do
           next
         end
 
-        # Parse canonical name format: "City/County/Region,State,Country"
-        # Example: "Abbeville,Alabama,United States"
+        # Parse canonical name format: "Location[,County],State,Country"
+        # Examples: 
+        #   "Abbeville,Alabama,United States" (City only)
+        #   "Grove Hill,Clarke County,Alabama,United States" (City with County)
         parts = canonical_name.split(",").map(&:strip)
         unless parts.size >= 2
           skipped += 1
@@ -71,8 +73,44 @@ namespace :geographic do
           next
         end
 
+        # Determine state and location based on number of parts and content
+        # If 4 parts: Location, County, State, Country
+        # If 3 parts: Could be "Location, State, Country" OR "Location, County, Country" (no state)
+        # If 2 parts: "Location, Country" (location might be the state itself)
+        
         location_name = parts[0]
-        state_name = parts[1]
+        county_name = nil
+        state_name = nil
+        
+        if parts.size >= 4
+          # 4+ parts: Location, County, State, Country
+          county_name = parts[1]
+          state_name = parts[2]
+        elsif parts.size == 3
+          # 3 parts: Need to determine if parts[1] is State or County
+          potential_state = state_name_to_code(parts[1])
+          
+          if potential_state.present?
+            # parts[1] is a state name
+            state_name = parts[1]
+            county_name = parts[0]  # Use location as county placeholder
+          else
+            # parts[1] might be a county name, try to extract state from it
+            # County names often end with "County" or contain state info
+            county_name = parts[1]
+            
+            # Try to extract state from county name (e.g., "Traverse County" -> look up state)
+            # For now, we'll skip these as we can't reliably determine the state
+            skipped += 1
+            skip_reasons["unable_to_determine_state_from_county"] += 1
+            next
+          end
+        else
+          # 2 parts: Location, Country (location might be the state itself)
+          location_name = parts[0]
+          county_name = parts[0]  # Use location as county placeholder
+          state_name = parts[0]   # Try location as state name first
+        end
         
         # Convert state name to state code (e.g., "Alabama" -> "AL")
         state = state_name_to_code(state_name)
@@ -87,7 +125,7 @@ namespace :geographic do
         # Process all target types (City, County, Region, etc.)
         # Create entries for each type
         city = location_name
-        county = location_name
+        county = county_name
         
         # Create a pseudo zip code based on state, location name, and target type
         # This ensures different types get different zip codes
