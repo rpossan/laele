@@ -280,6 +280,8 @@ en:
     locations: "locations"
     error_applying: "Error applying locations"
     searching: "Searching..."
+    paste_locations: "Paste locations"
+    paste_placeholder: "Ex: Duluth, 30301, Fulton County"
 
   # Dashboard
   dashboard:

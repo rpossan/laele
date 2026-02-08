@@ -285,6 +285,8 @@ pt-BR:
     locations: "localizações"
     error_applying: "Erro ao aplicar localizações"
     searching: "Buscando..."
+    paste_locations: "Cole as localizações"
+    paste_placeholder: "Ex: Duluth, 30301, Fulton County"
 
   # Dashboard
   dashboard:
