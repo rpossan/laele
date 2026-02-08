@@ -123,7 +123,8 @@ export default class extends Controller {
     // Update UI
     this.updateStateSelectionUI(selectedStates)
 
-    // Clear search results when state selection changes
+    // Clear search results and unmatched items when state selection changes
+    this.unmatchedItems.clear()
     this.clearSearchResults()
   }
 
@@ -298,7 +299,8 @@ export default class extends Controller {
       const results = data.results || []
       const unmatched = data.unmatched || []
 
-      // Add unmatched items to the set
+      // Clear previous unmatched items and add only the new ones from this search
+      this.unmatchedItems.clear()
       unmatched.forEach(term => this.unmatchedItems.add(term))
       this.updateUnmatchedLocations()
 
