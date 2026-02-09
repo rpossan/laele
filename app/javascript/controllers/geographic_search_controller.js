@@ -419,7 +419,7 @@ export default class extends Controller {
     const resultItems = resultsContainer.querySelectorAll('.flex.items-center.gap-3')
     
     if (resultItems.length === 0) {
-      alert('Nenhuma localização para processar')
+      this.showErrorModal('Nenhuma localização para processar')
       return
     }
 
@@ -435,11 +435,33 @@ export default class extends Controller {
       }
     })
 
-    // Call API to update geo targets
-    this.updateGeoTargets(selectedLocations)
+    // Show loading state on button
+    const processButton = document.querySelector('[data-action="click->geographic-search#addSelectedResults"]')
+    const removeAllButton = document.querySelector('[data-action="click->geographic-search#removeAllLocations"]')
+    
+    if (processButton) {
+      processButton.disabled = true
+      const originalHTML = processButton.innerHTML
+      processButton.innerHTML = `
+        <svg class="inline-block w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Processando...
+      `
+      
+      if (removeAllButton) {
+        removeAllButton.disabled = true
+      }
+      
+      // Call API to update geo targets
+      this.updateGeoTargets(selectedLocations, processButton, originalHTML, removeAllButton)
+    } else {
+      // Fallback if button not found
+      this.updateGeoTargets(selectedLocations)
+    }
   }
 
-  async updateGeoTargets(locations) {
+  async updateGeoTargets(locations, processButton, originalHTML, removeAllButton) {
     try {
       // Format locations for the API - pass city name only or zip code
       const formattedLocations = locations.map(loc => {
@@ -448,7 +470,15 @@ export default class extends Controller {
       }).filter(Boolean)
 
       if (formattedLocations.length === 0) {
-        alert('Nenhuma localização válida para processar')
+        this.showErrorModal('Nenhuma localização válida para processar')
+        // Restore button state
+        if (processButton) {
+          processButton.disabled = false
+          processButton.innerHTML = originalHTML
+        }
+        if (removeAllButton) {
+          removeAllButton.disabled = false
+        }
         return
       }
 
@@ -467,14 +497,25 @@ export default class extends Controller {
         })
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        const error = await response.json()
-        console.error('Error updating geo targets:', error)
-        alert('Erro ao atualizar localizações: ' + (error.error || 'Erro desconhecido'))
+        // Show error message from API
+        const errorMessage = data.error || 'Erro desconhecido ao atualizar localizações'
+        this.showErrorModal(errorMessage)
+        console.error('Error updating geo targets:', data)
+        
+        // Restore button state
+        if (processButton) {
+          processButton.disabled = false
+          processButton.innerHTML = originalHTML
+        }
+        if (removeAllButton) {
+          removeAllButton.disabled = false
+        }
         return
       }
 
-      const data = await response.json()
       console.log('Geo targets updated:', data)
 
       // Show success modal
@@ -483,9 +524,27 @@ export default class extends Controller {
       // Clear search
       this.searchInputTarget.value = ''
       this.clearSearchResults()
+      
+      // Restore button state
+      if (processButton) {
+        processButton.disabled = false
+        processButton.innerHTML = originalHTML
+      }
+      if (removeAllButton) {
+        removeAllButton.disabled = false
+      }
     } catch (error) {
       console.error('Error updating geo targets:', error)
-      alert('Erro ao atualizar localizações: ' + error.message)
+      this.showErrorModal('Erro ao atualizar localizações: ' + error.message)
+      
+      // Restore button state
+      if (processButton) {
+        processButton.disabled = false
+        processButton.innerHTML = originalHTML
+      }
+      if (removeAllButton) {
+        removeAllButton.disabled = false
+      }
     }
   }
 
@@ -497,6 +556,46 @@ export default class extends Controller {
 
   closeSuccessModal() {
     this.successModalTarget.classList.add('hidden')
+  }
+
+  showErrorModal(message) {
+    // Create error modal if it doesn't exist
+    let errorModal = document.getElementById('error-modal')
+    if (!errorModal) {
+      errorModal = document.createElement('div')
+      errorModal.id = 'error-modal'
+      errorModal.className = 'hidden fixed inset-0 bg-black bg-opacity-5 backdrop-blur-sm flex items-center justify-center z-50'
+      errorModal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm mx-4">
+          <div class="flex items-center justify-center mb-4">
+            <div class="flex-shrink-0">
+              <svg class="h-12 w-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+          <h3 class="text-lg font-medium text-slate-900 text-center mb-2">
+            Erro ao Processar Localizações
+          </h3>
+          <p class="text-sm text-slate-600 text-center mb-6" id="error-message">
+          </p>
+          <button 
+            type="button"
+            onclick="document.getElementById('error-modal').classList.add('hidden')"
+            class="w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition">
+            Fechar
+          </button>
+        </div>
+      `
+      document.body.appendChild(errorModal)
+    }
+
+    // Update error message
+    const errorMessageEl = errorModal.querySelector('#error-message')
+    errorMessageEl.textContent = message
+
+    // Show modal
+    errorModal.classList.remove('hidden')
   }
 
   removeLocation(event) {

@@ -235,7 +235,7 @@ RSpec.describe 'Api::GeoTargets', type: :request do
         }
 
         expect(response).to have_http_status(:internal_server_error)
-        expect(json_response['error']).to include('Erro inesperado')
+        expect(json_response['error']).to include('Erro ao atualizar targets de localização')
       end
     end
 

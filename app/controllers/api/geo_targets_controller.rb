@@ -86,15 +86,62 @@ module Api
 
         render json: result
       rescue Google::Ads::GoogleAds::Errors::GoogleAdsError => e
-        error_message = "Erro ao atualizar targets de localização: #{e.message}"
+        # Extract detailed error message from Google Ads API response
+        detailed_error = extract_google_ads_error_details(e)
+        error_message = "Erro ao atualizar targets de localização: #{detailed_error}"
         Rails.logger.error("[Api::GeoTargetsController] #{error_message}")
         render_error(error_message, :unprocessable_entity)
       rescue => e
-        error_message = "Erro inesperado ao atualizar targets de localização: #{e.message}"
+        # Extract detailed error message if it's a RuntimeError from API
+        detailed_error = extract_api_error_details(e)
+        error_message = "Erro ao atualizar targets de localização: #{detailed_error}"
         Rails.logger.error("[Api::GeoTargetsController] #{error_message}")
         Rails.logger.error("[Api::GeoTargetsController] Backtrace: #{e.backtrace.first(10).join("\n")}")
         render_error(error_message, :internal_server_error)
       end
+    end
+
+    private
+
+    def extract_google_ads_error_details(error)
+      # Try to extract error details from Google Ads error
+      error.message
+    end
+
+    def extract_api_error_details(error)
+      # Check if error message contains JSON from API response
+      if error.message.include?("Google Ads API error:")
+        # Try to parse and extract the actual error message
+        begin
+          # Extract JSON from error message
+          json_start = error.message.index('{')
+          json_end = error.message.rindex('}')
+          
+          if json_start && json_end
+            json_str = error.message[json_start..json_end]
+            error_data = JSON.parse(json_str)
+            
+            # Extract the most relevant error message
+            if error_data['error'] && error_data['error']['details']
+              details = error_data['error']['details'].first
+              if details && details['errors']
+                first_error = details['errors'].first
+                # Try to get the specific error message first
+                if first_error && first_error['message']
+                  return first_error['message']
+                end
+              end
+            end
+            
+            # Fallback to main error message
+            return error_data['error']['message'] if error_data['error'] && error_data['error']['message']
+          end
+        rescue => parse_error
+          Rails.logger.warn("[Api::GeoTargetsController] Failed to parse error details: #{parse_error.message}")
+        end
+      end
+      
+      error.message
     end
   end
 end
