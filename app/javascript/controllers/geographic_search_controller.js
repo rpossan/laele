@@ -392,20 +392,17 @@ export default class extends Controller {
     if (this.unmatchedItems.size === 0) {
       unmatchedList.innerHTML = `
         <div class="flex flex-col items-center justify-center py-8 text-center">
-          <svg class="w-8 h-8 text-red-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-8 h-8 text-green-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          <p class="text-xs text-red-500 font-medium">
-            Nenhum endereço não encontrado
+          <p class="text-xs text-green-600 font-medium">
+            Todos os endereços foram encontrados
           </p>
         </div>
       `
     } else {
       const badgesHtml = Array.from(this.unmatchedItems).map(item => `
         <div class="inline-flex items-center gap-2 rounded-lg bg-red-100 px-3 py-2 text-xs font-medium text-red-800 mr-2 mb-2 border border-red-200">
-          <svg class="w-4 h-4 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 2.697m8.368 12.192a6 6 0 01-8.368-8.368m8.368 8.368L2.697 5.11m12.192 8.368a6 6 0 01-8.368-8.368m8.368 8.368L2.697 5.11" clip-rule="evenodd"/>
-          </svg>
           <span>${item}</span>
         </div>
       `).join('')
