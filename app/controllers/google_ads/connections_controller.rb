@@ -2,7 +2,7 @@ require "ostruct"
 
 module GoogleAds
   class ConnectionsController < ApplicationController
-    before_action :authenticate_user!, except: [:callback]
+    before_action :authenticate_user!, except: [ :callback ]
     before_action :set_google_account, only: :destroy
 
     def start
@@ -46,7 +46,7 @@ module GoogleAds
         # Create a new account without login_customer_id (will be set later)
         google_account = @user.google_accounts.build
       end
-      
+
       refresh_token = token_client.refresh_token
 
       if refresh_token.blank?
@@ -67,11 +67,53 @@ module GoogleAds
         return
       end
 
-      # Store customer_ids in session and redirect to selection page
+      # Store customer_ids in session
       session[:pending_google_account_id] = google_account.id
       session[:accessible_customer_ids] = customer_ids
 
-      redirect_to google_ads_select_account_path, notice: "Encontramos #{customer_ids.count} conta(s) acessível(is). Por favor, escolha qual conta deseja usar."
+      # Check if user is allowed (MVP/admin bypass) - skip all plan selection
+      if @user.allowed?
+        # Allowed users get full access to all accounts without plan selection
+        session[:selected_customer_ids] = customer_ids
+        session[:skip_plan_selection] = true
+
+        # Activate all accounts for allowed users
+        customer_ids.each do |cid|
+          ac = google_account.accessible_customers.find_or_create_by(customer_id: cid)
+          ac.update(active: true)
+        end
+
+        redirect_to google_ads_select_account_path, notice: "Conectado! Selecione a conta principal para continuar."
+        return
+      end
+
+      # Check if user already has an active subscription
+      existing_subscription = @user.user_subscription
+      if existing_subscription&.active? || existing_subscription&.pending?
+        # User already has a plan - skip plan selection, go directly to account selection
+        # Use only the active accounts from their existing subscription
+        session[:selected_plan_id] = existing_subscription.plan_id
+
+        # Get previously active customer IDs from accessible_customers
+        active_customer_ids = google_account.accessible_customers.active.pluck(:customer_id)
+        if active_customer_ids.any?
+          session[:selected_customer_ids] = active_customer_ids
+        else
+          # If no active accounts stored yet, use all for unlimited or go to plan selection
+          if existing_subscription.plan.unlimited? && existing_subscription.plan.max_accounts.nil?
+            session[:selected_customer_ids] = customer_ids
+          else
+            # Something is wrong, let them select accounts again within their plan limits
+            redirect_to google_ads_select_plan_path, notice: "Reconectado! Por favor, confirme as contas ativas do seu plano."
+            return
+          end
+        end
+
+        redirect_to google_ads_select_account_path, notice: "Reconectado! Selecione a conta principal para continuar."
+      else
+        # No subscription - go to plan selection
+        redirect_to google_ads_select_plan_path, notice: "Encontramos #{customer_ids.count} conta(s) acessível(is). Por favor, escolha um plano para continuar."
+      end
     rescue Signet::AuthorizationError => e
       error_message = if e.message.include?("invalid_grant")
         "Código de autorização inválido ou expirado. Por favor, tente conectar novamente."
@@ -85,7 +127,7 @@ module GoogleAds
       redirect_to dashboard_path, alert: "Erro ao salvar conta: #{e.message}"
     end
 
-    def select_account
+    def select_plan
       google_account_id = session[:pending_google_account_id]
       customer_ids = session[:accessible_customer_ids]
 
@@ -96,53 +138,172 @@ module GoogleAds
 
       @google_account = current_user.google_accounts.find(google_account_id)
       @customer_ids = customer_ids
-      
-      # Fetch customer names in parallel for performance
-      @customer_names = {}
-      
-      if customer_ids.any?
-        Rails.logger.info("[GoogleAds::ConnectionsController] Fetching names for #{customer_ids.count} customers in parallel")
-        
-        threads = []
-        mutex = Mutex.new
-        
-        customer_ids.each do |customer_id|
-          threads << Thread.new(customer_id) do |cid|
-            begin
-              # Each customer can only be queried using its own ID as login_customer_id
-              temp_account = OpenStruct.new(
-                refresh_token: @google_account.refresh_token,
-                login_customer_id: cid
-              )
-              
-              temp_service = GoogleAds::CustomerService.new(google_account: temp_account)
-              details = temp_service.fetch_customer_details(cid)
-              
-              if details && details[:descriptive_name].present?
-                mutex.synchronize do
-                  @customer_names[cid] = details[:descriptive_name]
-                  Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Fetched name for #{cid}: #{details[:descriptive_name]}")
-                end
-              else
-                Rails.logger.warn("[GoogleAds::ConnectionsController] No name found for #{cid}")
-              end
-            rescue => e
-              Rails.logger.warn("[GoogleAds::ConnectionsController] Failed to fetch name for #{cid}: #{e.message}")
-            end
-          end
-        end
-        
-        # Wait for all threads to complete
-        threads.each(&:join)
-        
-        Rails.logger.info("[GoogleAds::ConnectionsController] Successfully fetched #{@customer_names.count} names out of #{customer_ids.count}")
+      @accounts_count = customer_ids.count
+
+      # Fetch available plans
+      @plans = Plan.active.ordered
+
+      # Fetch customer names for display
+      @customer_names = fetch_customer_names(@google_account, customer_ids)
+    end
+
+    def save_plan_selection
+      google_account_id = session[:pending_google_account_id]
+      customer_ids = session[:accessible_customer_ids]
+      plan_id = params[:plan_id]
+      selected_ids = params[:selected_customer_ids] || []
+
+      # Ensure selected_ids is an array
+      selected_ids = [ selected_ids ] unless selected_ids.is_a?(Array)
+      selected_ids = selected_ids.reject(&:blank?)
+
+      unless google_account_id && customer_ids && plan_id.present?
+        redirect_to dashboard_path, alert: "Parâmetros inválidos."
+        return
       end
+
+      plan = Plan.active.find(plan_id)
+
+      # Validate selection
+      if selected_ids.empty?
+        redirect_to google_ads_select_plan_path, alert: "Selecione pelo menos uma conta para ativar."
+        return
+      end
+
+      # Check plan limits
+      if plan.max_accounts && selected_ids.count > plan.max_accounts
+        redirect_to google_ads_select_plan_path, alert: "Este plano permite no máximo #{plan.max_accounts} contas. Você selecionou #{selected_ids.count}."
+        return
+      end
+
+      # Store plan and selected accounts in session
+      session[:selected_plan_id] = plan.id
+      session[:selected_customer_ids] = selected_ids
+
+      # Create or update user subscription with selected accounts count
+      subscription = current_user.user_subscription || current_user.build_user_subscription
+      subscription.plan = plan
+      subscription.selected_accounts_count = selected_ids.count
+      subscription.status = "pending"
+      subscription.save!
+
+      # Go directly to main account selection
+      redirect_to google_ads_select_account_path, notice: "#{selected_ids.count} conta(s) selecionada(s)! Agora escolha qual será sua conta principal."
+    rescue ActiveRecord::RecordNotFound
+      redirect_to google_ads_select_plan_path, alert: "Plano não encontrado."
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to google_ads_select_plan_path, alert: "Erro ao salvar: #{e.message}"
+    end
+
+    def select_active_accounts
+      google_account_id = session[:pending_google_account_id]
+      customer_ids = session[:accessible_customer_ids]
+      plan_id = session[:selected_plan_id]
+
+      unless google_account_id && customer_ids && plan_id
+        redirect_to dashboard_path, alert: "Sessão expirada. Por favor, tente conectar novamente."
+        return
+      end
+
+      @google_account = current_user.google_accounts.find(google_account_id)
+      @customer_ids = customer_ids
+      @plan = Plan.find(plan_id)
+
+      # Calculate max accounts allowed
+      @max_accounts = @plan.max_accounts || customer_ids.count
+
+      # For per_account plan, no limit but price increases
+      @is_per_account = @plan.per_account?
+      @price_per_account = @plan.price_per_account_brl if @is_per_account
+
+      # Fetch customer names for display
+      @customer_names = fetch_customer_names(@google_account, customer_ids)
+    end
+
+    def save_active_accounts
+      google_account_id = session[:pending_google_account_id]
+      customer_ids = session[:accessible_customer_ids]
+      plan_id = session[:selected_plan_id]
+      selected_ids = params[:selected_customer_ids] || []
+
+      # Ensure selected_ids is an array
+      selected_ids = [ selected_ids ] unless selected_ids.is_a?(Array)
+      selected_ids = selected_ids.reject(&:blank?)
+
+      unless google_account_id && customer_ids && plan_id
+        redirect_to dashboard_path, alert: "Sessão expirada. Por favor, tente conectar novamente."
+        return
+      end
+
+      plan = Plan.find(plan_id)
+
+      # Validate selection
+      if selected_ids.empty?
+        redirect_to google_ads_select_active_accounts_path, alert: "Selecione pelo menos uma conta para ativar."
+        return
+      end
+
+      # Check plan limits
+      if plan.max_accounts && selected_ids.count > plan.max_accounts
+        redirect_to google_ads_select_active_accounts_path, alert: "Este plano permite no máximo #{plan.max_accounts} contas. Você selecionou #{selected_ids.count}."
+        return
+      end
+
+      # Store selected accounts and create/update subscription
+      session[:selected_customer_ids] = selected_ids
+
+      # Create or update user subscription with selected accounts count
+      subscription = current_user.user_subscription || current_user.build_user_subscription
+      subscription.plan = plan
+      subscription.selected_accounts_count = selected_ids.count
+      subscription.status = "pending"
+      subscription.save!
+
+      redirect_to google_ads_select_account_path, notice: "#{selected_ids.count} conta(s) selecionada(s)! Agora escolha qual será sua conta principal."
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to google_ads_select_active_accounts_path, alert: "Erro ao salvar: #{e.message}"
+    end
+
+    def select_account
+      google_account_id = session[:pending_google_account_id]
+      customer_ids = session[:accessible_customer_ids]
+      selected_customer_ids = session[:selected_customer_ids]
+
+      unless google_account_id && customer_ids
+        redirect_to dashboard_path, alert: "Sessão expirada. Por favor, tente conectar novamente."
+        return
+      end
+
+      # Check if plan was selected
+      unless session[:selected_plan_id].present?
+        redirect_to google_ads_select_plan_path, alert: "Por favor, selecione um plano primeiro."
+        return
+      end
+
+      @google_account = current_user.google_accounts.find(google_account_id)
+      @selected_plan = Plan.find(session[:selected_plan_id])
+
+      # For unlimited plan with no max, all accounts are selectable
+      if @selected_plan.unlimited? && @selected_plan.max_accounts.nil?
+        @customer_ids = customer_ids
+        @active_customer_ids = customer_ids
+      else
+        # Only show selected/active accounts for selection
+        @customer_ids = selected_customer_ids || customer_ids
+        @active_customer_ids = selected_customer_ids || []
+      end
+
+      @selected_accounts_count = @active_customer_ids.count
+
+      # Fetch customer names in parallel for performance
+      @customer_names = fetch_customer_names(@google_account, customer_ids)
     end
 
     def save_account_selection
       google_account_id = params[:google_account_id]
       selected_customer_id = params[:login_customer_id]
       customer_names_json = params[:customer_names]
+      selected_customer_ids = session[:selected_customer_ids] || session[:accessible_customer_ids]
 
       unless google_account_id.present? && selected_customer_id.present?
         redirect_to dashboard_path, alert: "Parâmetros inválidos."
@@ -150,7 +311,8 @@ module GoogleAds
       end
 
       google_account = current_user.google_accounts.find(google_account_id)
-      
+      plan = Plan.find(session[:selected_plan_id]) if session[:selected_plan_id]
+
       # Parse customer names from form
       customer_names = {}
       begin
@@ -158,10 +320,10 @@ module GoogleAds
       rescue => e
         Rails.logger.warn("[GoogleAds::ConnectionsController] Failed to parse customer_names: #{e.message}")
       end
-      
+
       # Check if account with this login_customer_id already exists
       existing_account = current_user.google_accounts.where(login_customer_id: selected_customer_id).where.not(id: google_account.id).first
-      
+
       if existing_account
         # Merge: delete the new account and use the existing one
         google_account.destroy
@@ -175,45 +337,57 @@ module GoogleAds
       selection = current_user.active_customer_selection || current_user.build_active_customer_selection
       selection.customer_id = selected_customer_id
       selection.google_account = google_account
-      
+
       unless selection.save
         Rails.logger.error("[GoogleAds::ConnectionsController] Failed to save ActiveCustomerSelection: #{selection.errors.full_messages.join(', ')}")
         redirect_to dashboard_path, alert: "Erro ao salvar seleção: #{selection.errors.full_messages.join(', ')}"
         return
       end
-      
+
       Rails.logger.info("[GoogleAds::ConnectionsController] Created/updated ActiveCustomerSelection: customer_id=#{selection.customer_id}, google_account_id=#{selection.google_account_id}, id=#{selection.id}")
 
       session[:active_customer_id] = selection.customer_id
       session[:active_google_account_id] = selection.google_account_id
 
-      # Try to fetch accessible customers and save them with names
+      # Try to fetch accessible customers and save them with names and active status
       begin
         service = GoogleAds::CustomerService.new(google_account: google_account)
         fetched_customer_ids = service.list_accessible_customers
-        
+
         Rails.logger.info("[GoogleAds::ConnectionsController] Creating #{fetched_customer_ids.count} AccessibleCustomer records")
-        
-        # Create AccessibleCustomer records with names from form
+
+        # Determine which accounts should be active
+        active_ids = if plan&.unlimited? && plan.max_accounts.nil?
+          fetched_customer_ids # All active for unlimited plan
+        else
+          selected_customer_ids || []
+        end
+
+        # Create AccessibleCustomer records with names from form and active status
         fetched_customer_ids.each do |customer_id|
           display_name = customer_names[customer_id]
           accessible_customer = google_account.accessible_customers.find_or_create_by(customer_id: customer_id)
-          
+
+          # Set active status based on selection
+          is_active = active_ids.include?(customer_id)
+          accessible_customer.active = is_active
+
           if display_name.present? && accessible_customer.display_name.blank?
-            accessible_customer.update(display_name: display_name)
-            Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Saved name for #{customer_id}: #{display_name}")
-          elsif display_name.blank?
-            Rails.logger.warn("[GoogleAds::ConnectionsController] No name available for #{customer_id}")
+            accessible_customer.display_name = display_name
+          end
+
+          accessible_customer.save!
+
+          if is_active
+            Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Activated account #{customer_id}: #{display_name}")
+          else
+            Rails.logger.info("[GoogleAds::ConnectionsController] ⚪ Inactive account #{customer_id}: #{display_name}")
           end
         end
-        
+
       rescue => e
         Rails.logger.warn("[GoogleAds::ConnectionsController] Could not fetch accessible customers: #{e.message}")
       end
-
-      # Clear session data
-      session.delete(:pending_google_account_id)
-      session.delete(:accessible_customer_ids)
 
       # Log activity
       ActivityLogger.log_account_connected(
@@ -222,20 +396,144 @@ module GoogleAds
         request: request
       )
 
-      redirect_to leads_path, notice: "Conta Google Ads conectada com sucesso!"
+      # Check if this is a new subscription or existing one
+      subscription = current_user.user_subscription
+
+      # If subscription is already active (reconnection case), go directly to dashboard
+      if subscription&.active?
+        # Clear session data
+        session.delete(:pending_google_account_id)
+        session.delete(:accessible_customer_ids)
+        session.delete(:selected_plan_id)
+        session.delete(:selected_customer_ids)
+
+        redirect_to leads_path, notice: "Conta Google Ads reconectada com sucesso!"
+        return
+      end
+
+      # New subscription or pending - redirect to payment confirmation
+      if subscription&.pending? && subscription.plan.present?
+        # Store data needed after Stripe callback
+        session[:stripe_pending_subscription] = {
+          google_account_id: google_account.id,
+          selected_customer_ids: selected_customer_ids,
+          plan_id: subscription.plan_id,
+          selected_accounts_count: subscription.selected_accounts_count
+        }
+
+        # Check if Stripe is configured
+        if ENV["STRIPE_SECRET_KEY"].present? && ENV["STRIPE_SECRET_KEY"] !~ /YOUR_SECRET_KEY/
+          # Redirect to payment confirmation page
+          redirect_to payments_confirm_path(
+            plan_id: subscription.plan_id,
+            selected_accounts_count: subscription.selected_accounts_count
+          )
+        else
+          # Stripe not configured - activate subscription directly (for development)
+          subscription.update!(status: "active", started_at: Time.current)
+          current_user.update!(allowed: true)
+
+          # Clear session data
+          session.delete(:pending_google_account_id)
+          session.delete(:accessible_customer_ids)
+          session.delete(:selected_plan_id)
+          session.delete(:selected_customer_ids)
+          session.delete(:stripe_pending_subscription)
+
+          redirect_to leads_path, notice: "Conta Google Ads conectada com sucesso! (Stripe não configurado - assinatura ativada automaticamente)"
+        end
+      else
+        # No subscription setup - something went wrong
+        redirect_to google_ads_select_plan_path, alert: "Por favor, selecione um plano para continuar."
+      end
+    end
+
+    def change_plan
+      @current_subscription = current_user.user_subscription
+      unless @current_subscription
+        redirect_to google_ads_select_plan_path, alert: "Você ainda não tem um plano. Por favor, selecione um."
+        return
+      end
+
+      @current_plan = @current_subscription.plan
+      @plans = Plan.active.ordered
+      @google_account = current_user.google_accounts.first
+
+      unless @google_account
+        redirect_to dashboard_path, alert: "Você precisa conectar uma conta Google Ads primeiro."
+        return
+      end
+
+      # Get all accessible customers for this account
+      @all_customer_ids = @google_account.accessible_customers.pluck(:customer_id)
+      @active_customer_ids = @google_account.accessible_customers.active.pluck(:customer_id)
+      @accounts_count = @all_customer_ids.count
+
+      # Fetch customer names for display
+      @customer_names = @google_account.accessible_customers.pluck(:customer_id, :display_name).to_h
+    end
+
+    def save_change_plan
+      plan_id = params[:plan_id]
+      selected_ids = params[:selected_customer_ids] || []
+
+      # Ensure selected_ids is an array
+      selected_ids = [ selected_ids ] unless selected_ids.is_a?(Array)
+      selected_ids = selected_ids.reject(&:blank?)
+
+      unless plan_id.present?
+        redirect_to google_ads_change_plan_path, alert: "Selecione um plano."
+        return
+      end
+
+      plan = Plan.active.find(plan_id)
+
+      # Validate selection
+      if selected_ids.empty?
+        redirect_to google_ads_change_plan_path, alert: "Selecione pelo menos uma conta para ativar."
+        return
+      end
+
+      # Check plan limits
+      if plan.max_accounts && selected_ids.count > plan.max_accounts
+        redirect_to google_ads_change_plan_path, alert: "Este plano permite no máximo #{plan.max_accounts} contas. Você selecionou #{selected_ids.count}."
+        return
+      end
+
+      # Update or create subscription
+      subscription = current_user.user_subscription || current_user.build_user_subscription
+      subscription.plan = plan
+      subscription.selected_accounts_count = selected_ids.count
+      subscription.status = "pending" # Payment will need to confirm
+      subscription.save!
+
+      # Update active status on accessible_customers
+      google_account = current_user.google_accounts.first
+      if google_account
+        google_account.accessible_customers.each do |ac|
+          is_active = selected_ids.include?(ac.customer_id)
+          ac.update!(active: is_active)
+        end
+      end
+
+      redirect_to dashboard_path, notice: "Plano alterado com sucesso! #{selected_ids.count} conta(s) ativa(s)."
+    rescue ActiveRecord::RecordNotFound
+      redirect_to google_ads_change_plan_path, alert: "Plano não encontrado."
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to google_ads_change_plan_path, alert: "Erro ao salvar: #{e.message}"
     end
 
     def destroy
       login_customer_id = @google_account.login_customer_id
       @google_account.destroy!
-      
+
       # Log activity
       ActivityLogger.log_account_disconnected(
         user: current_user,
         login_customer_id: login_customer_id,
         request: request
       )
-      
+
       redirect_to dashboard_path, notice: "Conexão removida."
     end
 
@@ -243,7 +541,7 @@ module GoogleAds
 
     def format_customer_id(customer_id)
       return "N/A" unless customer_id.present?
-      
+
       # Format customer_id: 9604421505 -> 960-442-1505
       digits = customer_id.to_s.gsub(/\D/, "")
       "#{digits[0..2]}-#{digits[3..5]}-#{digits[6..-1]}"
@@ -254,6 +552,49 @@ module GoogleAds
     def set_google_account
       @google_account = current_user.google_accounts.find(params[:id])
     end
+
+    def fetch_customer_names(google_account, customer_ids)
+      customer_names = {}
+
+      return customer_names unless customer_ids.any?
+
+      Rails.logger.info("[GoogleAds::ConnectionsController] Fetching names for #{customer_ids.count} customers in parallel")
+
+      threads = []
+      mutex = Mutex.new
+
+      customer_ids.each do |customer_id|
+        threads << Thread.new(customer_id) do |cid|
+          begin
+            # Each customer can only be queried using its own ID as login_customer_id
+            temp_account = OpenStruct.new(
+              refresh_token: google_account.refresh_token,
+              login_customer_id: cid
+            )
+
+            temp_service = GoogleAds::CustomerService.new(google_account: temp_account)
+            details = temp_service.fetch_customer_details(cid)
+
+            if details && details[:descriptive_name].present?
+              mutex.synchronize do
+                customer_names[cid] = details[:descriptive_name]
+                Rails.logger.info("[GoogleAds::ConnectionsController] ✅ Fetched name for #{cid}: #{details[:descriptive_name]}")
+              end
+            else
+              Rails.logger.warn("[GoogleAds::ConnectionsController] No name found for #{cid}")
+            end
+          rescue => e
+            Rails.logger.warn("[GoogleAds::ConnectionsController] Failed to fetch name for #{cid}: #{e.message}")
+          end
+        end
+      end
+
+      # Wait for all threads to complete
+      threads.each(&:join)
+
+      Rails.logger.info("[GoogleAds::ConnectionsController] Successfully fetched #{customer_names.count} names out of #{customer_ids.count}")
+
+      customer_names
+    end
   end
 end
-

@@ -1,11 +1,11 @@
-<% all_customers = (@google_accounts || []).flat_map(&:accessible_customers) %>
+<% all_customers = (@google_accounts || []).flat_map(&:plan_accessible_customers) %>
 
 <div class="space-y-6">
   <!-- Tabs Navigation -->
   <div class="border-b border-slate-200">
     <nav class="flex space-x-8" aria-label="Tabs">
-      <button 
-        id="tab-dashboard" 
+      <button
+        id="tab-dashboard"
         class="tab-button <%= current_page?(dashboard_path) && !current_page?(leads_path) ? 'active border-b-2 border-indigo-600 text-indigo-600' : 'border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' %> py-4 px-1 text-sm font-semibold transition-colors"
         onclick="switchTab('dashboard')">
         <div class="flex items-center gap-2">
@@ -15,8 +15,8 @@
           <span><%= t('navigation.dashboard') %></span>
         </div>
       </button>
-      <button 
-        id="tab-account" 
+      <button
+        id="tab-account"
         class="tab-button border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 py-4 px-1 text-sm font-semibold transition-colors"
         onclick="switchTab('account')">
         <div class="flex items-center gap-2">
@@ -26,8 +26,8 @@
           <span><%= t('navigation.account') %></span>
         </div>
       </button>
-      <button 
-        id="tab-leads" 
+      <button
+        id="tab-leads"
         class="tab-button <%= current_page?(leads_path) ? 'active border-b-2 border-indigo-600 text-indigo-600' : 'border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' %> py-4 px-1 text-sm font-semibold transition-colors"
         onclick="switchTab('leads')">
         <div class="flex items-center gap-2">
@@ -37,8 +37,8 @@
           <span><%= t('navigation.leads') %></span>
         </div>
       </button>
-      <button 
-        id="tab-campaigns" 
+      <button
+        id="tab-campaigns"
         class="tab-button border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 py-4 px-1 text-sm font-semibold transition-colors"
         onclick="switchTab('campaigns')">
         <div class="flex items-center gap-2">
@@ -128,16 +128,16 @@
 
       <!-- Footer -->
       <div class="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
-        <button 
-          type="button" 
-          onclick="closeAccountSwitcherModal()" 
+        <button
+          type="button"
+          onclick="closeAccountSwitcherModal()"
           class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:border-slate-300 transition">
           <%= t('common.cancel') %>
         </button>
-        <button 
-          type="button" 
+        <button
+          type="button"
           id="modal-save-btn"
-          onclick="saveAccountSelection()" 
+          onclick="saveAccountSelection()"
           class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition">
             <%= t('common.save') %>
           </button>
@@ -192,13 +192,13 @@
     document.querySelectorAll('.tab-content').forEach(content => {
       content.classList.add('hidden');
     });
-    
+
     // Remove active class from all tabs
     document.querySelectorAll('.tab-button').forEach(button => {
       button.classList.remove('active', 'border-indigo-600', 'text-indigo-600');
       button.classList.add('border-transparent', 'text-slate-500');
     });
-    
+
     // Show loading state
     const contentDiv = document.getElementById(`content-${tabName}`);
     if (contentDiv) {
@@ -206,12 +206,12 @@
       contentDiv.innerHTML = '<div class="flex items-center justify-center py-12"><div class="text-center"><svg class="mx-auto h-8 w-8 text-indigo-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><p class="mt-2 text-sm text-slate-600">' + loadingText + '</p></div></div>';
       contentDiv.classList.remove('hidden');
     }
-    
+
     // Add active class to selected tab
     const activeTab = document.getElementById(`tab-${tabName}`);
     activeTab.classList.add('active', 'border-indigo-600', 'text-indigo-600');
     activeTab.classList.remove('border-transparent', 'text-slate-500');
-    
+
     // Fetch updated content
     try {
       let url;
@@ -231,7 +231,7 @@
         default:
           return;
       }
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -241,11 +241,11 @@
         },
         credentials: 'same-origin'
       });
-      
+
       if (response.ok) {
         const html = await response.text();
         contentDiv.innerHTML = html;
-        
+
         // Reinitialize any scripts or components that need it
         if (tabName === 'campaigns') {
           // Reinitialize Select2 for campaigns tab if campaigns are already loaded
@@ -255,11 +255,11 @@
               const selectPlaceholder = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.select_campaign_placeholder : 'Select a campaign...';
               const noResultsText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.no_campaigns_found : 'No campaigns found';
               const searchingText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.searching : 'Searching...';
-              
+
               if (jQuery(campaignSelect).hasClass('select2-hidden-accessible')) {
                 jQuery(campaignSelect).select2('destroy');
               }
-              
+
               jQuery(campaignSelect).select2({
                 placeholder: selectPlaceholder,
                 allowClear: true,
@@ -273,12 +273,12 @@
                   }
                 }
               });
-              
+
               jQuery(campaignSelect).off('change').on('change', function() {
                 const selectedCampaignId = this.value;
                 const applyBtn = document.getElementById('apply-locations-btn');
                 const locationManagement = document.getElementById('location-management');
-                
+
                 if (this.value) {
                   locationManagement.classList.remove('hidden');
                   applyBtn.disabled = false;
@@ -296,7 +296,7 @@
             }
           }
         }
-        
+
         if (tabName === 'account') {
           // Reinitialize Select2 and event listeners for account tab
           if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
@@ -316,13 +316,13 @@
                 }
               }
             });
-            
+
             jQuery('#customer-select').off('change').on('change', async function() {
               const customerId = this.value;
               const googleAccountId = this.options[this.selectedIndex].dataset.googleAccountId;
-              
+
               if (!customerId) return;
-              
+
               try {
                 const response = await fetch('/api/google_ads/customers/select', {
                   method: 'POST',
@@ -334,9 +334,9 @@
                   credentials: 'same-origin',
                   body: JSON.stringify({ customer_id: customerId })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (response.ok) {
                   window.location.reload();
                 } else {
@@ -358,7 +358,7 @@
               fetchNamesBtn.disabled = true;
               const fetchingText = 'Busca inteligente...';
               fetchNamesBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + fetchingText + '</span>';
-              
+
               try {
                 const response = await fetch('/api/google_ads/customers/names/smart_fetch', {
                   method: 'POST',
@@ -368,9 +368,9 @@
                   },
                   credentials: 'same-origin'
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (response.ok) {
                   if (data.updated_count > 0) {
                     showSuccess(`${data.updated_count} nomes foram obtidos da API com sucesso!`);
@@ -410,7 +410,7 @@
     const modal = document.getElementById('account-switcher-modal');
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
-    
+
     // Initialize Select2 if not already initialized
     if (!jQuery('#modal-customer-select').hasClass('select2-hidden-accessible')) {
       const selectPlaceholder = window.I18n && window.I18n.account ? window.I18n.account.select_account : 'Select an account...';
@@ -441,7 +441,7 @@
         modalFetchNamesBtn.disabled = true;
         const fetchingText = 'Buscando nomes...';
         modalFetchNamesBtn.innerHTML = '<svg class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>' + fetchingText + '</span>';
-        
+
         try {
           const response = await fetch('/api/google_ads/customers/names/smart_fetch', {
             method: 'POST',
@@ -451,9 +451,9 @@
             },
             credentials: 'same-origin'
           });
-          
+
           const data = await response.json();
-          
+
           if (response.ok) {
             if (data.updated_count > 0) {
               showSuccess(`${data.updated_count} nomes foram obtidos da API com sucesso!`);
@@ -488,18 +488,18 @@
     const customerId = select.value;
     const selectedOption = select.options[select.selectedIndex];
     const googleAccountId = selectedOption ? selectedOption.dataset.googleAccountId : null;
-    
+
     if (!customerId) {
       const pleaseSelectText = window.I18n && window.I18n.account ? window.I18n.account.please_select_account : 'Please select an account';
       showInfo(pleaseSelectText);
       return;
     }
-    
+
     const saveBtn = document.getElementById('modal-save-btn');
     saveBtn.disabled = true;
     const savingText = window.I18n && window.I18n.common ? window.I18n.common.saving : 'Saving...';
     saveBtn.textContent = savingText;
-    
+
     fetch('/api/google_ads/customers/select', {
       method: 'POST',
       headers: {
@@ -514,11 +514,11 @@
     .then(data => {
       if (data.success || data.message) {
         closeAccountSwitcherModal();
-      
+
         // Check if were on the Leads tab
         const leadsTab = document.querySelector('[data-tab="leads"]');
         const isLeadsTabActive = leadsTab && leadsTab.classList.contains('active-tab');
-        
+
         if (isLeadsTabActive && window.leadsController) {
           // Reload the page to update the account selector in leads section
           window.location.reload();
@@ -559,13 +559,13 @@
     event.preventDefault();
     const link = event.target.closest('a');
     if (!link) return;
-    
+
     const page = link.getAttribute('data-page');
     if (!page) return;
-    
+
     const contentDiv = document.getElementById('content-dashboard');
     const paginationDiv = document.getElementById('activity-pagination');
-    
+
     // Disable pagination buttons during loading
     if (paginationDiv) {
       const buttons = paginationDiv.querySelectorAll('a');
@@ -574,7 +574,7 @@
         btn.style.opacity = '0.6';
       });
     }
-    
+
     // Show elegant loading state
     const loadingText = window.I18n && window.I18n.common ? window.I18n.common.loading : 'Carregando...';
     contentDiv.innerHTML = `
@@ -598,7 +598,7 @@
         </div>
       </div>
     `;
-    
+
     // Fetch the page via AJAX
     fetch('/dashboard/activity_log?page=' + page, {
       method: 'GET',
@@ -620,11 +620,11 @@
       // Add a small delay for smooth transition
       setTimeout(() => {
         contentDiv.innerHTML = html;
-        
+
         // Smooth scroll to top of content
-        contentDiv.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
+        contentDiv.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
         });
       }, 300);
     })
@@ -671,13 +671,13 @@
           }
         }
       });
-      
+
       jQuery('#customer-select').on('change', async function() {
         const customerId = this.value;
         const googleAccountId = this.options[this.selectedIndex].dataset.googleAccountId;
-        
+
         if (!customerId) return;
-        
+
         try {
           const response = await fetch('/api/google_ads/customers/select', {
             method: 'POST',
@@ -689,9 +689,9 @@
             credentials: 'same-origin',
             body: JSON.stringify({ customer_id: customerId })
           });
-          
+
           const data = await response.json();
-          
+
           if (response.ok) {
             window.location.reload();
           } else {
@@ -722,7 +722,7 @@
       { value: 'SOLICITATION', label: leadLabel('solicitation', 'Solicitation') },
       { value: 'OTHER_DISSATISFIED_REASON', label: leadLabel('other_dissatisfied_reason', 'Other reason') }
     ];
-    
+
     const satisfiedReasons = [
       { value: 'SERVICE_RELATED', label: leadLabel('service_related', 'Service Related') },
       { value: 'BOOKED_CUSTOMER', label: leadLabel('booked_customer', 'Booked Customer') },
@@ -730,18 +730,18 @@
       { value: 'HIGH_VALUE_SERVICE', label: leadLabel('high_value_service', 'High Value Service') },
       { value: 'OTHER_SATISFIED_REASON', label: leadLabel('other_satisfied_reason', 'Other Reason') }
     ];
-    
+
     window.openFeedbackModal = function(leadId, leadIds = null) {
       // Support both single lead and bulk leads
       const isBulk = Array.isArray(leadIds) && leadIds.length > 1;
       const singleLeadId = isBulk ? null : leadId;
-      
+
       if (!singleLeadId && !isBulk) {
         const errorMsg = window.I18n && window.I18n.leads ? window.I18n.leads.lead_id_not_provided : 'Lead ID not provided';
         showError(errorMsg);
         return;
       }
-      
+
       const modal = document.getElementById('feedback-modal');
       const leadIdInput = document.getElementById('feedback-lead-id');
       const leadIdsInput = document.getElementById('feedback-lead-ids');
@@ -749,9 +749,9 @@
       const bulkCount = document.getElementById('bulk-lead-count');
       const modalTitle = document.getElementById('modal-title');
       const form = document.getElementById('feedback-form');
-      
+
       if (!modal || !form) return;
-      
+
       // Set lead IDs
       if (isBulk) {
         leadIdInput.value = '';
@@ -765,7 +765,7 @@
         if (bulkInfo) bulkInfo.classList.add('hidden');
         if (modalTitle) modalTitle.textContent = window.I18n && window.I18n.leads ? window.I18n.leads.submit_feedback : 'Submit Feedback';
       }
-      
+
       form.reset();
       const reasonSection = document.getElementById('reason-section');
       const reasonSelect = document.getElementById('feedback-reason');
@@ -783,7 +783,7 @@
       }
       const modalErrorEl = document.getElementById('feedback-modal-error');
       if (modalErrorEl) modalErrorEl.classList.add('hidden');
-      
+
       // Reset submit button to initial state (fixes "Sending..." stuck from previous submit)
       const submitBtn = document.getElementById('submit-feedback-btn');
       if (submitBtn) {
@@ -791,11 +791,11 @@
         const sendFeedbackText = (window.I18n && window.I18n.leads && window.I18n.leads.send_feedback) || (window.I18n && window.I18n.leads && window.I18n.leads.submit_feedback) || 'Enviar feedback';
         submitBtn.innerHTML = sendFeedbackText;
       }
-      
+
       modal.classList.remove('hidden');
       modal.style.display = 'block';
       modal.setAttribute('aria-hidden', 'false');
-      
+
       const surveyInputs = form.querySelectorAll('input[name="survey_answer"]');
       surveyInputs.forEach(input => {
         const newInput = input.cloneNode(true);
@@ -805,7 +805,7 @@
         });
       });
     };
-    
+
     window.closeFeedbackModal = function() {
       const modal = document.getElementById('feedback-modal');
       if (modal) {
@@ -887,9 +887,9 @@
       const reasonLabel = document.getElementById('reason-label');
       const reasonRequiredHint = document.getElementById('reason-required-hint');
       const otherRequiredHint = document.getElementById('other-reason-required-hint');
-      
+
       if (!reasonSection || !reasonSelect) return;
-      
+
       // When no survey answer or NEUTRAL, hide reason section and show optional placeholder only
       if (!surveyAnswer || surveyAnswer === 'NEUTRAL') {
         const selectOptionalText = (window.I18n && window.I18n.leads && window.I18n.leads.select_reason_optional) || 'Select a reason (optional)';
@@ -901,14 +901,14 @@
         reasonSelect.removeAttribute('required');
         return;
       }
-      
+
       if (otherReasonSection) otherReasonSection.classList.add('hidden');
       if (otherRequiredHint) otherRequiredHint.classList.add('hidden');
       reasonSelect.removeAttribute('required');
-      
+
       const selectReasonRequiredText = (window.I18n && window.I18n.leads && window.I18n.leads.select_reason_required) || 'Select a reason (required)';
       reasonSelect.innerHTML = '<option value="">' + selectReasonRequiredText + '</option>';
-      
+
       if (surveyAnswer === 'VERY_DISSATISFIED' || surveyAnswer === 'DISSATISFIED') {
         reasonLabel.textContent = leadLabel('dissatisfaction_reason', 'Dissatisfaction Reason');
         dissatisfiedReasons.forEach(reason => {
@@ -935,7 +935,7 @@
         reasonSection.classList.add('hidden');
         if (reasonRequiredHint) reasonRequiredHint.classList.add('hidden');
       }
-      
+
       function toggleOtherReasonSection() {
         const val = reasonSelect.value;
         if (val === 'OTHER_SATISFIED_REASON' || val === 'OTHER_DISSATISFIED_REASON') {
@@ -945,13 +945,13 @@
           if (otherRequiredHint) otherRequiredHint.classList.add('hidden');
         }
       }
-      
+
       reasonSelect.onchange = toggleOtherReasonSection;
     }
-    
+
     window.handleFeedbackSubmit = function(event) {
       event.preventDefault();
-      
+
       const form = event.target;
       const leadId = document.getElementById('feedback-lead-id').value;
       const leadIdsJson = document.getElementById('feedback-lead-ids').value;
@@ -960,7 +960,7 @@
       const surveyAnswer = formData.get('survey_answer');
       const reason = formData.get('reason');
       const otherComment = (formData.get('other_reason_comment') || '').trim();
-      
+
       // Validation: reason required when not NEUTRAL
       if (surveyAnswer !== 'NEUTRAL') {
         if (!reason) {
@@ -978,15 +978,15 @@
           return;
         }
       }
-      
+
       const payload = { survey_answer: surveyAnswer };
       if (reason) payload.reason = reason;
       if (otherComment) payload.other_reason_comment = otherComment;
-      
+
       // Check if it's bulk feedback
       const isBulk = leadIdsJson && leadIdsJson.trim() !== '';
       let leadIds = [];
-      
+
       if (isBulk) {
         try {
           leadIds = JSON.parse(leadIdsJson);
@@ -1002,7 +1002,7 @@
           return;
         }
       }
-      
+
       submitBtn.disabled = true;
       const originalBtnText = submitBtn.textContent;
       const sendingText = window.I18n && window.I18n.leads ? window.I18n.leads.sending : 'Sending...';
@@ -1015,15 +1015,15 @@
         </svg>
         ${loadingText}
       `;
-      
+
       // Show loading overlay with SweetAlert2
       const processingText = window.I18n && window.I18n.leads ? window.I18n.leads.processing : 'Processing...';
       const processingFeedbackText = window.I18n && window.I18n.leads ? window.I18n.leads.processing_feedback : 'Processing feedback for %{count} leads...';
       const pleaseWaitText = window.I18n && window.I18n.leads ? window.I18n.leads.please_wait : 'Please wait...';
-      const loadingMessage = isBulk 
+      const loadingMessage = isBulk
         ? processingFeedbackText.replace('%{count}', leadIds.length)
         : (window.I18n && window.I18n.leads ? window.I18n.leads.sending : 'Sending feedback...');
-      
+
       Swal.fire({
         title: processingText,
         html: `
@@ -1040,9 +1040,9 @@
           Swal.showLoading();
         }
       });
-      
+
       const url = isBulk ? '/api/leads/bulk_feedback' : `/api/leads/${leadId}/feedback`;
-      
+
       fetch(url, {
         method: 'POST',
         headers: {
@@ -1064,7 +1064,7 @@
             data = null;
           }
         }
-        
+
         if (!response.ok) {
           const errorMessage = (data && data.error) || `Erro ${response.status}: ${response.statusText}`;
           const isAlreadySubmitted = (data && data.error_code === 'feedback_already_submitted') ||
@@ -1090,19 +1090,19 @@
           }
           throw new Error(errorMessage);
         }
-        
+
         if (!isJson || !data) {
           throw new Error('Resposta do servidor não é JSON válido');
         }
-        
+
         return data;
       })
       .then(data => {
         // Early return (e.g. "already submitted" handled in modal) — no data passed
         if (data == null || data === undefined) return;
-        
+
         Swal.close();
-        
+
         if (data.success || data.message) {
           // Restore submit button before closing (fixes "Sending..." stuck on next open)
           submitBtn.disabled = false;
@@ -1111,7 +1111,7 @@
           closeFeedbackModal();
           const successText = window.I18n && window.I18n.leads ? window.I18n.leads.feedback_sent_success : 'Feedback sent successfully!';
           const successBulkText = window.I18n && window.I18n.leads ? window.I18n.leads.feedback_sent_success_bulk : 'Feedback sent successfully to %{count} leads!';
-          let message = isBulk 
+          let message = isBulk
             ? successBulkText.replace('%{count}', data.processed_count || leadIds.length)
             : successText;
           if (!isBulk && data.credit_issuance_decision) {
@@ -1147,7 +1147,7 @@
       .catch(error => {
         // Close loading overlay
         Swal.close();
-        
+
         console.error("Error submitting feedback:", error);
         const errorSendingText = window.I18n && window.I18n.leads ? window.I18n.leads.error_sending : 'Error sending feedback: %{error}';
         const errorMsg = errorSendingText.replace('%{error}', error.message);
@@ -1163,13 +1163,13 @@
     // Toggle names section
     const toggleBtn = document.getElementById('toggle-names-section');
     const namesSection = document.getElementById('names-management');
-    
+
     if (toggleBtn && namesSection) {
       toggleBtn.onclick = function() {
         const isHidden = namesSection.classList.contains('hidden');
         const toggleText = toggleBtn.querySelector('.toggle-text');
         const toggleIcon = toggleBtn.querySelector('.toggle-icon');
-        
+
         if (isHidden) {
           namesSection.classList.remove('hidden');
           toggleText.textContent = 'Ocultar';
@@ -1205,29 +1205,29 @@
     const customerId = element.dataset.customerId;
     const currentName = element.dataset.currentName;
     const nameDisplay = element.querySelector('.name-display');
-    
+
     // Create input element
     const input = document.createElement('input');
     input.type = 'text';
     input.value = currentName;
     input.className = 'w-full px-2 py-1 text-sm border border-indigo-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-200';
     input.placeholder = 'Digite um nome para esta conta...';
-    
+
     // Replace display with input
     const originalContent = nameDisplay.innerHTML;
     nameDisplay.innerHTML = '';
     nameDisplay.appendChild(input);
-    
+
     // Focus and select
     input.focus();
     input.select();
-    
+
     // Save function
     const saveEdit = async function() {
       const newName = input.value.trim();
-      
+
       try {
-        
+
         const response = await fetch(`/api/google_ads/customers/${customerId}/name`, {
           method: 'PATCH',
           headers: {
@@ -1238,8 +1238,8 @@
           credentials: 'same-origin',
           body: JSON.stringify({ custom_name: newName })
         });
-        
-        
+
+
         let data;
         try {
           data = await response.json();
@@ -1247,28 +1247,28 @@
           const text = await response.text();
           throw new Error('Invalid JSON response: ' + text);
         }
-        
+
         // Check if response is successful (200-299 status or success flag)
         const isSuccess = response.ok && (data.success !== false);
-        
+
         if (isSuccess) {
           // Update the display
           element.dataset.currentName = newName;
           nameDisplay.innerHTML = originalContent;
-          
+
           // Find the first span which contains the name (not the badge)
           const nameSpan = nameDisplay.querySelector('span:first-of-type');
           if (nameSpan) {
             nameSpan.textContent = data.effective_name || data.custom_name || newName;
           }
-          
+
           // Update the select dropdown
           const selectOption = document.querySelector(`#customer-select option[value="${customerId}"]`);
           if (selectOption) {
             const formattedId = selectOption.textContent.split(' — ')[0];
             selectOption.textContent = `${formattedId} — ${data.effective_name || data.custom_name || newName}`;
           }
-          
+
           showSuccess('Nome atualizado com sucesso!');
         } else {
           nameDisplay.innerHTML = originalContent;
@@ -1281,12 +1281,12 @@
         showError('Erro ao atualizar nome');
       }
     };
-    
+
     // Cancel function
     const cancelEdit = function() {
       nameDisplay.innerHTML = originalContent;
     };
-    
+
     // Event listeners
     input.onblur = saveEdit;
     input.onkeydown = function(e) {

@@ -16,6 +16,21 @@ pt-BR:
     back: "Voltar"
     language: "Idioma"
 
+  # User Settings Menu
+  user_settings:
+    title: "Configurações do usuário"
+    settings: "Configurações"
+    plan_section: "Plano"
+    billing: "Faturamento"
+    change_plan: "Alterar plano"
+    view_plans: "Ver planos"
+    google_section: "Google Ads"
+    connect_google: "Conectar Google Ads"
+    disconnect_google: "Desconectar Google Ads"
+    account_section: "Conta"
+    change_password: "Alterar senha"
+    preferences: "Preferências"
+
   # Common
   common:
     loading: "Carregando..."
@@ -98,8 +113,13 @@ pt-BR:
   google_ads:
     integration: "Integração Google Ads"
     choose_account: "Escolha a conta Google Ads"
-    found_accounts: "Encontramos %{count} conta acessível"
-    found_accounts_plural: "Encontramos %{count} contas acessíveis"
+    choose_account_description: "Esta conta será usada como contexto principal para gerenciar seus leads"
+    choose_main_account: "Escolha a conta principal"
+    choose_main_account_description: "Esta será a conta padrão para gerenciar seus leads"
+    main_account_description: "A conta principal define o contexto inicial ao acessar a plataforma. Você pode trocar entre contas ativas a qualquer momento."
+    found_accounts:
+      one: "Encontramos 1 conta acessível"
+      other: "Encontramos %{count} contas acessíveis"
     selection_info: "Sobre a seleção"
     selection_info_item1: "A conta escolhida será aplicada como contexto global até que você troque."
     selection_info_item2: "Você pode conectar novas contas Google Ads a qualquer momento."
@@ -361,29 +381,114 @@ pt-BR:
     switch_note: "Altere de plano a qualquer momento"
     per_month: "por mês"
     custom: "Sob demanda"
-    cards:
-      standard:
-        name: "Standard"
-        accounts: "Até 10 contas"
-        price_brl_amount: 100
-        price_usd_amount: 20
-        description: "Ideal para equipes começando com Local Services Ads e validando o fluxo de captura e feedback."
-        cta: "Começar no Standard"
-      professional:
-        name: "Professional"
-        badge: "Mais escolhido"
-        accounts: "Até 50 contas"
-        price_brl_amount: 150
-        price_usd_amount: 50
-        description: "Para operações com várias localidades e necessidade de escala com relatórios consistentes."
-        cta: "Assinar o Professional"
-      enterprise:
-        name: "Enterprise"
-        accounts: "Mais de 40 contas"
-        price_brl: "Valores customizados"
-        price_usd: "Custom pricing"
-        description: "Quando você precisa de volume, SLA dedicado e integrações alinhadas com seu stack."
-        cta: "Falar com vendas"
+    faq:
+      title: "Perguntas Frequentes"
+      what_is_subaccount:
+        question: "O que é uma subconta?"
+        answer: "Subconta é cada conta Google Ads individual que você gerencia. Se você tem um MCC com 10 contas de clientes, você tem 10 subcontas."
+      can_change_plan:
+        question: "Posso trocar de plano?"
+        answer: "Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. A diferença será calculada proporcionalmente."
+      payment_methods:
+        question: "Quais formas de pagamento são aceitas?"
+        answer: "Aceitamos cartão de crédito, boleto bancário e PIX. Para planos Enterprise, também oferecemos faturamento."
+      trial:
+        question: "Existe período de teste?"
+        answer: "Sim, oferecemos 14 dias de teste gratuito para você conhecer todas as funcionalidades da plataforma."
+
+  plans:
+    step_1: "Passo 1 - Escolha seu plano"
+    step_2: "Passo 2 - Escolha a conta principal"
+    choose_plan_title: "Escolha o plano ideal para você"
+    choose_plan_subtitle: "Baseado no número de contas Google Ads que você conectou, recomendamos o plano mais adequado para sua operação."
+    accounts_found:
+      one: "1 conta encontrada"
+      other: "%{count} contas encontradas"
+    accounts_found_description: "Estas são as contas Google Ads acessíveis com suas credenciais"
+    view_accounts: "Ver contas"
+    hide_accounts: "Ocultar contas"
+    recommended: "Recomendado"
+    selected_plan: "Plano selecionado"
+    change_plan: "Alterar plano"
+    plan_selected: "Plano selecionado"
+    unlimited_accounts: "Subcontas ilimitadas"
+    up_to_accounts:
+      one: "Até 1 conta"
+      other: "Até %{count} contas"
+    flexible_accounts: "Contas flexíveis"
+    per_account: "Por subconta"
+    per_subaccount: "subconta"
+    accounts: "contas"
+    your_estimate: "Sua estimativa"
+    continue_to_account_selection: "Continuar para seleção de conta"
+    start_now: "Começar agora"
+    warning_accounts_exceeded: "Este plano não suporta o número de contas encontradas"
+    warning_accounts_exceeded_description: "Escolha um plano com limite maior ou o plano ilimitado para continuar."
+    features:
+      pay_only_used: "Pague apenas pelo que usar"
+      flexible_scaling: "Escale conforme sua necessidade"
+      up_to_accounts:
+        one: "Até 1 conta incluída"
+        other: "Até %{count} contas incluídas"
+      fixed_monthly: "Valor fixo mensal"
+      unlimited_accounts: "Subcontas ilimitadas"
+      best_value: "Melhor custo-benefício"
+      full_access: "Acesso completo a todas as funcionalidades"
+      support: "Suporte via chat e email"
+    per_account:
+      name: "Por Subconta"
+      description: "Ideal para quem está começando ou tem poucas contas. Pague apenas pelo número de subcontas que você gerencia."
+      cta: "Começar com Por Subconta"
+    unlimited_30:
+      name: "Ilimitado até 30"
+      description: "Perfeito para agências e profissionais com operações de médio porte. Valor fixo para até 30 subcontas."
+      cta: "Escolher Ilimitado 30"
+    unlimited:
+      name: "Ilimitado"
+      description: "Para grandes operações sem limites. Gerencie quantas subcontas precisar por um valor fixo mensal."
+      cta: "Escolher Ilimitado"
+    # Account selection page translations
+    step_select_accounts: "Passo 2 - Selecione as contas"
+    step_3: "Passo 3 - Conta principal"
+    select_accounts_title: "Selecione as contas para ativar"
+    select_accounts_subtitle: "Escolha quais contas Google Ads você deseja ativar no seu plano. Apenas as contas selecionadas terão acesso completo às funcionalidades."
+    accounts_selected: "Contas selecionadas"
+    estimated_monthly: "Valor mensal estimado"
+    available_accounts: "Contas disponíveis"
+    select_all: "Selecionar todas"
+    deselect_all: "Desmarcar todas"
+    will_be_activated: "Será ativada"
+    limit_reached_title: "Limite de contas atingido"
+    limit_reached_description: "Seu plano permite no máximo %{count} contas. Desmarque uma conta para selecionar outra."
+    # New keys for integrated plan selection page
+    your_monthly_value: "Seu valor mensal"
+    select_accounts_to_activate: "Selecione as contas para ativar"
+    select_accounts_description: "Marque as contas que você deseja incluir no seu plano"
+    unlimited_info_title: "Todas as contas incluídas"
+    unlimited_info_description: "O plano ilimitado inclui todas as suas %{count} contas automaticamente."
+    continue_to_main_account: "Continuar para seleção de conta principal"
+    account_active: "Ativa"
+    account_inactive: "Inativa"
+    account_inactive_reason: "Esta conta não está incluída no seu plano atual"
+    active_accounts_info: "Apenas contas ativas podem ser selecionadas como conta principal"
+    active_accounts_count:
+      one: "1 conta ativa no seu plano"
+      other: "%{count} contas ativas no seu plano"
+    # Change plan page translations
+    change_plan_header: "Alterar Plano"
+    change_plan_title: "Alterar seu plano"
+    change_plan_subtitle: "Escolha um novo plano e selecione quais contas deseja ativar. As mudanças entrarão em vigor imediatamente."
+    current_plan: "Plano atual"
+    current: "Atual"
+    current_monthly_value: "Valor mensal atual"
+    new_monthly_value: "Novo valor mensal"
+    total_accessible_accounts:
+      one: "%{count} conta acessível no total"
+      other: "%{count} contas acessíveis no total"
+    save_plan_changes: "Salvar alterações do plano"
+    change_plan_button: "Alterar plano"
+    your_plan: "Seu plano"
+    manage_plan: "Gerenciar plano"
 
   # Messages
   messages:
@@ -516,6 +621,61 @@ pt-BR:
 
       <p class="text-sm text-slate-500">Última atualização: 13 de Novembro de 2025</p>
 
+  # Payments
+  payments:
+    plan_not_found: "Plano não encontrado"
+    checkout_error: "Erro ao iniciar checkout: %{error}"
+    no_subscription: "Você não possui uma assinatura ativa"
+    portal_error: "Erro ao acessar o portal de pagamentos"
+    success_title: "Pagamento realizado com sucesso!"
+    success_message: "Sua assinatura foi ativada. Agora você pode aproveitar todos os recursos da plataforma."
+    session_id: "ID da sessão"
+    processing_note: "Seu acesso será liberado automaticamente em alguns segundos. Se não for redirecionado, atualize a página."
+    go_to_dashboard: "Ir para o Dashboard"
+    cancel_title: "Pagamento cancelado"
+    cancel_message: "Você cancelou o processo de pagamento. Nenhuma cobrança foi realizada."
+    view_plans: "Ver planos disponíveis"
+    subscribe_now: "Assinar agora"
+    manage_subscription: "Gerenciar assinatura"
+    confirm_title: "Confirmar Assinatura"
+    confirm_subtitle: "Revise os detalhes antes de prosseguir para o pagamento"
+    secure_checkout_note: "Você será redirecionado para uma página segura do Stripe para concluir o pagamento. Seus dados de cartão são processados diretamente pelo Stripe."
+    proceed_to_payment: "Prosseguir para pagamento"
+    powered_by_stripe: "Pagamentos seguros via Stripe"
+
+  # Billing
+  billing:
+    title: "Faturamento"
+    subtitle: "Gerencie sua assinatura e histórico de pagamentos"
+    current_plan: "Plano atual"
+    status_active: "Ativo"
+    status_trial: "Período de teste"
+    status_past_due: "Pagamento atrasado"
+    status_canceled: "Cancelado"
+    status_pending: "Aguardando pagamento"
+    accounts_count:
+      one: "1 conta ativa"
+      other: "%{count} contas ativas"
+    next_billing_date: "Próxima cobrança"
+    change_plan: "Alterar plano"
+    manage_payment: "Gerenciar pagamento"
+    recent_invoices: "Faturas recentes"
+    invoice_date: "Data"
+    invoice_number: "Número"
+    invoice_amount: "Valor"
+    invoice_status: "Status"
+    invoice_actions: "Ações"
+    invoice_paid: "Pago"
+    invoice_open: "Em aberto"
+    invoice_void: "Cancelada"
+    no_subscription_title: "Você não possui uma assinatura"
+    no_subscription_description: "Escolha um plano para começar a usar todos os recursos da plataforma."
+    view_plans: "Ver planos"
+    payment_required_title: "Pagamento pendente"
+    payment_required_description: "Complete o pagamento para ativar sua assinatura e ter acesso completo à plataforma."
+    pay_now: "Pagar agora"
+    secure_stripe_note: "Você será redirecionado para uma página segura do Stripe. Não armazenamos dados de cartão."
+
   # Errors
   errors:
     server_error: "Erro do servidor"
@@ -526,3 +686,6 @@ pt-BR:
     unknown_error: "Erro desconhecido"
     invalid_response: "Resposta do servidor não é JSON válido"
     invalid_locale: "Idioma inválido"
+    inactive_account: "A conta %{account} não está ativa no seu plano atual. Ative-a ou selecione outra conta."
+    inactive_account_selection: "A conta %{account} não está ativa no seu plano. Ative-a nas configurações ou escolha outra conta."
+    subscription_required: "Você precisa de uma assinatura ativa para acessar esta funcionalidade."
