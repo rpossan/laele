@@ -18,12 +18,25 @@ export default class extends Controller {
     campaignId: String
   }
 
+  campaignIdValueChanged() {
+    // When campaign ID changes, reload current locations
+    if (this.campaignIdValue) {
+      this.allLocations.clear()
+      this.loadCurrentLocations()
+    }
+  }
+
   connect() {
     this.loadSelectedStates()
     this.initializeStateSelect()
     this.attachEventListeners()
     this.unmatchedItems = new Set()
     this.allLocations = new Map() // Map of location name -> { type: 'new'|'current', resourceName?, deleted: boolean }
+    
+    // Load current locations immediately if campaign ID is set
+    if (this.campaignIdValue) {
+      this.loadCurrentLocations()
+    }
   }
 
   // ===== STAGE 1: State Selection =====
@@ -290,6 +303,7 @@ export default class extends Controller {
     
     if (this.allLocations.size === 0) {
       resultsContainer.innerHTML = '<p class="text-center text-sm text-slate-500 py-4">Nenhuma localização</p>'
+      resultsContainer.style.maxHeight = 'auto'
       return
     }
 
@@ -352,6 +366,16 @@ export default class extends Controller {
     }).join('')
 
     resultsContainer.innerHTML = locationsHtml
+    
+    // Adjust max-height based on number of locations
+    // Each location item is approximately 60px (p-3 + border + text)
+    const itemHeight = 60
+    const maxItems = 4
+    const totalHeight = this.allLocations.size > maxItems 
+      ? maxItems * itemHeight + 16 // 16px for padding
+      : this.allLocations.size * itemHeight + 16
+    
+    resultsContainer.style.maxHeight = `${totalHeight}px`
   }
 
   toggleDeleteLocation(event) {
@@ -371,6 +395,21 @@ export default class extends Controller {
       
       this.displayAllLocations()
     }
+  }
+
+  deleteAllLocations() {
+    // Iterate through all locations
+    Array.from(this.allLocations.entries()).forEach(([name, data]) => {
+      if (data.type === 'new') {
+        // Remove new locations completely
+        this.allLocations.delete(name)
+      } else {
+        // Mark current locations as deleted
+        data.deleted = true
+      }
+    })
+    
+    this.displayAllLocations()
   }
 
   // ===== STAGE 2: Location Search =====
@@ -625,6 +664,9 @@ export default class extends Controller {
       this.allLocations.clear()
       await this.loadCurrentLocations()
       
+      // Update the current locations display in the campaigns section
+      await this.updateCurrentLocationsDisplay()
+      
       // Restore button state
       if (processButton) {
         processButton.disabled = false
@@ -639,6 +681,46 @@ export default class extends Controller {
         processButton.disabled = false
         processButton.innerHTML = originalHTML
       }
+    }
+  }
+
+  async updateCurrentLocationsDisplay() {
+    try {
+      const campaignId = this.campaignIdValue
+      if (!campaignId) return
+
+      const response = await fetch(`/api/google_ads/campaign_locations?campaign_id=${campaignId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        credentials: 'same-origin'
+      })
+
+      if (!response.ok) {
+        console.error('Error loading current locations:', response.status)
+        return
+      }
+
+      const data = await response.json()
+      const locations = data.locations || []
+
+      // Update the current locations list in the campaigns section
+      const locationsList = document.getElementById('current-locations-list')
+      if (locationsList) {
+        if (locations.length === 0) {
+          locationsList.innerHTML = '<p class="text-sm text-slate-500">Nenhuma localização</p>'
+        } else {
+          const locationsHtml = locations.map(loc => {
+            const name = loc.name || loc.geo_target_constant || 'Unknown'
+            return `<span class="inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800 mr-2 mb-2">${name}</span>`
+          }).join('')
+          locationsList.innerHTML = locationsHtml
+        }
+      }
+    } catch (error) {
+      console.error('Error updating current locations display:', error)
     }
   }
 

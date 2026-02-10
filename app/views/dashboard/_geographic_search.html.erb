@@ -147,7 +147,8 @@
           <!-- Results Container -->
           <div 
             data-geographic-search-target="resultsContainer"
-            class="space-y-2 mb-4 flex-1 overflow-y-auto max-h-96 rounded-lg border border-slate-200 p-3 bg-white">
+            class="space-y-2 mb-4 flex-1 rounded-lg border border-slate-200 p-3 bg-white overflow-y-auto"
+            style="max-height: calc(4 * 60px + 16px);">
           </div>
 
           <!-- Process Button -->
@@ -159,6 +160,18 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             <%= t('campaigns.process_locations', default: 'Processar Localizações') %>
+          </button>
+
+          <!-- Delete All Button -->
+          <button 
+            type="button"
+            data-action="click->geographic-search#deleteAllLocations"
+            class="w-full mt-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition"
+            title="Remove todas as novas localizações e marca as atuais para deletar">
+            <svg class="inline-block w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            <%= t('campaigns.delete_all_locations', default: 'Deletar Tudo') %>
           </button>
         </div>
       </div>

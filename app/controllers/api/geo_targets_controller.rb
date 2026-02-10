@@ -32,15 +32,6 @@ module Api
         return render_error("campaign_id é obrigatório")
       end
 
-      unless locations.present? || locations_to_remove.present?
-        return render_error("locations é obrigatório")
-      end
-
-      selection = current_user.active_customer_selection
-      return render_error("Selecione uma conta antes de atualizar os targets de localização") unless selection
-
-      customer_id = params[:customer_id] || selection.customer_id
-
       # Normalize locations to array (can be string, array, or array of resource names)
       locations_array = if locations.is_a?(Array)
         locations
@@ -52,12 +43,18 @@ module Api
         Array(locations)
       end
 
-      # Filter out empty strings and validate
+      # Filter out empty strings
       locations_array = locations_array.reject { |loc| loc.to_s.strip.blank? }
 
+      # Validate that at least one of locations or locations_to_remove is provided
       unless locations_array.present? || locations_to_remove.present?
         return render_error("locations é obrigatório")
       end
+
+      selection = current_user.active_customer_selection
+      return render_error("Selecione uma conta antes de atualizar os targets de localização") unless selection
+
+      customer_id = params[:customer_id] || selection.customer_id
 
       Rails.logger.info("[Api::GeoTargetsController] Updating geo targets for campaign #{campaign_id}")
       Rails.logger.info("[Api::GeoTargetsController] Locations: #{locations_array.inspect}")
