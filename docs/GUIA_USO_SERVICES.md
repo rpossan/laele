@@ -154,7 +154,7 @@ class Api::GoogleAds::CustomerNamesController < Api::BaseController
     if result[:success]
       render json: result
     else
-      render json: { error: result[:error] }, status: :unprocessable_entity
+      render json: { error: result[:error] }, status: :unprocessable_content
     end
   end
 end
