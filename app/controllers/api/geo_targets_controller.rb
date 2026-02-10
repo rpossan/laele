@@ -26,12 +26,13 @@ module Api
       locations = params[:locations]
       country_code = params[:country_code] || "US"
       selected_states = params[:selected_states]
+      locations_to_remove = params[:locations_to_remove]
 
       unless campaign_id.present?
         return render_error("campaign_id é obrigatório")
       end
 
-      unless locations.present?
+      unless locations.present? || locations_to_remove.present?
         return render_error("locations é obrigatório")
       end
 
@@ -54,7 +55,7 @@ module Api
       # Filter out empty strings and validate
       locations_array = locations_array.reject { |loc| loc.to_s.strip.blank? }
 
-      unless locations_array.present?
+      unless locations_array.present? || locations_to_remove.present?
         return render_error("locations é obrigatório")
       end
 
@@ -62,6 +63,7 @@ module Api
       Rails.logger.info("[Api::GeoTargetsController] Locations: #{locations_array.inspect}")
       Rails.logger.info("[Api::GeoTargetsController] Country code: #{country_code}")
       Rails.logger.info("[Api::GeoTargetsController] Selected states: #{selected_states.inspect}")
+      Rails.logger.info("[Api::GeoTargetsController] Locations to remove: #{locations_to_remove.inspect}")
 
       begin
         service = Lsa::ApplyGeoTargets.new(
@@ -70,7 +72,7 @@ module Api
           campaign_id: campaign_id
         )
 
-        result = service.apply(locations_array, country_code: country_code, selected_states: selected_states)
+        result = service.apply(locations_array, country_code: country_code, selected_states: selected_states, locations_to_remove: locations_to_remove)
 
         # Ensure total_count is always present
         result[:total_count] ||= result[:applied_geo_targets]&.size || 0

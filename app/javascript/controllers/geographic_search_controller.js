@@ -9,7 +9,6 @@ export default class extends Controller {
     "searchResults",
     "resultsContainer",
     "noResultsMessage",
-    "selectedResultsCheckboxes",
     "selectedStatesList",
     "successModal",
     "successMessage"
@@ -24,6 +23,7 @@ export default class extends Controller {
     this.initializeStateSelect()
     this.attachEventListeners()
     this.unmatchedItems = new Set()
+    this.allLocations = new Map() // Map of location name -> { type: 'new'|'current', resourceName?, deleted: boolean }
   }
 
   // ===== STAGE 1: State Selection =====
@@ -127,7 +127,13 @@ export default class extends Controller {
 
     // Clear search results and unmatched items when state selection changes
     this.unmatchedItems.clear()
+    this.allLocations.clear()
     this.clearSearchResults()
+    
+    // Load current locations for the selected campaign
+    if (selectedStates.length > 0) {
+      await this.loadCurrentLocations()
+    }
   }
 
   async saveStateSelection(states) {
@@ -238,6 +244,135 @@ export default class extends Controller {
     }
   }
 
+  async loadCurrentLocations() {
+    try {
+      const campaignId = this.campaignIdValue
+      if (!campaignId) return
+
+      const response = await fetch(`/api/google_ads/campaign_locations?campaign_id=${campaignId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        credentials: 'same-origin'
+      })
+
+      if (!response.ok) {
+        console.error('Error loading current locations:', response.status)
+        return
+      }
+
+      const data = await response.json()
+      const locations = data.locations || []
+
+      // Store current locations
+      locations.forEach(loc => {
+        const name = loc.name || loc.geo_target_constant || 'Unknown'
+        this.allLocations.set(name, {
+          type: 'current',
+          resourceName: loc.resource_name || loc.geo_target_constant,
+          deleted: false
+        })
+      })
+
+      // Display all locations
+      this.displayAllLocations()
+      // Show the results container
+      this.searchResultsTarget.classList.remove('hidden')
+    } catch (error) {
+      console.error('Error loading current locations:', error)
+    }
+  }
+
+  displayAllLocations() {
+    const resultsContainer = this.resultsContainerTarget
+    
+    if (this.allLocations.size === 0) {
+      resultsContainer.innerHTML = '<p class="text-center text-sm text-slate-500 py-4">Nenhuma localização</p>'
+      return
+    }
+
+    const locationsHtml = Array.from(this.allLocations.entries()).map(([name, data]) => {
+      const isDeleted = data.deleted
+      const isCurrent = data.type === 'current'
+      
+      // Define colors based on type and deleted status
+      let borderColor, bgColor, labelColor, label, buttonColor, buttonIcon
+      
+      if (isCurrent) {
+        if (isDeleted) {
+          // Current location marked for deletion
+          borderColor = 'border-red-300'
+          bgColor = 'bg-red-50'
+          labelColor = 'text-red-600'
+          label = 'A ser deletado'
+          buttonColor = 'text-green-600'
+          buttonIcon = 'checkmark' // ✓
+        } else {
+          // Current location (normal)
+          borderColor = 'border-blue-300'
+          bgColor = 'bg-blue-50'
+          labelColor = 'text-blue-600'
+          label = 'Localização Atual'
+          buttonColor = 'text-red-600'
+          buttonIcon = 'x' // ✕
+        }
+      } else {
+        // New location
+        borderColor = 'border-slate-300'
+        bgColor = 'bg-slate-50'
+        labelColor = 'text-slate-600'
+        label = 'Nova Localização'
+        buttonColor = 'text-red-600'
+        buttonIcon = 'x' // ✕
+      }
+      
+      return `
+        <div class="flex items-center gap-3 p-3 border rounded-lg transition ${borderColor} ${bgColor} group">
+          <div class="flex-1">
+            <div class="text-sm font-medium text-slate-900">${name}</div>
+            <div class="text-xs ${labelColor}">${label}</div>
+          </div>
+          <button 
+            type="button"
+            data-action="click->geographic-search#toggleDeleteLocation"
+            data-location-name="${name}"
+            class="opacity-0 group-hover:opacity-100 transition p-1 rounded hover:bg-white/50"
+            title="${isDeleted ? 'Manter' : 'Remover'}">
+            <svg class="w-4 h-4 ${buttonColor}" fill="currentColor" viewBox="0 0 20 20">
+              ${buttonIcon === 'checkmark' ? 
+                '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>' :
+                '<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>'
+              }
+            </svg>
+          </button>
+        </div>
+      `
+    }).join('')
+
+    resultsContainer.innerHTML = locationsHtml
+  }
+
+  toggleDeleteLocation(event) {
+    const button = event.target.closest('button')
+    const locationName = button.dataset.locationName
+    
+    if (this.allLocations.has(locationName)) {
+      const data = this.allLocations.get(locationName)
+      
+      // If it's a new location, remove it completely
+      if (data.type === 'new') {
+        this.allLocations.delete(locationName)
+      } else {
+        // If it's a current location, toggle deleted flag
+        data.deleted = !data.deleted
+      }
+      
+      this.displayAllLocations()
+    }
+  }
+
   // ===== STAGE 2: Location Search =====
 
   attachEventListeners() {
@@ -311,46 +446,24 @@ export default class extends Controller {
       } else if (results.length === 0) {
         this.showNoResultsMessage('Nenhum endereço encontrado')
       } else {
-        this.displaySearchResults(results)
+        // Add new results to allLocations, but check if they already exist
+        results.forEach(result => {
+          const locationName = `${result.city} (${result.state})`
+          // Only add if it doesn't already exist (as current location)
+          if (!this.allLocations.has(locationName)) {
+            this.allLocations.set(locationName, {
+              type: 'new',
+              deleted: false
+            })
+          }
+        })
+        this.displayAllLocations()
+        this.searchResultsTarget.classList.remove('hidden')
       }
     } catch (error) {
       console.error('Error performing search:', error)
       this.showNoResultsMessage('Erro ao buscar localizações')
     }
-  }
-
-  displaySearchResults(results) {
-    const resultsContainer = this.resultsContainerTarget
-    const noResultsMessage = this.noResultsMessageTarget
-
-    // Hide no results message
-    noResultsMessage.classList.add('hidden')
-
-    // Build results HTML with remove button for each location
-    const resultsHtml = results.map((result, index) => `
-      <div class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition group">
-        <div class="flex-1">
-          <div class="text-sm font-medium text-slate-900">
-            ${result.city} (${result.state})
-          </div>
-          ${result.county ? `<div class="text-xs text-slate-500">${result.county}</div>` : ''}
-        </div>
-        <button 
-          type="button"
-          data-action="click->geographic-search#removeLocation"
-          class="opacity-0 group-hover:opacity-100 transition p-1 text-red-600 hover:bg-red-50 rounded"
-          title="Remover esta localização">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-          </svg>
-        </button>
-      </div>
-    `).join('')
-
-    resultsContainer.innerHTML = resultsHtml
-
-    // Show results section
-    this.searchResultsTarget.classList.remove('hidden')
   }
 
   showLoadingState() {
@@ -410,31 +523,26 @@ export default class extends Controller {
     }
   }
 
-  // Add selected results to current locations
+  // Process all locations
   addSelectedResults() {
-    const resultsContainer = this.resultsContainerTarget
-    const resultItems = resultsContainer.querySelectorAll('.flex.items-center.gap-3')
-    
-    if (resultItems.length === 0) {
-      this.showErrorModal('Nenhuma localização para processar')
+    // Collect new locations to add (only new ones that are NOT deleted)
+    const newLocations = Array.from(this.allLocations.entries())
+      .filter(([_, data]) => data.type === 'new' && !data.deleted)
+      .map(([name, _]) => name.split(' (')[0]) // Extract city name
+
+    // Collect current locations to remove (current ones that ARE marked as deleted)
+    const locationsToRemove = Array.from(this.allLocations.entries())
+      .filter(([_, data]) => data.type === 'current' && data.deleted)
+      .map(([_, data]) => data.resourceName)
+
+    // Validate that we have something to do
+    if (newLocations.length === 0 && locationsToRemove.length === 0) {
+      this.showErrorModal('Selecione pelo menos uma localização para adicionar ou remover')
       return
     }
 
-    const selectedLocations = Array.from(resultItems).map(item => {
-      const text = item.querySelector('.text-sm.font-medium').textContent
-      const parts = text.split('|').map(p => p.trim())
-      
-      return {
-        city: parts[0],
-        state: parts[1],
-        zip_code: parts[2],
-        county: item.querySelector('.text-xs.text-slate-500')?.textContent || ''
-      }
-    })
-
     // Show loading state on button
     const processButton = document.querySelector('[data-action="click->geographic-search#addSelectedResults"]')
-    const removeAllButton = document.querySelector('[data-action="click->geographic-search#removeAllLocations"]')
     
     if (processButton) {
       processButton.disabled = true
@@ -446,42 +554,35 @@ export default class extends Controller {
         Processando...
       `
       
-      if (removeAllButton) {
-        removeAllButton.disabled = true
-      }
-      
       // Call API to update geo targets
-      this.updateGeoTargets(selectedLocations, processButton, originalHTML, removeAllButton)
+      this.updateGeoTargets(newLocations, locationsToRemove, processButton, originalHTML)
     } else {
       // Fallback if button not found
-      this.updateGeoTargets(selectedLocations)
+      this.updateGeoTargets(newLocations, locationsToRemove)
     }
   }
 
-  async updateGeoTargets(locations, processButton, originalHTML, removeAllButton) {
+  async updateGeoTargets(newLocations, locationsToRemove, processButton, originalHTML) {
     try {
-      // Format locations for the API - pass city name only or zip code
-      const formattedLocations = locations.map(loc => {
-        // Try with city name first, or use zip code as fallback
-        return loc.city || loc.zip_code
-      }).filter(Boolean)
-
-      if (formattedLocations.length === 0) {
-        this.showErrorModal('Nenhuma localização válida para processar')
-        // Restore button state
-        if (processButton) {
-          processButton.disabled = false
-          processButton.innerHTML = originalHTML
-        }
-        if (removeAllButton) {
-          removeAllButton.disabled = false
-        }
-        return
-      }
-
       // Get selected states from the state selector
       const stateSelect = this.stateSelectTarget
       const selectedStates = jQuery(stateSelect).val() || []
+
+      const requestBody = {
+        campaign_id: this.campaignIdValue,
+        country_code: 'US',
+        selected_states: selectedStates
+      }
+
+      // Only add locations if there are new ones
+      if (newLocations.length > 0) {
+        requestBody.locations = newLocations
+      }
+
+      // Only add locations_to_remove if there are any
+      if (locationsToRemove.length > 0) {
+        requestBody.locations_to_remove = locationsToRemove
+      }
 
       const response = await fetch('/api/geo_targets/update', {
         method: 'POST',
@@ -491,12 +592,7 @@ export default class extends Controller {
           'Accept': 'application/json'
         },
         credentials: 'same-origin',
-        body: JSON.stringify({
-          campaign_id: this.campaignIdValue,
-          locations: formattedLocations,
-          country_code: 'US',
-          selected_states: selectedStates
-        })
+        body: JSON.stringify(requestBody)
       })
 
       const data = await response.json()
@@ -512,31 +608,27 @@ export default class extends Controller {
           processButton.disabled = false
           processButton.innerHTML = originalHTML
         }
-        if (removeAllButton) {
-          removeAllButton.disabled = false
-        }
         return
       }
 
       console.log('Geo targets updated:', data)
 
       // Show success modal
-      this.showSuccessModal(locations.length)
+      const totalChanges = newLocations.length + locationsToRemove.length
+      this.showSuccessModal(totalChanges)
 
       // Clear search
       this.searchInputTarget.value = ''
       this.clearSearchResults()
       
       // Refresh current locations
-      this.refreshCurrentLocations()
+      this.allLocations.clear()
+      await this.loadCurrentLocations()
       
       // Restore button state
       if (processButton) {
         processButton.disabled = false
         processButton.innerHTML = originalHTML
-      }
-      if (removeAllButton) {
-        removeAllButton.disabled = false
       }
     } catch (error) {
       console.error('Error updating geo targets:', error)
@@ -547,15 +639,12 @@ export default class extends Controller {
         processButton.disabled = false
         processButton.innerHTML = originalHTML
       }
-      if (removeAllButton) {
-        removeAllButton.disabled = false
-      }
     }
   }
 
   showSuccessModal(count) {
     const successMessage = this.successMessageTarget
-    successMessage.textContent = `${count} localização${count !== 1 ? 's' : ''} adicionada${count !== 1 ? 's' : ''} com sucesso!`
+    successMessage.textContent = `${count} localização${count !== 1 ? 's' : ''} processada${count !== 1 ? 's' : ''} com sucesso!`
     this.successModalTarget.classList.remove('hidden')
   }
 
@@ -601,69 +690,5 @@ export default class extends Controller {
 
     // Show modal
     errorModal.classList.remove('hidden')
-  }
-
-  removeLocation(event) {
-    const button = event.target.closest('button')
-    const locationItem = button.closest('.flex.items-center.gap-3')
-    if (locationItem) {
-      locationItem.remove()
-    }
-
-    // Check if there are any locations left
-    const resultsContainer = this.resultsContainerTarget
-    const remainingItems = resultsContainer.querySelectorAll('.flex.items-center.gap-3')
-    
-    if (remainingItems.length === 0) {
-      this.showNoResultsMessage('Nenhuma localização selecionada')
-    }
-  }
-
-  removeAllLocations() {
-    const resultsContainer = this.resultsContainerTarget
-    resultsContainer.innerHTML = ''
-    this.showNoResultsMessage('Nenhuma localização selecionada')
-  }
-
-  async refreshCurrentLocations() {
-    try {
-      // Get the campaign ID from the geographic search component
-      const campaignId = this.campaignIdValue
-      if (!campaignId) return
-
-      // Fetch current locations from the API
-      const response = await fetch(`/api/google_ads/campaign_locations?campaign_id=${campaignId}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-        },
-        credentials: 'same-origin'
-      })
-
-      if (!response.ok) {
-        console.error('Error refreshing current locations:', response.status)
-        return
-      }
-
-      const data = await response.json()
-      const locations = data.locations || []
-
-      // Update the current locations display
-      const currentLocationsList = document.getElementById('current-locations-list')
-      if (!currentLocationsList) return
-
-      if (locations.length === 0) {
-        currentLocationsList.innerHTML = '<p class="text-sm text-slate-500">Nenhuma localização</p>'
-      } else {
-        const locationsHtml = locations.map(loc => {
-          const name = loc.name || loc.geo_target_constant || 'Unknown'
-          return `<span class="inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800 mr-2 mb-2">${name}</span>`
-        }).join('')
-        currentLocationsList.innerHTML = locationsHtml
-      }
-    } catch (error) {
-      console.error('Error refreshing current locations:', error)
-    }
   }
 }

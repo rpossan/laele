@@ -43,11 +43,10 @@ RSpec.describe 'Api::GeoTargets', type: :request do
     # Ensure the selection is created
     selection
     allow_any_instance_of(GoogleAds::GetGeoTargets).to receive(:fetch_existing_targets).and_return([])
-    allow_any_instance_of(GoogleAds::CreateLocationTarget).to receive(:add_location_targets).and_return([
-      'geoTargetConstants/1023191',
-      'geoTargetConstants/1023192',
-      'geoTargetConstants/1023193'
-    ])
+    # Mock CreateLocationTarget to return the same number of resource names as input
+    allow_any_instance_of(GoogleAds::CreateLocationTarget).to receive(:add_location_targets) do |instance, targets|
+      targets.map { |target| target }
+    end
   end
 
   describe 'POST /api/geo_targets/update' do
