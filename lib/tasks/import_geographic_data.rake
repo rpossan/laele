@@ -50,15 +50,16 @@ namespace :geographic do
       total_rows += 1
 
       begin
+        criteria_id = row["Criteria ID"]&.strip
         name = row["Name"]&.strip
         canonical_name = row["Canonical Name"]&.strip
         country_code = row["Country Code"]&.strip || "US"
         target_type = row["Target Type"]&.strip
 
-        # Skip if no canonical name
-        unless canonical_name.present?
+        # Skip if no canonical name or criteria_id
+        unless canonical_name.present? && criteria_id.present?
           skipped += 1
-          skip_reasons["no_canonical_name"] += 1
+          skip_reasons["no_canonical_name_or_criteria_id"] += 1
           next
         end
 
@@ -152,10 +153,11 @@ namespace :geographic do
 
         is_new = mapping.new_record?
 
-        # Assign attributes
+        # Assign attributes including criteria_id
         mapping.assign_attributes(
           state: state,
-          country_code: country_code
+          country_code: country_code,
+          criteria_id: criteria_id
         )
 
         if mapping.save

@@ -538,7 +538,7 @@ pt-BR:
     not_found: "Não encontrado"
     unauthorized: "Não autorizado"
     forbidden: "Proibido"
-    unprocessable_entity: "Entidade não processável"
+    unprocessable_content: "Entidade não processável"
     unknown_error: "Erro desconhecido"
     invalid_response: "Resposta do servidor não é JSON válido"
     invalid_locale: "Idioma inválido"

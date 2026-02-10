@@ -25,6 +25,7 @@ module Api
       campaign_id = params[:campaign_id]
       locations = params[:locations]
       country_code = params[:country_code] || "US"
+      selected_states = params[:selected_states]
 
       unless campaign_id.present?
         return render_error("campaign_id é obrigatório")
@@ -60,6 +61,7 @@ module Api
       Rails.logger.info("[Api::GeoTargetsController] Updating geo targets for campaign #{campaign_id}")
       Rails.logger.info("[Api::GeoTargetsController] Locations: #{locations_array.inspect}")
       Rails.logger.info("[Api::GeoTargetsController] Country code: #{country_code}")
+      Rails.logger.info("[Api::GeoTargetsController] Selected states: #{selected_states.inspect}")
 
       begin
         service = Lsa::ApplyGeoTargets.new(
@@ -68,7 +70,7 @@ module Api
           campaign_id: campaign_id
         )
 
-        result = service.apply(locations_array, country_code: country_code)
+        result = service.apply(locations_array, country_code: country_code, selected_states: selected_states)
 
         # Ensure total_count is always present
         result[:total_count] ||= result[:applied_geo_targets]&.size || 0
@@ -90,7 +92,7 @@ module Api
         detailed_error = extract_google_ads_error_details(e)
         error_message = "Erro ao atualizar targets de localização: #{detailed_error}"
         Rails.logger.error("[Api::GeoTargetsController] #{error_message}")
-        render_error(error_message, :unprocessable_entity)
+        render_error(error_message, :unprocessable_content)
       rescue => e
         # Extract detailed error message if it's a RuntimeError from API
         detailed_error = extract_api_error_details(e)

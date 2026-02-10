@@ -533,7 +533,7 @@ en:
     not_found: "Not Found"
     unauthorized: "Unauthorized"
     forbidden: "Forbidden"
-    unprocessable_entity: "Unprocessable Entity"
+    unprocessable_content: "Unprocessable Entity"
     unknown_error: "Unknown Error"
     invalid_response: "Server response is not valid JSON"
     invalid_locale: "Invalid locale"

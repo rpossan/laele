@@ -479,6 +479,10 @@ export default class extends Controller {
         return
       }
 
+      // Get selected states from the state selector
+      const stateSelect = this.stateSelectTarget
+      const selectedStates = jQuery(stateSelect).val() || []
+
       const response = await fetch('/api/geo_targets/update', {
         method: 'POST',
         headers: {
@@ -490,7 +494,8 @@ export default class extends Controller {
         body: JSON.stringify({
           campaign_id: this.campaignIdValue,
           locations: formattedLocations,
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: selectedStates
         })
       })
 

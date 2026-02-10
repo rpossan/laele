@@ -8,9 +8,8 @@ module Lsa
       @campaign_id = campaign_id
     end
 
-    def apply(location_names, country_code: nil)
+    def apply(location_names, country_code: nil, selected_states: nil)
       return { applied_geo_targets: [] } if location_names.blank?
-
       # Parse location names (can be comma-separated string, array of names, or array of resource names)
       location_array = if location_names.is_a?(String)
         location_names.split(",").map(&:strip).reject(&:blank?)
@@ -21,6 +20,7 @@ module Lsa
       return { applied_geo_targets: [] } if location_array.empty?
 
       Rails.logger.info("[Lsa::ApplyGeoTargets] Applying geo targets for locations: #{location_array.inspect}")
+      Rails.logger.info("[Lsa::ApplyGeoTargets] Selected states: #{selected_states.inspect}")
 
       # Check if locations are already resource names (geoTargetConstants/...)
       # If they are, use them directly; otherwise, lookup using offline lookup
@@ -31,11 +31,24 @@ module Lsa
         if location_input.start_with?("geoTargetConstants/")
           found_targets << location_input
         else
-          # Lookup using offline lookup
-          lookup_service = GoogleAds::OfflineGeoLookup.new(country_code: country_code)
+          # Lookup using offline lookup with selected states filter
+          lookup_service = GoogleAds::OfflineGeoLookup.new(country_code: country_code, selected_states: selected_states)
           results = lookup_service.find(location_input)
           if results.any?
-            found_targets.concat(results.map { |r| r[:id] })
+            # Found in AddressGeographicMapping - can have multiple results for same city in different states
+            results.each do |result|
+              if result[:type] == "ADDRESS"
+                # For addresses, use the criteria_id to create the geo target constant
+                address_mapping = AddressGeographicMapping.find(result[:id])
+                if address_mapping.criteria_id.present?
+                  found_targets << "geoTargetConstants/#{address_mapping.criteria_id}"
+                else
+                  Rails.logger.warn("[Lsa::ApplyGeoTargets] No criteria_id found for address: #{location_input}")
+                end
+              else
+                found_targets << result[:id]
+              end
+            end
           else
             Rails.logger.warn("[Lsa::ApplyGeoTargets] No geo target found for: #{location_input}")
           end

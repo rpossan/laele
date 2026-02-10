@@ -1,6 +1,7 @@
 class AddressGeographicMapping < ApplicationRecord
   validates :zip_code, :city, :county, :state, :country_code, presence: true
   validates :zip_code, uniqueness: { scope: [:city, :county, :country_code] }
+  validates :criteria_id, uniqueness: true, allow_nil: true
 
   scope :by_state, ->(state) { where(state: state) }
   scope :by_zip_code, ->(zip) { where(zip_code: zip) }

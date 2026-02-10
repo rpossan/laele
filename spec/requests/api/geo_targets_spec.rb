@@ -5,33 +5,36 @@ RSpec.describe 'Api::GeoTargets', type: :request do
   let(:google_account) { create(:google_account, user: user) }
   let(:selection) { create(:active_customer_selection, user: user, google_account: google_account) }
 
-  let(:geo_target1) do
-    create(:geo_target,
+  let(:address_mapping1) do
+    create(:address_geographic_mapping,
       criteria_id: '1023191',
-      name: 'Boston',
-      canonical_name: 'Boston,Massachusetts,United States',
-      country_code: 'US',
-      target_type: 'City'
+      city: 'Boston',
+      county: 'Suffolk County',
+      state: 'MA',
+      zip_code: 'MA0001',
+      country_code: 'US'
     )
   end
 
-  let(:geo_target2) do
-    create(:geo_target,
+  let(:address_mapping2) do
+    create(:address_geographic_mapping,
       criteria_id: '1023192',
-      name: 'Cambridge',
-      canonical_name: 'Cambridge,Massachusetts,United States',
-      country_code: 'US',
-      target_type: 'City'
+      city: 'Cambridge',
+      county: 'Middlesex County',
+      state: 'MA',
+      zip_code: 'MA0002',
+      country_code: 'US'
     )
   end
 
-  let(:geo_target3) do
-    create(:geo_target,
+  let(:address_mapping3) do
+    create(:address_geographic_mapping,
       criteria_id: '1023193',
-      name: 'Worcester',
-      canonical_name: 'Worcester,Massachusetts,United States',
-      country_code: 'US',
-      target_type: 'City'
+      city: 'Worcester',
+      county: 'Worcester County',
+      state: 'MA',
+      zip_code: 'MA0003',
+      country_code: 'US'
     )
   end
 
@@ -50,16 +53,17 @@ RSpec.describe 'Api::GeoTargets', type: :request do
   describe 'POST /api/geo_targets/update' do
     context 'with valid parameters' do
       before do
-        geo_target1
-        geo_target2
-        geo_target3
+        address_mapping1
+        address_mapping2
+        address_mapping3
       end
 
       it 'updates geo targets with city names' do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: ['Boston', 'Cambridge', 'Worcester'],
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }
 
         expect(response).to have_http_status(:ok)
@@ -73,7 +77,8 @@ RSpec.describe 'Api::GeoTargets', type: :request do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: ['Boston'],
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }
 
         expect(response).to have_http_status(:ok)
@@ -85,7 +90,8 @@ RSpec.describe 'Api::GeoTargets', type: :request do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: 'Boston, Cambridge, Worcester',
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }
 
         expect(response).to have_http_status(:ok)
@@ -96,7 +102,8 @@ RSpec.describe 'Api::GeoTargets', type: :request do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: ['Boston', 'Boston', 'Cambridge'],
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }
 
         expect(response).to have_http_status(:ok)
@@ -106,7 +113,8 @@ RSpec.describe 'Api::GeoTargets', type: :request do
       it 'defaults to US country code' do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
-          locations: ['Boston']
+          locations: ['Boston'],
+          selected_states: ['MA']
         }
 
         expect(response).to have_http_status(:ok)
@@ -117,7 +125,8 @@ RSpec.describe 'Api::GeoTargets', type: :request do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: ['NonExistentCity'],
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }
 
         expect(response).to have_http_status(:ok)
@@ -139,7 +148,8 @@ RSpec.describe 'Api::GeoTargets', type: :request do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: ['Boston', 'Cambridge', 'Worcester'],
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }
 
         expect(response).to have_http_status(:ok)
@@ -153,7 +163,7 @@ RSpec.describe 'Api::GeoTargets', type: :request do
           country_code: 'US'
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('campaign_id é obrigatório')
       end
 
@@ -163,7 +173,7 @@ RSpec.describe 'Api::GeoTargets', type: :request do
           country_code: 'US'
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('locations é obrigatório')
       end
 
@@ -174,7 +184,7 @@ RSpec.describe 'Api::GeoTargets', type: :request do
           country_code: 'US'
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('locations é obrigatório')
       end
 
@@ -185,7 +195,7 @@ RSpec.describe 'Api::GeoTargets', type: :request do
           country_code: 'US'
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('locations é obrigatório')
       end
     end
@@ -196,7 +206,8 @@ RSpec.describe 'Api::GeoTargets', type: :request do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: ['Boston'],
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }, as: :json
 
         expect(response).to have_http_status(:unauthorized)
@@ -205,7 +216,7 @@ RSpec.describe 'Api::GeoTargets', type: :request do
 
     context 'error handling' do
       before do
-        geo_target1
+        address_mapping1
       end
 
       it 'handles Google Ads API errors gracefully' do
@@ -216,10 +227,11 @@ RSpec.describe 'Api::GeoTargets', type: :request do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: ['Boston'],
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('Erro ao atualizar targets de localização')
       end
 
@@ -231,7 +243,8 @@ RSpec.describe 'Api::GeoTargets', type: :request do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: ['Boston'],
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }
 
         expect(response).to have_http_status(:internal_server_error)
@@ -253,7 +266,8 @@ RSpec.describe 'Api::GeoTargets', type: :request do
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: ['geoTargetConstants/1023191', 'geoTargetConstants/1023192'],
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }
 
         expect(response).to have_http_status(:ok)
@@ -261,12 +275,13 @@ RSpec.describe 'Api::GeoTargets', type: :request do
       end
 
       it 'mixes location names and resource names' do
-        geo_target1
+        address_mapping1
 
         post '/api/geo_targets/update', params: {
           campaign_id: '123456789',
           locations: ['Boston', 'geoTargetConstants/1023192'],
-          country_code: 'US'
+          country_code: 'US',
+          selected_states: ['MA']
         }
 
         expect(response).to have_http_status(:ok)
