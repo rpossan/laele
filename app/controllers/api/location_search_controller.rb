@@ -72,8 +72,7 @@ module Api
           # ZIP code format (5 digits)
           parsed[:zip_code] = term
         elsif term.match?(/county/i)
-          # County format (contains "county")
-          parsed[:county] = term.gsub(/\s+county\s*/i, '').strip
+          parsed[:county] = term
         else
           # Assume it's a city name
           parsed[:city] = term
