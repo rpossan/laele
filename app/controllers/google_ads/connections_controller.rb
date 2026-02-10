@@ -159,16 +159,15 @@ module GoogleAds
         Rails.logger.warn("[GoogleAds::ConnectionsController] Failed to parse customer_names: #{e.message}")
       end
       
-      # Check if account with this login_customer_id already exists
-      existing_account = current_user.google_accounts.where(login_customer_id: selected_customer_id).where.not(id: google_account.id).first
-      
-      if existing_account
-        # Merge: delete the new account and use the existing one
-        google_account.destroy
-        google_account = existing_account
-      else
-        # Update the account with the selected login_customer_id
-        google_account.update!(login_customer_id: selected_customer_id)
+      # ⚠️ IMPORTANTE: manager_customer_id é a conta RAIZ (root manager account)
+      # Deve ser definido UMA VEZ e nunca alterado
+      # login_customer_id é usado para requisições e pode ser a mesma coisa
+      unless google_account.manager_customer_id.present?
+        google_account.update!(
+          manager_customer_id: selected_customer_id,
+          login_customer_id: selected_customer_id
+        )
+        Rails.logger.info("[GoogleAds::ConnectionsController] Set manager_customer_id to #{selected_customer_id} (root manager account)")
       end
 
       # Create or update ActiveCustomerSelection
@@ -237,6 +236,44 @@ module GoogleAds
       )
       
       redirect_to dashboard_path, notice: "Conexão removida."
+    end
+
+    def switch_customer
+      # Permite trocar de customer_id sem alterar login_customer_id
+      google_account_id = params[:google_account_id]
+      new_customer_id = params[:customer_id]
+
+      unless google_account_id.present? && new_customer_id.present?
+        return render json: { error: "Parâmetros inválidos" }, status: :bad_request
+      end
+
+      google_account = current_user.google_accounts.find(google_account_id)
+      
+      # Verifica se o customer_id é acessível
+      accessible = google_account.accessible_customers.find_by(customer_id: new_customer_id)
+      unless accessible
+        return render json: { error: "Conta não acessível" }, status: :forbidden
+      end
+
+      # Atualiza a seleção ativa
+      selection = current_user.active_customer_selection || current_user.build_active_customer_selection
+      selection.customer_id = new_customer_id
+      selection.google_account = google_account
+
+      if selection.save
+        session[:active_customer_id] = selection.customer_id
+        session[:active_google_account_id] = selection.google_account_id
+        
+        Rails.logger.info("[GoogleAds::ConnectionsController] Switched to customer #{new_customer_id}")
+        
+        render json: {
+          success: true,
+          customer_id: new_customer_id,
+          display_name: accessible.display_name
+        }
+      else
+        render json: { error: selection.errors.full_messages.join(", ") }, status: :unprocessable_entity
+      end
     end
 
     helper_method :format_customer_id

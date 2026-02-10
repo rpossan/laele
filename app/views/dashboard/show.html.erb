@@ -248,6 +248,11 @@
         
         // Reinitialize any scripts or components that need it
         if (tabName === 'campaigns') {
+          // Chamar autoFetchCampaigns quando a aba de campanhas é aberta
+          if (typeof autoFetchCampaigns === 'function') {
+            autoFetchCampaigns();
+          }
+          
           // Reinitialize Select2 for campaigns tab if campaigns are already loaded
           if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
             const campaignSelect = document.getElementById('campaign-select');

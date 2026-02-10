@@ -22,20 +22,14 @@ module Api
     end
 
     def update
-      selection = current_user.active_customer_selection
-      return render_error("Selecione uma conta antes de atualizar os targets de localização") unless selection
-
-      customer_id = params[:customer_id] || selection.customer_id
       campaign_id = params[:campaign_id]
       locations = params[:locations]
       country_code = params[:country_code] || "US"
+      selected_states = params[:selected_states]
+      locations_to_remove = params[:locations_to_remove]
 
       unless campaign_id.present?
         return render_error("campaign_id é obrigatório")
-      end
-
-      unless locations.present?
-        return render_error("locations é obrigatório")
       end
 
       # Normalize locations to array (can be string, array, or array of resource names)
@@ -49,9 +43,24 @@ module Api
         Array(locations)
       end
 
+      # Filter out empty strings
+      locations_array = locations_array.reject { |loc| loc.to_s.strip.blank? }
+
+      # Validate that at least one of locations or locations_to_remove is provided
+      unless locations_array.present? || locations_to_remove.present?
+        return render_error("locations é obrigatório")
+      end
+
+      selection = current_user.active_customer_selection
+      return render_error("Selecione uma conta antes de atualizar os targets de localização") unless selection
+
+      customer_id = params[:customer_id] || selection.customer_id
+
       Rails.logger.info("[Api::GeoTargetsController] Updating geo targets for campaign #{campaign_id}")
       Rails.logger.info("[Api::GeoTargetsController] Locations: #{locations_array.inspect}")
       Rails.logger.info("[Api::GeoTargetsController] Country code: #{country_code}")
+      Rails.logger.info("[Api::GeoTargetsController] Selected states: #{selected_states.inspect}")
+      Rails.logger.info("[Api::GeoTargetsController] Locations to remove: #{locations_to_remove.inspect}")
 
       begin
         service = Lsa::ApplyGeoTargets.new(
@@ -60,7 +69,10 @@ module Api
           campaign_id: campaign_id
         )
 
-        result = service.apply(locations_array, country_code: country_code)
+        result = service.apply(locations_array, country_code: country_code, selected_states: selected_states, locations_to_remove: locations_to_remove)
+
+        # Ensure total_count is always present
+        result[:total_count] ||= result[:applied_geo_targets]&.size || 0
 
         # Log activity
         ActivityLogger.log_geo_targets_updated(
@@ -68,22 +80,69 @@ module Api
           campaign_id: campaign_id,
           added_count: result[:added_count] || 0,
           removed_count: result[:removed_count] || 0,
-          total_count: result[:total_count] || result[:applied_geo_targets]&.size || 0,
+          total_count: result[:total_count],
           locations: result[:applied_geo_targets] || [],
           request: request
         )
 
         render json: result
       rescue Google::Ads::GoogleAds::Errors::GoogleAdsError => e
-        error_message = "Erro ao atualizar targets de localização: #{e.message}"
+        # Extract detailed error message from Google Ads API response
+        detailed_error = extract_google_ads_error_details(e)
+        error_message = "Erro ao atualizar targets de localização: #{detailed_error}"
         Rails.logger.error("[Api::GeoTargetsController] #{error_message}")
-        render_error(error_message, :unprocessable_entity)
+        render_error(error_message, :unprocessable_content)
       rescue => e
-        error_message = "Erro inesperado ao atualizar targets de localização: #{e.message}"
+        # Extract detailed error message if it's a RuntimeError from API
+        detailed_error = extract_api_error_details(e)
+        error_message = "Erro ao atualizar targets de localização: #{detailed_error}"
         Rails.logger.error("[Api::GeoTargetsController] #{error_message}")
         Rails.logger.error("[Api::GeoTargetsController] Backtrace: #{e.backtrace.first(10).join("\n")}")
         render_error(error_message, :internal_server_error)
       end
+    end
+
+    private
+
+    def extract_google_ads_error_details(error)
+      # Try to extract error details from Google Ads error
+      error.message
+    end
+
+    def extract_api_error_details(error)
+      # Check if error message contains JSON from API response
+      if error.message.include?("Google Ads API error:")
+        # Try to parse and extract the actual error message
+        begin
+          # Extract JSON from error message
+          json_start = error.message.index('{')
+          json_end = error.message.rindex('}')
+          
+          if json_start && json_end
+            json_str = error.message[json_start..json_end]
+            error_data = JSON.parse(json_str)
+            
+            # Extract the most relevant error message
+            if error_data['error'] && error_data['error']['details']
+              details = error_data['error']['details'].first
+              if details && details['errors']
+                first_error = details['errors'].first
+                # Try to get the specific error message first
+                if first_error && first_error['message']
+                  return first_error['message']
+                end
+              end
+            end
+            
+            # Fallback to main error message
+            return error_data['error']['message'] if error_data['error'] && error_data['error']['message']
+          end
+        rescue => parse_error
+          Rails.logger.warn("[Api::GeoTargetsController] Failed to parse error details: #{parse_error.message}")
+        end
+      end
+      
+      error.message
     end
   end
 end

@@ -1,36 +1,45 @@
 module GoogleAds
   class OfflineGeoLookup
-    def initialize(country_code: nil)
-      @country_code = country_code
+    def initialize(country_code: nil, selected_states: nil)
+      @country_code = country_code || "US"
+      @selected_states = Array(selected_states).map(&:upcase)
     end
 
     def find(query)
       return [] if query.blank?
 
       query = query.strip
+      
+      # Remove state abbreviation if present (e.g., "Windsor (MA)" -> "Windsor")
+      query = query.gsub(/\s*\([A-Z]{2}\)\s*$/, '').strip
+      
       results = []
 
-      # Exact match on criteria_id
-      if query.match?(/^\d+$/)
-        geo_target = GeoTarget.find_by(criteria_id: query)
-        if geo_target
-          results << format_result(geo_target)
+      # Try to find by ZIP code first (most specific)
+      if query.match?(/^\d{5}(-\d{4})?$/)
+        address_mappings = AddressGeographicMapping.by_zip_code(query)
+        address_mappings = filter_by_states(address_mappings)
+        address_mappings.each do |mapping|
+          result = format_address_result(mapping)
+          results << result unless results.any? { |r| r[:id] == result[:id] }
         end
+        return results if results.any?
       end
 
-      # Exact match on name (case-insensitive)
-      exact_name_matches = GeoTarget.where("LOWER(name) = ?", query.downcase)
-      exact_name_matches = exact_name_matches.by_country(@country_code) if @country_code.present?
-      exact_name_matches.each do |geo_target|
-        result = format_result(geo_target)
+      # Try exact match on city name
+      address_mappings = AddressGeographicMapping.by_city(query)
+      address_mappings = filter_by_states(address_mappings)
+      address_mappings.each do |mapping|
+        result = format_address_result(mapping)
         results << result unless results.any? { |r| r[:id] == result[:id] }
       end
+      return results if results.any?
 
-      # Exact match on canonical_name (case-insensitive)
-      exact_canonical_matches = GeoTarget.where("LOWER(canonical_name) = ?", query.downcase)
-      exact_canonical_matches = exact_canonical_matches.by_country(@country_code) if @country_code.present?
-      exact_canonical_matches.each do |geo_target|
-        result = format_result(geo_target)
+      # Try exact match on county name
+      address_mappings = AddressGeographicMapping.by_county(query)
+      address_mappings = filter_by_states(address_mappings)
+      address_mappings.each do |mapping|
+        result = format_address_result(mapping)
         results << result unless results.any? { |r| r[:id] == result[:id] }
       end
 
@@ -45,21 +54,33 @@ module GoogleAds
 
       results = []
 
-      # Search in name (case-insensitive, partial match)
-      name_matches = GeoTarget.where("LOWER(name) LIKE ?", "%#{query.downcase}%")
-      name_matches = name_matches.by_country(@country_code) if @country_code.present?
-      name_matches.limit(limit).each do |geo_target|
-        result = format_result(geo_target)
+      # Search by ZIP code (exact match)
+      if query.match?(/^\d{5}(-\d{4})?$/)
+        address_mappings = AddressGeographicMapping.by_zip_code(query)
+        address_mappings = filter_by_states(address_mappings)
+        address_mappings.limit(limit).each do |mapping|
+          result = format_address_result(mapping)
+          results << result unless results.any? { |r| r[:id] == result[:id] }
+          break if results.size >= limit
+        end
+        return results if results.any?
+      end
+
+      # Search by city name (case-insensitive, partial match)
+      city_matches = AddressGeographicMapping.where("LOWER(city) LIKE ?", "%#{query.downcase}%")
+      city_matches = filter_by_states(city_matches)
+      city_matches.limit(limit).each do |mapping|
+        result = format_address_result(mapping)
         results << result unless results.any? { |r| r[:id] == result[:id] }
         break if results.size >= limit
       end
 
-      # Search in canonical_name if we haven't reached the limit
+      # Search by county name if we haven't reached the limit
       if results.size < limit
-        canonical_matches = GeoTarget.where("LOWER(canonical_name) LIKE ?", "%#{query.downcase}%")
-        canonical_matches = canonical_matches.by_country(@country_code) if @country_code.present?
-        canonical_matches.limit(limit - results.size).each do |geo_target|
-          result = format_result(geo_target)
+        county_matches = AddressGeographicMapping.where("LOWER(county) LIKE ?", "%#{query.downcase}%")
+        county_matches = filter_by_states(county_matches)
+        county_matches.limit(limit - results.size).each do |mapping|
+          result = format_address_result(mapping)
           results << result unless results.any? { |r| r[:id] == result[:id] }
           break if results.size >= limit
         end
@@ -69,6 +90,24 @@ module GoogleAds
     end
 
     private
+
+    def filter_by_states(query)
+      return query if @selected_states.blank?
+      query.where(state: @selected_states)
+    end
+
+    def format_address_result(address_mapping)
+      {
+        id: address_mapping.id,
+        name: "#{address_mapping.city} (#{address_mapping.state})",
+        city: address_mapping.city,
+        state: address_mapping.state,
+        zip_code: address_mapping.zip_code,
+        county: address_mapping.county,
+        type: "ADDRESS",
+        status: "ENABLED"
+      }
+    end
 
     def format_result(geo_target)
       {

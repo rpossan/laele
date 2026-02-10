@@ -14,7 +14,22 @@ class GoogleAccount < ApplicationRecord
     "#{digits[0..2]}-#{digits[3..5]}-#{digits[6..-1]}"
   end
 
+  def manager_customer_id_formatted
+    digits = manager_customer_id.to_s
+    "#{digits[0..2]}-#{digits[3..5]}-#{digits[6..-1]}"
+  end
+
   def access_token_cache_key
     "google_ads/access_token/#{id}"
+  end
+
+  # Ensure manager_customer_id is set (should be set once and never change)
+  def ensure_manager_customer_id!
+    return if manager_customer_id.present?
+    
+    first_accessible = accessible_customers.first
+    if first_accessible
+      update!(manager_customer_id: first_accessible.customer_id)
+    end
   end
 end

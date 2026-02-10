@@ -102,7 +102,11 @@ module GoogleAds
       Rails.logger.info("[GoogleAds::CampaignService] Request URL: #{uri}")
       Rails.logger.info("[GoogleAds::CampaignService] Request method: POST")
       Rails.logger.info("[GoogleAds::CampaignService] Customer ID: #{@customer_id}")
-      Rails.logger.info("[GoogleAds::CampaignService] Login Customer ID: #{@google_account.login_customer_id || 'N/A'}")
+      
+      # ⚠️ IMPORTANTE: login-customer-id deve ser o próprio customer_id
+      # Cada customer só pode ser consultado usando seu próprio ID como login_customer_id
+      login_customer_id_to_use = @customer_id
+      Rails.logger.info("[GoogleAds::CampaignService] Login Customer ID: #{login_customer_id_to_use}")
 
       request_body = { query: query }
 
@@ -113,9 +117,9 @@ module GoogleAds
       req["developer-token"] = ENV["GOOGLE_ADS_DEVELOPER_TOKEN"]
       req["Content-Type"] = "application/json"
 
-      if @google_account.login_customer_id.present?
-        req["login-customer-id"] = @google_account.login_customer_id
-        Rails.logger.debug("[GoogleAds::CampaignService] Added login-customer-id header: #{@google_account.login_customer_id}")
+      if login_customer_id_to_use.present?
+        req["login-customer-id"] = login_customer_id_to_use
+        Rails.logger.debug("[GoogleAds::CampaignService] Added login-customer-id header: #{login_customer_id_to_use}")
       end
 
       req.body = request_body.to_json

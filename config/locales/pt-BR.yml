@@ -264,6 +264,7 @@ pt-BR:
     select_campaign_placeholder: "Selecione uma campanha..."
     fetch_campaigns: "Buscar Campanhas"
     fetching: "Buscando..."
+    view_zip_codes: Consultar ZIP Codes
     campaigns_fetched: "Campanhas encontradas"
     no_campaigns_found: "Nenhuma campanha LSA encontrada"
     error_fetching: "Erro ao buscar campanhas"
@@ -284,6 +285,21 @@ pt-BR:
     locations: "localizações"
     error_applying: "Erro ao aplicar localizações"
     searching: "Buscando..."
+    paste_locations: "Cole as localizações"
+    paste_placeholder: "Ex: Duluth, 30301, Fulton County"
+    locations_processed: "Localizações Processadas"
+    locations_processed_message: "As localizações foram adicionadas com sucesso!"
+    state_selection: "Etapa 1: Selecione os Estados"
+    state_selection_description: "Selecione um ou mais estados para definir a área de cobertura para busca de localizações."
+    select_states: "Estados"
+    state_selection_required: "Seleção de Estados Necessária"
+    state_selection_blocking_message: "Selecione pelo menos um estado para buscar localidades"
+    location_search: "Etapa 2: Buscar Localizações"
+    location_search_description: "Digite para buscar cidades, ZIP codes ou condados dentro dos estados selecionados."
+    unmatched_locations_title: "Endereços não encontrados ou fora da área selecionada de estados"
+    unmatched_locations_hint: "Itens que não foram encontrados na base de GeoTargets ou estão fora dos estados selecionados aparecerão aqui."
+    unmatched_locations_empty: "Nenhum endereço não encontrado até o momento."
+    add_selected_locations: "Processar Localizações"
 
   # Dashboard
   dashboard:
@@ -522,7 +538,7 @@ pt-BR:
     not_found: "Não encontrado"
     unauthorized: "Não autorizado"
     forbidden: "Proibido"
-    unprocessable_entity: "Entidade não processável"
+    unprocessable_content: "Entidade não processável"
     unknown_error: "Erro desconhecido"
     invalid_response: "Resposta do servidor não é JSON válido"
     invalid_locale: "Idioma inválido"

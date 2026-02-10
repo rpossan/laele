@@ -21,6 +21,7 @@ Rails.application.routes.draw do
     get "auth/callback", to: "connections#callback"
     get "auth/select", to: "connections#select_account", as: :select_account
     post "auth/select", to: "connections#save_account_selection"
+    post "auth/switch_customer", to: "connections#switch_customer", as: :switch_customer
     delete "auth/disconnect/:id", to: "connections#destroy", as: :disconnect
   end
 
@@ -50,6 +51,14 @@ Rails.application.routes.draw do
         post :bulk_feedback, to: "leads/bulk_lead_feedback#create"
       end
     end
+
+    # State selections management
+    get "state_selections", to: "state_selections#index"
+    post "state_selections", to: "state_selections#update"
+    delete "state_selections", to: "state_selections#clear"
+
+    # Location search with state filtering
+    post "location_search", to: "location_search#search"
 
     get "geo_targets/search", to: "geo_targets#search"
     post "geo_targets/update", to: "geo_targets#update"

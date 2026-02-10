@@ -258,6 +258,7 @@ en:
     campaign: "Campaign"
     select_campaign_placeholder: "Select a campaign..."
     fetch_campaigns: "Fetch Campaigns"
+    view_zip_codes: View ZIP Codes
     fetching: "Fetching..."
     campaigns_fetched: "Campaigns found"
     no_campaigns_found: "No LSA campaigns found"
@@ -279,6 +280,21 @@ en:
     locations: "locations"
     error_applying: "Error applying locations"
     searching: "Searching..."
+    paste_locations: "Paste locations"
+    paste_placeholder: "Ex: Duluth, 30301, Fulton County"
+    locations_processed: "Locations Processed"
+    locations_processed_message: "Locations have been added successfully!"
+    state_selection: "Step 1: Select States"
+    state_selection_description: "Select one or more states to define the coverage area for location search."
+    select_states: "States"
+    state_selection_required: "State Selection Required"
+    state_selection_blocking_message: "Select at least one state to search for locations"
+    location_search: "Step 2: Search Locations"
+    location_search_description: "Type to search for cities, ZIP codes or counties within the selected states."
+    unmatched_locations_title: "Addresses not found or outside the selected state area"
+    unmatched_locations_hint: "Items that were not found in the GeoTargets database or are outside the selected states will appear here."
+    unmatched_locations_empty: "No addresses not found at this time."
+    add_selected_locations: "Process Locations"
 
   # Dashboard
   dashboard:
@@ -517,7 +533,7 @@ en:
     not_found: "Not Found"
     unauthorized: "Unauthorized"
     forbidden: "Forbidden"
-    unprocessable_entity: "Unprocessable Entity"
+    unprocessable_content: "Unprocessable Entity"
     unknown_error: "Unknown Error"
     invalid_response: "Server response is not valid JSON"
     invalid_locale: "Invalid locale"

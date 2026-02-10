@@ -18,9 +18,11 @@
       </div>
       
       <div class="mb-4">
-        <label for="campaign-select" class="block text-sm font-medium text-slate-700 mb-2">
-          <%= t('campaigns.campaign') %>
-        </label>
+        <div class="flex items-center justify-between mb-2">
+          <label for="campaign-select" class="block text-sm font-medium text-slate-700">
+            <%= t('campaigns.campaign') %>
+          </label>
+        </div>
         <select id="campaign-select" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
           <option value=""><%= t('campaigns.select_campaign_placeholder') %></option>
         </select>
@@ -52,92 +54,9 @@
         </div>
       </div>
 
-      <div class="grid lg:grid-cols-2 gap-6">
-        <!-- Add Locations Form + Bulk Paste -->
-        <div>
-          <!-- Add Locations Form (Select2) -->
-          <div class="mb-4">
-            <label for="locations-select" class="block text-sm font-medium text-slate-700 mb-2">
-              <%= t('campaigns.add_locations') %>
-            </label>
-            <select 
-              id="locations-select"
-              multiple="multiple"
-              class="w-full rounded-lg border border-slate-300 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            </select>
-            <p class="mt-1 text-xs text-slate-500"><%= t('campaigns.locations_hint') %></p>
-          </div>
-
-          <!-- Bulk Paste Input -->
-          <div class="mb-4">
-            <label for="locations-bulk-input" class="block text-sm font-medium text-slate-700 mb-2">
-              <%= t('campaigns.bulk_paste_label', default: 'Colar lista de regiões/ZIP/cidades') %>
-            </label>
-            <textarea
-              id="locations-bulk-input"
-              rows="3"
-              placeholder="<%= t('campaigns.bulk_paste_placeholder', default: 'Ex: 33411, West Palm Beach, Stuart') %>"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
-            <p class="mt-1 text-xs text-slate-500">
-              <%= t('campaigns.bulk_paste_hint', default: 'Cole uma lista separada por vírgulas. As regiões encontradas serão selecionadas automaticamente.') %>
-            </p>
-            <button
-              id="process-locations-btn"
-              type="button"
-              onclick="processLocationsList()"
-              class="mt-2 inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-              </svg>
-              <%= t('campaigns.bulk_paste_button', default: 'Processar lista') %>
-            </button>
-          </div>
-
-          <!-- Country code + Apply button -->
-          <div class="mb-4">
-            <label for="country-code-select" class="block text-sm font-medium text-slate-700 mb-2">
-              <%= t('campaigns.country_code') %>
-            </label>
-            <select id="country-code-select" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-              <option value="US" selected>United States (US)</option>
-              <option value="CA">Canada (CA)</option>
-              <option value="GB">United Kingdom (GB)</option>
-              <option value="AU">Australia (AU)</option>
-              <option value="DE">Germany (DE)</option>
-              <option value="FR">France (FR)</option>
-              <option value="ES">Spain (ES)</option>
-              <option value="IT">Italy (IT)</option>
-              <option value="BR">Brazil (BR)</option>
-              <option value="MX">Mexico (MX)</option>
-            </select>
-          </div>
-
-          <button 
-            id="apply-locations-btn"
-            onclick="applyLocations()"
-            disabled
-            class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:bg-slate-400 disabled:cursor-not-allowed">
-            <svg class="inline-block w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <%= t('campaigns.apply_locations') %>
-          </button>
-        </div>
-
-        <!-- Unmatched Locations Panel -->
-        <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <h3 class="mb-2 text-sm font-semibold text-amber-800">
-            <%= t('campaigns.unmatched_locations_title', default: 'Endereços não encontrados') %>
-          </h3>
-          <p class="mb-2 text-xs text-amber-700">
-            <%= t('campaigns.unmatched_locations_hint', default: 'Itens colados que não foram encontrados na base de GeoTargets aparecerão aqui.') %>
-          </p>
-          <div id="unmatched-locations-list" class="min-h-[40px] rounded-md border border-dashed border-amber-200 bg-white/70 p-2">
-            <p class="text-xs text-amber-500">
-              <%= t('campaigns.unmatched_locations_empty', default: 'Nenhum endereço não encontrado até o momento.') %>
-            </p>
-          </div>
-        </div>
+      <!-- Geographic Search Component (Two-Stage) -->
+      <div class="mb-6" id="geographic-search-container">
+        <%= render 'dashboard/geographic_search', campaign_id: '' %>
       </div>
     </div>
   <% end %>
@@ -145,6 +64,109 @@
 
 <script>
   let selectedCampaignId = null;
+
+  // Função silenciosa para buscar campanhas automaticamente
+  async function autoFetchCampaigns() {
+    const select = document.getElementById('campaign-select');
+    
+    if (!select) {
+      console.error('Select campaign não encontrado');
+      return;
+    }
+
+    try {
+      
+      // Mostrar ícone de carregamento
+      const loadingIcon = document.createElement('span');
+      loadingIcon.id = 'campaign-loading-icon';
+      loadingIcon.innerHTML = '<svg class="inline-block w-4 h-4 mr-2 animate-spin text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>';
+      select.parentElement.appendChild(loadingIcon);
+      select.disabled = true;
+      
+      const response = await fetch('/api/google_ads/campaigns', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        console.error('Erro ao buscar campanhas:', response.status);
+        return;
+      }
+
+      const data = await response.json();
+      const campaigns = data.campaigns || [];
+
+      if (campaigns.length > 0) {
+        // Limpar opções existentes
+        select.innerHTML = '<option value=""><%= t('campaigns.select_campaign_placeholder') %></option>';
+
+        // Adicionar campanhas
+        campaigns.forEach(campaign => {
+          const option = document.createElement('option');
+          option.value = campaign.id;
+          option.textContent = `${campaign.name} (${campaign.status})`;
+          select.appendChild(option);
+        });
+
+
+        // Inicializar Select2 DEPOIS de adicionar as campanhas
+        if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+          
+          const selectPlaceholder = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.select_campaign_placeholder : '<%= t('campaigns.select_campaign_placeholder') %>';
+          const noResultsText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.no_campaigns_found : '<%= t('campaigns.no_campaigns_found') %>';
+          const searchingText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.searching : 'Searching...';
+          
+          jQuery(select).select2({
+            placeholder: selectPlaceholder,
+            allowClear: true,
+            width: '100%',
+            language: {
+              noResults: function() {
+                return noResultsText;
+              },
+              searching: function() {
+                return searchingText;
+              }
+            }
+          });
+          
+          jQuery(select).on('change', function() {
+            selectedCampaignId = this.value;
+            const locationManagement = document.getElementById('location-management');
+            
+            if (this.value) {
+              locationManagement.classList.remove('hidden');
+              fetchCurrentLocations();
+              
+              // Update the geographic search controller with the selected campaign ID
+              const geographicSearchComponent = document.getElementById('geographic-search-component');
+              if (geographicSearchComponent) {
+                geographicSearchComponent.setAttribute('data-geographic-search-campaign-id-value', this.value);
+              }
+            } else {
+              locationManagement.classList.add('hidden');
+            }
+          });
+          
+        }
+      } else {
+        console.log('Nenhuma campanha encontrada');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar campanhas automaticamente:', error);
+    } finally {
+      // Remover ícone de carregamento
+      const loadingIcon = document.getElementById('campaign-loading-icon');
+      if (loadingIcon) {
+        loadingIcon.remove();
+      }
+      select.disabled = false;
+    }
+  }
 
   async function fetchCampaigns() {
     const btn = document.getElementById('fetch-campaigns-btn');
@@ -226,28 +248,34 @@
         
         if (this.value) {
           locationManagement.classList.remove('hidden');
-          applyBtn.disabled = false;
           fetchCurrentLocations();
-          initializeLocationsSelect2();
+          
+          // Update the geographic search controller with the selected campaign ID
+          const geographicSearchComponent = document.getElementById('geographic-search-component');
+          if (geographicSearchComponent) {
+            geographicSearchComponent.setAttribute('data-geographic-search-campaign-id-value', this.value);
+          }
         } else {
           locationManagement.classList.add('hidden');
-          applyBtn.disabled = true;
         }
       });
       } else {
         // Fallback to native select if Select2 is not available
         select.onchange = function() {
           selectedCampaignId = this.value;
-          const applyBtn = document.getElementById('apply-locations-btn');
           const locationManagement = document.getElementById('location-management');
           
           if (this.value) {
             locationManagement.classList.remove('hidden');
-            applyBtn.disabled = false;
             fetchCurrentLocations();
+            
+            // Update the geographic search controller with the selected campaign ID
+            const geographicSearchComponent = document.getElementById('geographic-search-component');
+            if (geographicSearchComponent) {
+              geographicSearchComponent.setAttribute('data-geographic-search-campaign-id-value', this.value);
+            }
           } else {
             locationManagement.classList.add('hidden');
-            applyBtn.disabled = true;
           }
         };
       }
@@ -335,9 +363,6 @@
               const option = new Option(item.text, item.id, true, true);
               jQuery(locationsSelect).append(option);
             });
-
-            // Initialize Select2 with existing data
-            initializeLocationsSelect2();
           }
         }
       }
@@ -347,302 +372,51 @@
     }
   }
 
-  function initializeLocationsSelect2() {
-    if (typeof jQuery === 'undefined' || !jQuery.fn.select2) {
-      return;
-    }
+
+
+  // Initialize Select2 on page load if campaigns are already loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    // Nada aqui - autoFetchCampaigns será chamado quando a aba de campanhas for aberta
+  });
+
+  // Handle geographic search component event
+  document.addEventListener('locationsSelected', function(event) {
+    const locations = event.detail.locations;
+    
+    if (!locations || locations.length === 0) return;
 
     const locationsSelect = document.getElementById('locations-select');
     if (!locationsSelect) return;
 
-    // Don't destroy if already initialized with data
-    if (jQuery(locationsSelect).hasClass('select2-hidden-accessible')) {
-      return; // Already initialized, just return
-    }
-
-    const countryCode = document.getElementById('country-code-select').value;
-    const selectPlaceholder = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.locations_placeholder : '<%= t('campaigns.locations_placeholder') %>';
-    const noResultsText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.no_locations : '<%= t('campaigns.no_locations') %>';
-    const searchingText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.searching : 'Searching...';
-
-    // Get existing selected values
-    const existingValues = Array.from(locationsSelect.options).map(opt => opt.value).filter(v => v);
-
-    jQuery(locationsSelect).select2({
-      placeholder: selectPlaceholder,
-      allowClear: true,
-      multiple: true,
-      width: '100%',
-      minimumInputLength: 2,
-      ajax: {
-        url: '/api/geo_targets/search',
-        dataType: 'json',
-        delay: 250,
-        data: function(params) {
-          return {
-            q: params.term,
-            country_code: countryCode,
-            limit: 20
-          };
-        },
-        processResults: function(data) {
-          return {
-            results: data.results || []
-          };
-        },
-        cache: true
-      },
-      language: {
-        noResults: function() {
-          return noResultsText;
-        },
-        searching: function() {
-          return searchingText;
-        }
-      }
-    });
-
-    // Update Select2 when country code changes
-    const countrySelect = document.getElementById('country-code-select');
-    if (countrySelect) {
-      jQuery(countrySelect).off('change.locations').on('change.locations', function() {
-        const newCountryCode = this.value;
-        // Save current selections
-        const currentSelections = jQuery(locationsSelect).val() || [];
-        // Destroy and reinitialize
-        if (jQuery(locationsSelect).hasClass('select2-hidden-accessible')) {
-          jQuery(locationsSelect).select2('destroy');
-          // Clear options and reinitialize
-          jQuery(locationsSelect).empty();
-          initializeLocationsSelect2();
-          // Note: User will need to re-select after country change
-        }
-      });
-    }
-  }
-
-  async function applyLocations() {
-    if (!selectedCampaignId) return;
-
-    const locationsSelect = document.getElementById('locations-select');
-    const countryCode = document.getElementById('country-code-select').value;
-    
-    // Get selected values from Select2
-    const selectedLocations = jQuery(locationsSelect).val() || [];
-
-    if (selectedLocations.length === 0) {
-      if (window.showError) {
-        window.showError('<%= t('campaigns.locations_required') %>');
-      }
-      return;
-    }
-
-    const btn = document.getElementById('apply-locations-btn');
-    btn.disabled = true;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<svg class="inline-block w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><%= t('campaigns.applying') %>';
-
-    try {
-      const response = await fetch('/api/geo_targets/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          campaign_id: selectedCampaignId,
-          locations: selectedLocations,
-          country_code: countryCode
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
-        throw new Error(error.error || '<%= t('campaigns.error_applying') %>');
-      }
-
-      const data = await response.json();
-      const appliedCount = data.applied_geo_targets?.length || 0;
-
-      if (window.showSuccess) {
-        window.showSuccess(`<%= t('campaigns.locations_applied') %>: ${appliedCount} <%= t('campaigns.locations') %>`);
-      }
-
-      // Refresh locations list (keep selections in Select2)
-      fetchCurrentLocations();
-    } catch (error) {
-      console.error('Error applying locations:', error);
-      if (window.showError) {
-        window.showError(error.message || '<%= t('campaigns.error_applying') %>');
-      }
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-    }
-  }
-
-  async function processLocationsList() {
-    if (!selectedCampaignId) return;
-
-    const bulkInput = document.getElementById('locations-bulk-input');
-    const raw = bulkInput.value || '';
-    const countryCode = document.getElementById('country-code-select').value;
-    const locationsSelect = document.getElementById('locations-select');
-    const unmatchedList = document.getElementById('unmatched-locations-list');
-
-    const textEmptyMsg = '<%= t('campaigns.locations_required') %>';
-
-    if (!raw.trim()) {
-      if (window.showError) {
-        window.showError(textEmptyMsg);
-      }
-      return;
-    }
-
-    // Split by comma and normalize
-    const parts = raw
-      .split(',')
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
-
-    // Remove duplicates
-    const uniqueParts = Array.from(new Set(parts));
-
-    if (uniqueParts.length === 0) {
-      if (window.showError) {
-        window.showError(textEmptyMsg);
-      }
-      return;
-    }
-
-    // Prepare UI state
-    const processBtn = document.getElementById('process-locations-btn');
-    const originalBtnText = processBtn.innerHTML;
-    processBtn.disabled = true;
-    processBtn.innerHTML = '<svg class="inline-block w-4 h-4 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span><%= t('campaigns.fetching') %></span>';
-
-    const foundMap = {};
-    const notFound = [];
-
-    try {
-      for (const term of uniqueParts) {
-        if (term.length < 2) {
-          notFound.push(term);
-          continue;
-        }
-
-        try {
-          const resp = await fetch(`/api/geo_targets/search?q=${encodeURIComponent(term)}&country_code=${encodeURIComponent(countryCode)}&limit=5`, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-            },
-            credentials: 'same-origin'
-          });
-
-          if (!resp.ok) {
-            notFound.push(term);
-            continue;
-          }
-
-          const data = await resp.json();
-          const results = data.results || [];
-
-          if (results.length === 0) {
-            notFound.push(term);
-          } else {
-            const first = results[0];
-            foundMap[first.id] = first;
-          }
-        } catch (error) {
-          console.error('Error searching geo target for term:', term, error);
-          notFound.push(term);
-        }
-      }
-
-      // Update Select2 with found locations
-      if (typeof jQuery !== 'undefined' && jQuery.fn.select2 && locationsSelect) {
-        if (!jQuery(locationsSelect).hasClass('select2-hidden-accessible')) {
-          initializeLocationsSelect2();
-        }
-
-        const $select = jQuery(locationsSelect);
-        const currentValues = $select.val() || [];
-        const newValues = Object.keys(foundMap);
-
-        // Add new options if they don't exist
-        Object.values(foundMap).forEach(item => {
-          if ($select.find(`option[value="${item.id}"]`).length === 0) {
-            const option = new Option(item.text, item.id, false, false);
-            $select.append(option);
-          }
-        });
-
-        // Merge new values with current selections
-        const merged = Array.from(new Set([...currentValues, ...newValues]));
-        $select.val(merged).trigger('change');
-      }
-
-      // Update unmatched locations panel
-      if (unmatchedList) {
-        if (notFound.length === 0) {
-          unmatchedList.innerHTML = '<p class="text-xs text-amber-500"><%= t('campaigns.unmatched_locations_empty', default: 'Nenhum endereço não encontrado até o momento.') %></p>';
-        } else {
-          unmatchedList.innerHTML = notFound.map(term => {
-            return `<span class="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 mr-2 mb-2">${term}</span>`;
-          }).join('');
-        }
-      }
-    } finally {
-      processBtn.disabled = false;
-      processBtn.innerHTML = originalBtnText;
-    }
-  }
-
-  // Initialize Select2 on page load if campaigns are already loaded
-  document.addEventListener('DOMContentLoaded', function() {
+    // Add locations to Select2 if available
     if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
-      const campaignSelect = document.getElementById('campaign-select');
-      if (campaignSelect && campaignSelect.options.length > 1) {
-        const selectPlaceholder = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.select_campaign_placeholder : '<%= t('campaigns.select_campaign_placeholder') %>';
-        const noResultsText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.no_campaigns_found : '<%= t('campaigns.no_campaigns_found') %>';
-        const searchingText = window.I18n && window.I18n.campaigns ? window.I18n.campaigns.searching : 'Searching...';
-        
-        if (!jQuery(campaignSelect).hasClass('select2-hidden-accessible')) {
-          jQuery(campaignSelect).select2({
-            placeholder: selectPlaceholder,
-            allowClear: true,
-            width: '100%',
-            language: {
-              noResults: function() {
-                return noResultsText;
-              },
-              searching: function() {
-                return searchingText;
-              }
-            }
-          });
-          
-          jQuery(campaignSelect).on('change', function() {
-            selectedCampaignId = this.value;
-            const applyBtn = document.getElementById('apply-locations-btn');
-            const locationManagement = document.getElementById('location-management');
-            
-            if (this.value) {
-              locationManagement.classList.remove('hidden');
-              applyBtn.disabled = false;
-              fetchCurrentLocations();
-            } else {
-              locationManagement.classList.add('hidden');
-              applyBtn.disabled = true;
-            }
-          });
+      const $select = jQuery(locationsSelect);
+      const currentValues = $select.val() || [];
+
+      // Add new options for each location
+      locations.forEach(location => {
+        const optionId = `${location.city}|${location.state}|${location.zip_code}`;
+        const optionText = `${location.city}, ${location.state} ${location.zip_code}`;
+
+        // Check if option already exists
+        if ($select.find(`option[value="${optionId}"]`).length === 0) {
+          const option = new Option(optionText, optionId, false, false);
+          $select.append(option);
         }
+
+        // Add to selected values
+        if (!currentValues.includes(optionId)) {
+          currentValues.push(optionId);
+        }
+      });
+
+      // Update Select2 with new values
+      $select.val(currentValues).trigger('change');
+
+      // Show success message
+      if (window.showSuccess) {
+        window.showSuccess(`${locations.length} localizações adicionadas com sucesso!`);
       }
     }
   });
 </script>
-

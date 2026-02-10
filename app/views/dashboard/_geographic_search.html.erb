@@ -1,0 +1,203 @@
+<div 
+  id="geographic-search-component"
+  data-controller="geographic-search"
+  data-geographic-search-campaign-id-value="<%= campaign_id %>"
+  class="space-y-6">
+
+  <!-- Success Modal -->
+  <div 
+    data-geographic-search-target="successModal"
+    class="hidden fixed inset-0 bg-black bg-opacity-5 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm mx-4">
+      <div class="flex items-center justify-center mb-4">
+        <div class="flex-shrink-0">
+          <svg class="h-12 w-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+      <h3 class="text-lg font-medium text-slate-900 text-center mb-2">
+        <%= t('campaigns.locations_processed', default: 'Localizações Processadas') %>
+      </h3>
+      <p class="text-sm text-slate-600 text-center mb-6">
+        <span data-geographic-search-target="successMessage">
+          <%= t('campaigns.locations_processed_message', default: 'As localizações foram adicionadas com sucesso!') %>
+        </span>
+      </p>
+      <button 
+        type="button"
+        data-action="click->geographic-search#closeSuccessModal"
+        class="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition">
+        <%= t('common.ok', default: 'OK') %>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stage 1: State Selection -->
+  <div class="rounded-lg border border-slate-200 bg-white p-6">
+    <div class="mb-4">
+      <h3 class="text-base font-semibold text-slate-900">
+        <%= t('campaigns.state_selection', default: 'Etapa 1: Selecione os Estados') %>
+      </h3>
+      <p class="mt-1 text-sm text-slate-600">
+        <%= t('campaigns.state_selection_description', default: 'Selecione um ou mais estados para definir a área de cobertura para busca de localizações.') %>
+      </p>
+    </div>
+
+    <!-- State Select Dropdown -->
+    <div class="mb-4">
+      <label for="geographic-state-select" class="block text-sm font-medium text-slate-700 mb-2">
+        <%= t('campaigns.select_states', default: 'Estados') %>
+      </label>
+      <select 
+        id="geographic-state-select"
+        data-geographic-search-target="stateSelect"
+        multiple="multiple"
+        class="w-full rounded-lg border border-slate-300 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+      </select>
+    </div>
+
+    <!-- Selected States Display -->
+    <div 
+      data-geographic-search-target="selectedStatesList"
+      class="mb-4 flex flex-wrap gap-2">
+    </div>
+
+    <!-- Blocking Message (shown when no states selected) -->
+    <div 
+      data-geographic-search-target="stateBlockingMessage"
+      class="hidden rounded-lg border border-amber-200 bg-amber-50 p-4">
+      <div class="flex items-start gap-3">
+        <div>
+          <h4 class="text-sm font-semibold text-amber-800">
+            <%= t('campaigns.state_selection_required', default: 'Seleção de Estados Necessária') %>
+          </h4>
+          <p class="mt-1 text-sm text-amber-700">
+            <%= t('campaigns.state_selection_blocking_message', default: 'Selecione pelo menos um estado para buscar localidades') %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 2: Location Search with Split Layout -->
+  <div class="rounded-lg border border-slate-200 bg-white p-6">
+    <div class="mb-4">
+      <h3 class="text-base font-semibold text-slate-900">
+        <%= t('campaigns.location_search', default: 'Etapa 2: Buscar Localizações') %>
+      </h3>
+      <p class="mt-1 text-sm text-slate-600">
+        <%= t('campaigns.location_search_description', default: 'Digite para buscar cidades, ZIP codes ou condados dentro dos estados selecionados.') %>
+      </p>
+    </div>
+
+    <!-- Split Layout Container -->
+    <div class="grid grid-cols-2 gap-6">
+      <!-- Left Side: Search and Results -->
+      <div class="flex flex-col">
+        <!-- Search Input -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <label for="geographic-search-input" class="block text-sm font-medium text-slate-700">
+              <%= t('campaigns.paste_locations', default: 'Cole as localizações') %>
+            </label>
+            <a 
+              href="https://www.unitedstateszipcodes.org/zip-code-radius-map.php" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+              <%= t('campaigns.view_zip_codes', default: 'Consultar ZIP Codes') %>
+            </a>
+          </div>
+          <div class="flex gap-2">
+            <input 
+              id="geographic-search-input"
+              type="text"
+              data-geographic-search-target="searchInput"
+              placeholder="<%= t('campaigns.paste_placeholder', default: 'Ex: Duluth, 30301, Fulton County') %>"
+              disabled
+              class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+            />
+            <button 
+              data-geographic-search-target="searchButton"
+              type="button"
+              disabled
+              class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:bg-slate-400 disabled:cursor-not-allowed">
+              <svg class="inline-block w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Results Section -->
+        <div 
+          data-geographic-search-target="searchResults"
+          class="hidden flex flex-col flex-1">
+          
+          <!-- No Results Message -->
+          <div 
+            data-geographic-search-target="noResultsMessage"
+            class="hidden rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-600 mb-4">
+          </div>
+
+          <!-- Results Container -->
+          <div 
+            data-geographic-search-target="resultsContainer"
+            class="space-y-2 mb-4 flex-1 rounded-lg border border-slate-200 p-3 bg-white overflow-y-auto"
+            style="max-height: calc(4 * 60px + 16px);">
+          </div>
+
+          <!-- Process Button -->
+          <button 
+            type="button"
+            data-action="click->geographic-search#addSelectedResults"
+            class="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition">
+            <svg class="inline-block w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            <%= t('campaigns.process_locations', default: 'Processar Localizações') %>
+          </button>
+
+          <!-- Delete All Button -->
+          <button 
+            type="button"
+            data-action="click->geographic-search#deleteAllLocations"
+            class="w-full mt-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition"
+            title="Remove todas as novas localizações e marca as atuais para deletar">
+            <svg class="inline-block w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            <%= t('campaigns.delete_all_locations', default: 'Deletar Tudo') %>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Side: Unmatched Locations Panel -->
+      <div class="flex flex-col">
+        <div class="rounded-lg border border-red-200 bg-gradient-to-br from-red-50 to-red-50 p-4 flex flex-col flex-1">
+          <div class="mb-3">
+            <h3 class="text-sm font-semibold text-red-900 flex items-center gap-2">
+              <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <%= t('campaigns.unmatched_locations_title', default: 'Endereços não encontrados ou fora da área selecionada de estados') %>
+            </h3>
+            <p class="mt-1 text-xs text-red-700">
+              <%= t('campaigns.unmatched_locations_hint', default: 'Itens que não foram encontrados na base de GeoTargets ou estão fora dos estados selecionados aparecerão aqui.') %>
+            </p>
+          </div>
+          <div id="unmatched-locations-list" class="flex-1 rounded-md border border-dashed border-red-300 bg-white/50 p-3 overflow-y-auto">
+            <p class="text-xs text-red-500 text-center py-8">
+              <%= t('campaigns.unmatched_locations_empty', default: 'Nenhum endereço não encontrado até o momento.') %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

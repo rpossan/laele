@@ -13,8 +13,8 @@ if is_asset_precompile
   Rails.application.config.active_record.encryption.primary_key = dummy_key
   Rails.application.config.active_record.encryption.deterministic_key = dummy_key
   Rails.application.config.active_record.encryption.key_derivation_salt = dummy_key
-elsif Rails.env.development?
-  # Use fixed keys for development (NOT for production!)
+elsif Rails.env.development? || Rails.env.test?
+  # Use fixed keys for development and test (NOT for production!)
   # Rails encryption needs 32-byte keys (64 hex characters)
   dev_key = "94e07481d385f8637b296200d68be934" * 2 # 64 hex chars = 32 bytes
   

@@ -55,7 +55,7 @@ def update
   else
     render json: { 
       error: "Erro ao atualizar nome: #{customer.errors.full_messages.join(', ')}" 
-    }, status: :unprocessable_entity
+    }, status: :unprocessable_content
   end
 end
 ```
@@ -69,7 +69,7 @@ def update
   if result[:success]
     render json: result
   else
-    render json: { error: result[:error] }, status: :unprocessable_entity
+    render json: { error: result[:error] }, status: :unprocessable_content
   end
 end
 ```

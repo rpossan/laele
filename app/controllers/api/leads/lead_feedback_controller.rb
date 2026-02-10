@@ -53,7 +53,7 @@ module Api
         render_error(e.message, :bad_request)
       rescue ::GoogleAds::LeadFeedbackAlreadySubmittedError => e
         Rails.logger.warn("[Api::Leads::LeadFeedbackController] Feedback already submitted: #{e.message}")
-        render json: { error: e.message, error_code: "feedback_already_submitted" }, status: :unprocessable_entity
+        render json: { error: e.message, error_code: "feedback_already_submitted" }, status: :unprocessable_content
       rescue => e
         Rails.logger.error("[Api::Leads::LeadFeedbackController] Error: #{e.class} - #{e.message}")
         Rails.logger.error("[Api::Leads::LeadFeedbackController] Backtrace: #{e.backtrace.first(10).join("\n")}")
