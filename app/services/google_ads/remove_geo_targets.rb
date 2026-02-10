@@ -56,8 +56,10 @@ module GoogleAds
       req["developer-token"] = ENV["GOOGLE_ADS_DEVELOPER_TOKEN"]
       req["Content-Type"] = "application/json"
       
-      if @google_account.login_customer_id.present?
-        req["login-customer-id"] = @google_account.login_customer_id
+      # ⚠️ IMPORTANTE: login-customer-id deve ser o próprio customer_id
+      # Cada customer só pode ser consultado usando seu próprio ID como login_customer_id
+      if @customer_id.present?
+        req["login-customer-id"] = @customer_id
       end
       
       req.body = request_body.to_json

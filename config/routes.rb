@@ -21,6 +21,7 @@ Rails.application.routes.draw do
     get "auth/callback", to: "connections#callback"
     get "auth/select", to: "connections#select_account", as: :select_account
     post "auth/select", to: "connections#save_account_selection"
+    post "auth/switch_customer", to: "connections#switch_customer", as: :switch_customer
     delete "auth/disconnect/:id", to: "connections#destroy", as: :disconnect
   end
 

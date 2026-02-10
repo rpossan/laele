@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_10_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_10_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -97,6 +97,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_10_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "refresh_token"
+    t.string "manager_customer_id", comment: "The root manager account ID (should not change when switching between accessible customers)"
+    t.index ["manager_customer_id"], name: "index_google_accounts_on_manager_customer_id"
     t.index ["user_id", "login_customer_id"], name: "index_google_accounts_on_user_id_and_login_customer_id", unique: true
     t.index ["user_id"], name: "index_google_accounts_on_user_id"
   end

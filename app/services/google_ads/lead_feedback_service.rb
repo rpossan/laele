@@ -76,6 +76,13 @@ module GoogleAds
       req["Authorization"] = "Bearer #{access_token}"
       req["developer-token"] = ENV["GOOGLE_ADS_DEVELOPER_TOKEN"]
       req["Content-Type"] = "application/json"
+      
+      # ⚠️ IMPORTANTE: login-customer-id deve ser o próprio customer_id
+      # Cada customer só pode ser consultado usando seu próprio ID como login_customer_id
+      if customer_id.present?
+        req["login-customer-id"] = customer_id
+      end
+      
       req.body = request_body.to_json
 
       Rails.logger.info("[GoogleAds::LeadFeedbackService] Sending feedback for lead #{lead_id}, survey_answer=#{survey_answer}")

@@ -194,6 +194,13 @@ module GoogleAds
       req["Authorization"] = "Bearer #{access_token}"
       req["developer-token"] = ENV["GOOGLE_ADS_DEVELOPER_TOKEN"]
       req["Content-Type"] = "application/json"
+      
+      # ⚠️ IMPORTANTE: login-customer-id deve ser o próprio customer_id
+      # Cada customer só pode ser consultado usando seu próprio ID como login_customer_id
+      if customer_id.present?
+        req["login-customer-id"] = customer_id
+      end
+      
       req.body = request_body.to_json
 
       res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
@@ -279,6 +286,13 @@ module GoogleAds
       req["Authorization"] = "Bearer #{access_token}"
       req["developer-token"] = ENV["GOOGLE_ADS_DEVELOPER_TOKEN"]
       req["Content-Type"] = "application/json"
+      
+      # ⚠️ IMPORTANTE: login-customer-id deve ser o próprio customer_id
+      # Cada customer só pode ser consultado usando seu próprio ID como login_customer_id
+      if customer_id.present?
+        req["login-customer-id"] = customer_id
+      end
+      
       req.body = request_body.to_json
 
       res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
