@@ -9,6 +9,10 @@ module GoogleAds
       return [] if query.blank?
 
       query = query.strip
+      
+      # Remove state abbreviation if present (e.g., "Windsor (MA)" -> "Windsor")
+      query = query.gsub(/\s*\([A-Z]{2}\)\s*$/, '').strip
+      
       results = []
 
       # Try to find by ZIP code first (most specific)
@@ -95,7 +99,7 @@ module GoogleAds
     def format_address_result(address_mapping)
       {
         id: address_mapping.id,
-        name: "#{address_mapping.city}, #{address_mapping.state} #{address_mapping.zip_code}",
+        name: "#{address_mapping.city} (#{address_mapping.state})",
         city: address_mapping.city,
         state: address_mapping.state,
         zip_code: address_mapping.zip_code,

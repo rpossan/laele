@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_31_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_10_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -62,8 +62,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_120000) do
     t.string "country_code", default: "US", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "criteria_id"
     t.index ["city", "state"], name: "index_address_geographic_mappings_on_city_and_state"
     t.index ["county", "state"], name: "index_address_geographic_mappings_on_county_and_state"
+    t.index ["criteria_id"], name: "index_address_geographic_mappings_on_criteria_id", unique: true
     t.index ["state"], name: "index_address_geographic_mappings_on_state"
     t.index ["zip_code", "city", "county", "country_code"], name: "index_agm_on_zip_city_county_country", unique: true
     t.index ["zip_code"], name: "index_address_geographic_mappings_on_zip_code"

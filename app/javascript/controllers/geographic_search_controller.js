@@ -331,7 +331,7 @@ export default class extends Controller {
       <div class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition group">
         <div class="flex-1">
           <div class="text-sm font-medium text-slate-900">
-            ${result.city} | ${result.state} | ${result.zip_code}
+            ${result.city} (${result.state})
           </div>
           ${result.county ? `<div class="text-xs text-slate-500">${result.county}</div>` : ''}
         </div>
