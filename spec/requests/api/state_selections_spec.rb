@@ -57,7 +57,7 @@ RSpec.describe 'Api::StateSelections', type: :request do
     it 'rejects invalid state codes' do
       post '/api/state_selections', params: { state_codes: ['CA', 'XX', 'YY'] }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(json_response['error']).to include('Invalid state codes')
     end
 

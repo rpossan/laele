@@ -22,7 +22,7 @@ RSpec.describe 'Api::Leads', type: :request do
       it 'returns blocking message' do
         get '/api/leads'
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('Please select at least one state')
       end
     end
@@ -120,7 +120,7 @@ RSpec.describe 'Api::Leads', type: :request do
       it 'returns error message' do
         get '/api/leads'
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('Selecione uma conta')
       end
     end

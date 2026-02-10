@@ -8,18 +8,18 @@ module Api
 
       # Validate input
       if search_terms.blank?
-        return render_error("Search terms cannot be empty", :unprocessable_entity)
+        return render_error("Search terms cannot be empty", :unprocessable_content)
       end
 
       if selected_states.compact_blank&.blank?
-        return render_error("No states selected for search", :unprocessable_entity)
+        return render_error("No states selected for search", :unprocessable_content)
       end
 
       # Split search terms by comma and process each individually
       terms = search_terms.split(',').map(&:strip).reject(&:blank?)
 
       if terms.empty?
-        return render_error("Search terms cannot be empty", :unprocessable_entity)
+        return render_error("Search terms cannot be empty", :unprocessable_content)
       end
 
       # Process each term individually

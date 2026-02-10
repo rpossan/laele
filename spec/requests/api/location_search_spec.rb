@@ -197,7 +197,7 @@ RSpec.describe 'Api::LocationSearch', type: :request do
           selected_states: ['GA']
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('Search terms cannot be empty')
       end
 
@@ -207,7 +207,7 @@ RSpec.describe 'Api::LocationSearch', type: :request do
           selected_states: ['GA']
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('Search terms cannot be empty')
       end
 
@@ -217,7 +217,7 @@ RSpec.describe 'Api::LocationSearch', type: :request do
           selected_states: []
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('No states selected')
       end
 
@@ -226,7 +226,7 @@ RSpec.describe 'Api::LocationSearch', type: :request do
           search_terms: 'Atlanta'
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('No states selected')
       end
 
@@ -235,7 +235,7 @@ RSpec.describe 'Api::LocationSearch', type: :request do
           selected_states: ['GA']
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('Search terms cannot be empty')
       end
     end

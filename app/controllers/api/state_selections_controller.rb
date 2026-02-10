@@ -25,7 +25,7 @@ module Api
           message: "State selections updated successfully"
         }
       else
-        render_error(result[:error], :unprocessable_entity)
+        render_error(result[:error], :unprocessable_content)
       end
     end
 

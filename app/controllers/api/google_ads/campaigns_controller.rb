@@ -16,7 +16,7 @@ module Api
       rescue Google::Ads::GoogleAds::Errors::GoogleAdsError => e
         error_message = "Erro ao buscar campanhas: #{e.message}"
         Rails.logger.error("[Api::GoogleAds::CampaignsController] #{error_message}")
-        render_error(error_message, :unprocessable_entity)
+        render_error(error_message, :unprocessable_content)
       rescue => e
         error_message = "Erro inesperado ao buscar campanhas: #{e.message}"
         Rails.logger.error("[Api::GoogleAds::CampaignsController] #{error_message}")
@@ -65,7 +65,7 @@ module Api
       rescue Google::Ads::GoogleAds::Errors::GoogleAdsError => e
         error_message = "Erro ao buscar localizações: #{e.message}"
         Rails.logger.error("[Api::GoogleAds::CampaignsController] #{error_message}")
-        render_error(error_message, :unprocessable_entity)
+        render_error(error_message, :unprocessable_content)
       rescue => e
         error_message = "Erro inesperado ao buscar localizações: #{e.message}"
         Rails.logger.error("[Api::GoogleAds::CampaignsController] #{error_message}")

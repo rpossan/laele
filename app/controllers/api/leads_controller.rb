@@ -7,7 +7,7 @@ module Api
       # Check if states are selected for geographic validation
       state_selector = StateSelector.new(session)
       unless state_selector.any_selected?
-        return render_error(GeographicValidatorService.new.blocking_message, :unprocessable_entity)
+        return render_error(GeographicValidatorService.new.blocking_message, :unprocessable_content)
       end
 
       service = ::GoogleAds::LeadService.new(

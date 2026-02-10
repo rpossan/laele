@@ -6,7 +6,7 @@ module Api
         result = service.update_custom_name(params[:customer_id], params[:custom_name])
 
         # Always return the full result with success flag
-        render json: result, status: result[:success] ? :ok : :unprocessable_entity
+        render json: result, status: result[:success] ? :ok : :unprocessable_content
       end
 
       def bulk_update

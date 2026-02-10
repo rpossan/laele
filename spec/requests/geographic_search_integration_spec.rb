@@ -91,14 +91,14 @@ RSpec.describe 'Geographic Search Integration', type: :request do
       it 'rejects invalid state codes' do
         post '/api/state_selections', params: { state_codes: ['XX', 'YY'] }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('Invalid state codes')
       end
 
       it 'accepts valid states and rejects invalid ones' do
         post '/api/state_selections', params: { state_codes: ['GA', 'XX'] }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('Invalid state codes')
       end
     end
@@ -242,7 +242,7 @@ RSpec.describe 'Geographic Search Integration', type: :request do
           selected_states: []
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('No states selected')
       end
 
@@ -252,7 +252,7 @@ RSpec.describe 'Geographic Search Integration', type: :request do
           selected_states: ['GA']
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['error']).to include('Search terms cannot be empty')
       end
 
@@ -262,7 +262,7 @@ RSpec.describe 'Geographic Search Integration', type: :request do
           selected_states: ['GA']
         }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
 
