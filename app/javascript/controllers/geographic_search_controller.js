@@ -527,6 +527,9 @@ export default class extends Controller {
       this.searchInputTarget.value = ''
       this.clearSearchResults()
       
+      // Refresh current locations
+      this.refreshCurrentLocations()
+      
       // Restore button state
       if (processButton) {
         processButton.disabled = false
@@ -620,5 +623,47 @@ export default class extends Controller {
     const resultsContainer = this.resultsContainerTarget
     resultsContainer.innerHTML = ''
     this.showNoResultsMessage('Nenhuma localização selecionada')
+  }
+
+  async refreshCurrentLocations() {
+    try {
+      // Get the campaign ID from the geographic search component
+      const campaignId = this.campaignIdValue
+      if (!campaignId) return
+
+      // Fetch current locations from the API
+      const response = await fetch(`/api/google_ads/campaign_locations?campaign_id=${campaignId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        credentials: 'same-origin'
+      })
+
+      if (!response.ok) {
+        console.error('Error refreshing current locations:', response.status)
+        return
+      }
+
+      const data = await response.json()
+      const locations = data.locations || []
+
+      // Update the current locations display
+      const currentLocationsList = document.getElementById('current-locations-list')
+      if (!currentLocationsList) return
+
+      if (locations.length === 0) {
+        currentLocationsList.innerHTML = '<p class="text-sm text-slate-500">Nenhuma localização</p>'
+      } else {
+        const locationsHtml = locations.map(loc => {
+          const name = loc.name || loc.geo_target_constant || 'Unknown'
+          return `<span class="inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800 mr-2 mb-2">${name}</span>`
+        }).join('')
+        currentLocationsList.innerHTML = locationsHtml
+      }
+    } catch (error) {
+      console.error('Error refreshing current locations:', error)
+    }
   }
 }
