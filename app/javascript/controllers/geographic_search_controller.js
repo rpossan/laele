@@ -580,6 +580,24 @@ export default class extends Controller {
       return
     }
 
+    // Validate that we won't end up with zero locations
+    const currentLocationsCount = Array.from(this.allLocations.values())
+      .filter(loc => loc.type === 'current' && !loc.deleted).length
+    
+    const newLocationsCount = newLocations.length
+    const totalAfterChanges = currentLocationsCount - locationsToRemove.length + newLocationsCount
+    
+    console.log('[Geographic Search] Validation Debug:')
+    console.log('  Current locations (not deleted):', currentLocationsCount)
+    console.log('  Locations to remove:', locationsToRemove.length)
+    console.log('  New locations to add:', newLocationsCount)
+    console.log('  Total after changes:', totalAfterChanges)
+    
+    if (totalAfterChanges === 0) {
+      this.showErrorModal('Obrigatório manter pelo menos uma localização. Regra de negócio do Google Ads.')
+      return
+    }
+
     // Show loading state on button
     const processButton = document.querySelector('[data-action="click->geographic-search#addSelectedResults"]')
     

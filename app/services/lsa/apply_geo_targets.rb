@@ -9,19 +9,41 @@ module Lsa
     end
 
     def apply(location_names, country_code: nil, selected_states: nil, locations_to_remove: nil)
-      # Handle locations to remove first
-      removed_count = remove_locations(locations_to_remove) if locations_to_remove.present?
+      # Fetch existing targets first to validate we won't end up with zero locations
+      get_service = GoogleAds::GetGeoTargets.new(
+        google_account: @google_account,
+        customer_id: @customer_id,
+        campaign_id: @campaign_id
+      )
 
-      return { applied_geo_targets: [], added_count: 0, removed_count: removed_count || 0, total_count: 0 } if location_names.blank?
+      existing_targets = get_service.fetch_existing_targets
+      existing_count = existing_targets.size
 
-      # Parse location names (can be comma-separated string, array of names, or array of resource names)
+      # Calculate how many locations will remain
+      locations_to_remove_array = Array(locations_to_remove).reject(&:blank?)
+      remaining_after_removal = existing_count - locations_to_remove_array.size
+
+      # Parse location names to count new locations
       location_array = if location_names.is_a?(String)
         location_names.split(",").map(&:strip).reject(&:blank?)
       else
         Array(location_names).map(&:to_s).map(&:strip).reject(&:blank?)
       end
 
-      return { applied_geo_targets: [], added_count: 0, removed_count: removed_count || 0, total_count: 0 } if location_array.empty?
+      # Calculate final count
+      final_count = remaining_after_removal + location_array.size
+
+      Rails.logger.info("[Lsa::ApplyGeoTargets] Validation: existing=#{existing_count}, removing=#{locations_to_remove_array.size}, adding=#{location_array.size}, final=#{final_count}")
+
+      # Validate that we won't end up with zero locations
+      if final_count <= 0
+        raise "Obrigatório manter pelo menos uma localização. Regra de negócio do Google Ads."
+      end
+
+      # Handle locations to remove
+      removed_count = remove_locations(locations_to_remove) if locations_to_remove.present?
+
+      return { applied_geo_targets: [], added_count: 0, removed_count: removed_count || 0, total_count: final_count } if location_array.empty?
 
       Rails.logger.info("[Lsa::ApplyGeoTargets] Applying geo targets for locations: #{location_array.inspect}")
       Rails.logger.info("[Lsa::ApplyGeoTargets] Selected states: #{selected_states.inspect}")
