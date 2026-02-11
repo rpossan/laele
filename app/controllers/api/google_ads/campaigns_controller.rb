@@ -1,6 +1,8 @@
 module Api
   module GoogleAds
     class CampaignsController < Api::BaseController
+      include EnsureActiveCustomer
+
       def index
         selection = current_user.active_customer_selection
         return render_error("Selecione uma conta antes de consultar as campanhas") unless selection
@@ -53,4 +55,3 @@ module Api
     end
   end
 end
-

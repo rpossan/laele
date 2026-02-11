@@ -23,6 +23,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_10_140000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "custom_name"
+    t.boolean "active", default: false, null: false
+    t.index ["active"], name: "index_accessible_customers_on_active"
     t.index ["google_account_id", "customer_id"], name: "index_accessible_customers_on_account_and_customer", unique: true
     t.index ["google_account_id"], name: "index_accessible_customers_on_google_account_id"
   end
@@ -117,6 +119,52 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_10_140000) do
     t.index ["lead_id"], name: "index_lead_feedback_submissions_on_lead_id"
   end
 
+  create_table "plans", force: :cascade do |t|
+    t.string "slug", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.string "pricing_type", null: false
+    t.integer "price_cents_brl", null: false
+    t.integer "price_cents_usd", null: false
+    t.integer "max_accounts"
+    t.integer "price_per_account_cents_brl"
+    t.integer "price_per_account_cents_usd"
+    t.boolean "recommended", default: false, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "stripe_price_id_brl"
+    t.string "stripe_price_id_usd"
+    t.index ["active"], name: "index_plans_on_active"
+    t.index ["position"], name: "index_plans_on_position"
+    t.index ["slug"], name: "index_plans_on_slug", unique: true
+    t.index ["stripe_price_id_brl"], name: "index_plans_on_stripe_price_id_brl"
+    t.index ["stripe_price_id_usd"], name: "index_plans_on_stripe_price_id_usd"
+  end
+
+  create_table "user_subscriptions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "plan_id", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "selected_accounts_count"
+    t.integer "calculated_price_cents_brl"
+    t.integer "calculated_price_cents_usd"
+    t.datetime "started_at"
+    t.datetime "expires_at"
+    t.datetime "cancelled_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "stripe_customer_id"
+    t.string "stripe_subscription_id"
+    t.index ["expires_at"], name: "index_user_subscriptions_on_expires_at"
+    t.index ["plan_id"], name: "index_user_subscriptions_on_plan_id"
+    t.index ["status"], name: "index_user_subscriptions_on_status"
+    t.index ["stripe_customer_id"], name: "index_user_subscriptions_on_stripe_customer_id"
+    t.index ["stripe_subscription_id"], name: "index_user_subscriptions_on_stripe_subscription_id"
+    t.index ["user_id"], name: "index_user_subscriptions_on_user_id", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -137,4 +185,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_10_140000) do
   add_foreign_key "activity_logs", "users"
   add_foreign_key "google_accounts", "users"
   add_foreign_key "lead_feedback_submissions", "google_accounts"
+  add_foreign_key "user_subscriptions", "plans"
+  add_foreign_key "user_subscriptions", "users"
 end

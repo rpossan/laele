@@ -1,0 +1,480 @@
+<div class="max-w-6xl mx-auto space-y-8">
+  <!-- Header Section -->
+  <div class="text-center space-y-4">
+    <div class="inline-flex items-center gap-2 rounded-full bg-indigo-50 text-indigo-700 px-4 py-2 text-xs font-semibold uppercase tracking-wider">
+      <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white font-bold">1</span>
+      <span><%= t('plans.step_1') %></span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-bold text-slate-900"><%= t('plans.choose_plan_title') %></h1>
+    <p class="text-lg text-slate-600 max-w-3xl mx-auto"><%= t('plans.choose_plan_subtitle') %></p>
+  </div>
+
+  <!-- Plan Selection Form -->
+  <%= form_with url: google_ads_save_plan_path, method: :post, local: true, id: "plan-selection-form" do |f| %>
+    <%= hidden_field_tag :selected_accounts_count, 0, id: "selected_accounts_count" %>
+    <%= hidden_field_tag :selected_customer_ids_json, "[]", id: "selected_customer_ids_json" %>
+
+    <!-- Plans Grid -->
+    <div class="grid lg:grid-cols-3 gap-6 items-stretch mb-8">
+      <% @plans.each_with_index do |plan, index| %>
+        <div class="plan-card relative rounded-2xl border-2 transition-all cursor-pointer <%= plan.recommended? ? 'border-emerald-300 bg-gradient-to-b from-white via-emerald-50 to-white shadow-xl' : 'border-slate-200 bg-white shadow-lg hover:shadow-xl' %>"
+             data-plan-id="<%= plan.id %>"
+             data-plan-slug="<%= plan.slug %>"
+             data-plan-type="<%= plan.pricing_type %>"
+             data-plan-max-accounts="<%= plan.max_accounts || 'unlimited' %>"
+             data-plan-price-per-account="<%= plan.price_per_account_cents_brl || 0 %>"
+             data-plan-fixed-price="<%= plan.price_cents_brl %>">
+
+          <% if plan.recommended? %>
+            <div class="absolute -top-3 right-4 px-3 py-1 rounded-full bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider shadow-md">
+              <%= t('plans.recommended') %>
+            </div>
+          <% end %>
+
+          <input type="radio"
+                 name="plan_id"
+                 value="<%= plan.id %>"
+                 id="plan_<%= plan.id %>"
+                 class="hidden"
+                 <%= 'checked' if plan.recommended? %>>
+
+          <label for="plan_<%= plan.id %>" class="block p-6 cursor-pointer">
+            <div class="space-y-4">
+              <!-- Plan Header -->
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-semibold uppercase tracking-wide <%= plan.recommended? ? 'text-emerald-600' : 'text-indigo-600' %>">
+                    <%= t("plans.#{plan.slug}.name", default: plan.name) %>
+                  </p>
+                  <p class="text-lg font-bold text-slate-900">
+                    <% if plan.unlimited? && plan.max_accounts.nil? %>
+                      <%= t('plans.unlimited_accounts') %>
+                    <% elsif plan.max_accounts %>
+                      <%= t('plans.up_to_accounts', count: plan.max_accounts) %>
+                    <% else %>
+                      <%= t('plans.per_account') %>
+                    <% end %>
+                  </p>
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider <%= plan.recommended? ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-50 text-indigo-700' %>">
+                  <%= t('pricing.per_month') %>
+                </span>
+              </div>
+
+              <!-- Price Display -->
+              <div class="space-y-1">
+                <% if plan.per_account? %>
+                  <p class="text-3xl font-bold text-slate-900">
+                    <%= number_to_currency(plan.price_per_account_brl, unit: "R$", format: "%u %n", precision: 0) %>
+                    <span class="text-base font-normal text-slate-500">/ <%= t('plans.per_subaccount') %></span>
+                  </p>
+                  <p class="text-sm text-slate-500">
+                    <%= number_to_currency(plan.price_per_account_usd, unit: "USD", format: "%u %n", precision: 0) %> / <%= t('plans.per_subaccount') %>
+                  </p>
+                <% else %>
+                  <p class="text-3xl font-bold text-slate-900">
+                    <%= number_to_currency(plan.price_brl, unit: "R$", format: "%u %n", precision: 0) %>
+                  </p>
+                  <p class="text-sm text-slate-500">
+                    <%= number_to_currency(plan.price_usd, unit: "USD", format: "%u %n", precision: 0) %>
+                  </p>
+                <% end %>
+              </div>
+
+              <!-- Description -->
+              <p class="text-sm text-slate-600 leading-relaxed">
+                <%= t("plans.#{plan.slug}.description", default: plan.description) %>
+              </p>
+
+              <!-- Features List -->
+              <ul class="space-y-2">
+                <% if plan.per_account? %>
+                  <li class="flex items-center gap-2 text-sm text-slate-600">
+                    <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <%= t('plans.features.pay_only_used') %>
+                  </li>
+                  <li class="flex items-center gap-2 text-sm text-slate-600">
+                    <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <%= t('plans.features.flexible_scaling') %>
+                  </li>
+                <% elsif plan.max_accounts %>
+                  <li class="flex items-center gap-2 text-sm text-slate-600">
+                    <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <%= t('plans.features.up_to_accounts', count: plan.max_accounts) %>
+                  </li>
+                  <li class="flex items-center gap-2 text-sm text-slate-600">
+                    <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <%= t('plans.features.fixed_monthly') %>
+                  </li>
+                <% else %>
+                  <li class="flex items-center gap-2 text-sm text-slate-600">
+                    <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <%= t('plans.features.unlimited_accounts') %>
+                  </li>
+                  <li class="flex items-center gap-2 text-sm text-slate-600">
+                    <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <%= t('plans.features.best_value') %>
+                  </li>
+                <% end %>
+                <li class="flex items-center gap-2 text-sm text-slate-600">
+                  <svg class="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  <%= t('plans.features.full_access') %>
+                </li>
+              </ul>
+
+              <!-- Selection Indicator -->
+              <div class="plan-selected-indicator hidden pt-4 border-t border-slate-100">
+                <div class="flex items-center gap-2 text-emerald-600">
+                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                  <span class="font-semibold"><%= t('plans.plan_selected') %></span>
+                </div>
+              </div>
+            </div>
+          </label>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Account Selection Section (shows after plan is selected) -->
+    <div id="account-selection-section" class="hidden space-y-6">
+      <!-- Price Summary -->
+      <div class="rounded-2xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-indigo-600 mb-1"><%= t('plans.your_monthly_value') %></p>
+            <p class="text-3xl font-bold text-slate-900">
+              R$ <span id="calculated-price">0</span>
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-slate-500"><%= t('plans.accounts_selected') %></p>
+            <p class="text-2xl font-bold text-indigo-600">
+              <span id="selected-count-display">0</span>
+              <span id="max-accounts-display" class="text-sm font-normal text-slate-400"></span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Progress bar for limited plans -->
+        <div id="accounts-progress" class="hidden mt-4">
+          <div class="w-full bg-slate-200 rounded-full h-2">
+            <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+          </div>
+          <p id="progress-text" class="text-xs text-slate-500 mt-1"></p>
+        </div>
+      </div>
+
+      <!-- Unlimited plan info -->
+      <div id="unlimited-plan-info" class="hidden rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+        <div class="flex items-start gap-3">
+          <svg class="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p class="text-sm font-medium text-emerald-800"><%= t('plans.unlimited_info_title') %></p>
+            <p class="text-sm text-emerald-600 mt-1"><%= t('plans.unlimited_info_description', count: @accounts_count) %></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Selection List -->
+      <div id="accounts-selection-list" class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 bg-slate-50">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold text-slate-900"><%= t('plans.select_accounts_to_activate') %></h3>
+              <p class="text-sm text-slate-500 mt-1"><%= t('plans.select_accounts_description') %></p>
+            </div>
+            <button type="button" id="select-all-btn" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+              <%= t('plans.select_all') %>
+            </button>
+          </div>
+        </div>
+
+        <div class="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+          <% @customer_ids.each_with_index do |customer_id, index| %>
+            <label class="account-item flex items-center gap-4 p-4 hover:bg-slate-50 cursor-pointer transition" data-customer-id="<%= customer_id %>">
+              <input type="checkbox"
+                     name="selected_customer_ids[]"
+                     value="<%= customer_id %>"
+                     class="account-checkbox h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+              <div class="flex-shrink-0 h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-slate-900"><%= format_customer_id(customer_id) %></p>
+                <% if @customer_names[customer_id].present? %>
+                  <p class="text-sm text-slate-500 truncate"><%= @customer_names[customer_id] %></p>
+                <% end %>
+              </div>
+              <div class="account-status hidden">
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                  <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                  <%= t('plans.will_be_activated') %>
+                </span>
+              </div>
+            </label>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Warning message for limit -->
+      <div id="limit-warning" class="hidden rounded-xl bg-amber-50 border border-amber-200 p-4">
+        <div class="flex items-start gap-3">
+          <svg class="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <div>
+            <p class="text-sm font-medium text-amber-800"><%= t('plans.limit_reached_title') %></p>
+            <p class="text-sm text-amber-600 mt-1" id="limit-warning-text"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="flex flex-col gap-3 pt-6 sm:flex-row">
+      <%= f.submit t('plans.continue_to_account_selection'), class: "flex-1 inline-flex items-center justify-center rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed", id: "submit-plan", disabled: true %>
+      <%= link_to t('common.cancel'), dashboard_path, class: "inline-flex items-center justify-center rounded-xl border border-slate-200 px-6 py-3 text-sm font-medium text-slate-600 hover:text-slate-900 hover:border-slate-300 transition" %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const planCards = document.querySelectorAll('.plan-card');
+  const accountSelectionSection = document.getElementById('account-selection-section');
+  const accountsSelectionList = document.getElementById('accounts-selection-list');
+  const unlimitedPlanInfo = document.getElementById('unlimited-plan-info');
+  const accountsProgress = document.getElementById('accounts-progress');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const limitWarning = document.getElementById('limit-warning');
+  const limitWarningText = document.getElementById('limit-warning-text');
+  const submitBtn = document.getElementById('submit-plan');
+  const selectAllBtn = document.getElementById('select-all-btn');
+  const checkboxes = document.querySelectorAll('.account-checkbox');
+  const selectedCountDisplay = document.getElementById('selected-count-display');
+  const maxAccountsDisplay = document.getElementById('max-accounts-display');
+  const calculatedPrice = document.getElementById('calculated-price');
+  const selectedAccountsCountInput = document.getElementById('selected_accounts_count');
+  const selectedCustomerIdsJsonInput = document.getElementById('selected_customer_ids_json');
+
+  const totalAccounts = <%= @accounts_count %>;
+  let currentPlan = null;
+
+  function formatCurrency(value) {
+    return value.toLocaleString('pt-BR', { minimumFractionDigits: 0 });
+  }
+
+  function getSelectedPlan() {
+    const selectedCard = document.querySelector('.plan-card.ring-2');
+    if (!selectedCard) return null;
+
+    return {
+      id: selectedCard.dataset.planId,
+      slug: selectedCard.dataset.planSlug,
+      type: selectedCard.dataset.planType,
+      maxAccounts: selectedCard.dataset.planMaxAccounts === 'unlimited' ? null : parseInt(selectedCard.dataset.planMaxAccounts),
+      pricePerAccount: parseInt(selectedCard.dataset.planPricePerAccount) / 100,
+      fixedPrice: parseInt(selectedCard.dataset.planFixedPrice) / 100
+    };
+  }
+
+  function updateUI() {
+    const plan = getSelectedPlan();
+    if (!plan) {
+      accountSelectionSection.classList.add('hidden');
+      submitBtn.disabled = true;
+      return;
+    }
+
+    currentPlan = plan;
+    accountSelectionSection.classList.remove('hidden');
+
+    const checkedCount = document.querySelectorAll('.account-checkbox:checked').length;
+    const selectedIds = Array.from(document.querySelectorAll('.account-checkbox:checked')).map(cb => cb.value);
+
+    // Update hidden inputs
+    selectedAccountsCountInput.value = checkedCount;
+    selectedCustomerIdsJsonInput.value = JSON.stringify(selectedIds);
+
+    // Handle unlimited plan (no max_accounts and not per_account)
+    if (plan.maxAccounts === null && plan.type !== 'per_account') {
+      // Unlimited plan - all accounts included
+      unlimitedPlanInfo.classList.remove('hidden');
+      accountsSelectionList.classList.add('hidden');
+      accountsProgress.classList.add('hidden');
+      limitWarning.classList.add('hidden');
+
+      selectedCountDisplay.textContent = totalAccounts;
+      maxAccountsDisplay.textContent = '';
+      calculatedPrice.textContent = formatCurrency(plan.fixedPrice);
+
+      // Auto-select all for unlimited
+      checkboxes.forEach(cb => cb.checked = true);
+      selectedAccountsCountInput.value = totalAccounts;
+      selectedCustomerIdsJsonInput.value = JSON.stringify(<%= @customer_ids.to_json.html_safe %>);
+
+      submitBtn.disabled = false;
+    } else {
+      // Per account or limited plan - show selection
+      unlimitedPlanInfo.classList.add('hidden');
+      accountsSelectionList.classList.remove('hidden');
+
+      selectedCountDisplay.textContent = checkedCount;
+
+      if (plan.maxAccounts) {
+        // Limited plan (e.g., up to 30)
+        maxAccountsDisplay.textContent = ` / ${plan.maxAccounts}`;
+        accountsProgress.classList.remove('hidden');
+
+        const percentage = Math.min((checkedCount / plan.maxAccounts) * 100, 100);
+        progressBar.style.width = percentage + '%';
+        progressText.textContent = `${checkedCount} de ${plan.maxAccounts} contas selecionadas`;
+
+        if (checkedCount >= plan.maxAccounts) {
+          progressBar.classList.remove('bg-indigo-600');
+          progressBar.classList.add('bg-amber-500');
+          limitWarning.classList.remove('hidden');
+          limitWarningText.textContent = `Este plano permite no máximo ${plan.maxAccounts} contas. Desmarque uma conta para selecionar outra.`;
+
+          // Disable unchecked checkboxes
+          checkboxes.forEach(cb => {
+            if (!cb.checked) {
+              cb.disabled = true;
+              cb.closest('.account-item').classList.add('opacity-50');
+            }
+          });
+        } else {
+          progressBar.classList.remove('bg-amber-500');
+          progressBar.classList.add('bg-indigo-600');
+          limitWarning.classList.add('hidden');
+
+          // Re-enable all checkboxes
+          checkboxes.forEach(cb => {
+            cb.disabled = false;
+            cb.closest('.account-item').classList.remove('opacity-50');
+          });
+        }
+
+        calculatedPrice.textContent = formatCurrency(plan.fixedPrice);
+      } else {
+        // Per account plan
+        maxAccountsDisplay.textContent = '';
+        accountsProgress.classList.add('hidden');
+        limitWarning.classList.add('hidden');
+
+        // Re-enable all checkboxes
+        checkboxes.forEach(cb => {
+          cb.disabled = false;
+          cb.closest('.account-item').classList.remove('opacity-50');
+        });
+
+        calculatedPrice.textContent = formatCurrency(checkedCount * plan.pricePerAccount);
+      }
+
+      // Update status badges
+      document.querySelectorAll('.account-item').forEach(item => {
+        const checkbox = item.querySelector('.account-checkbox');
+        const status = item.querySelector('.account-status');
+        if (checkbox.checked) {
+          status.classList.remove('hidden');
+        } else {
+          status.classList.add('hidden');
+        }
+      });
+
+      // Enable/disable submit based on selection
+      submitBtn.disabled = checkedCount === 0;
+    }
+  }
+
+  // Plan card selection
+  planCards.forEach(card => {
+    card.addEventListener('click', function() {
+      const radio = this.querySelector('input[type="radio"]');
+
+      // Unselect all cards
+      planCards.forEach(c => {
+        c.classList.remove('ring-2', 'ring-indigo-500', 'ring-offset-2');
+        c.querySelector('.plan-selected-indicator')?.classList.add('hidden');
+      });
+
+      // Select this card
+      this.classList.add('ring-2', 'ring-indigo-500', 'ring-offset-2');
+      this.querySelector('.plan-selected-indicator')?.classList.remove('hidden');
+      radio.checked = true;
+
+      // Reset checkboxes when plan changes
+      checkboxes.forEach(cb => {
+        cb.checked = false;
+        cb.disabled = false;
+        cb.closest('.account-item').classList.remove('opacity-50');
+      });
+
+      updateUI();
+    });
+  });
+
+  // Account checkbox changes
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', updateUI);
+  });
+
+  // Select all button
+  selectAllBtn.addEventListener('click', function() {
+    const plan = getSelectedPlan();
+    if (!plan) return;
+
+    const allChecked = Array.from(checkboxes).filter(cb => !cb.disabled).every(cb => cb.checked);
+
+    if (allChecked) {
+      // Deselect all
+      checkboxes.forEach(cb => cb.checked = false);
+      selectAllBtn.textContent = '<%= t('plans.select_all') %>';
+    } else {
+      // Select all (up to limit)
+      let count = 0;
+      checkboxes.forEach(cb => {
+        if (!plan.maxAccounts || count < plan.maxAccounts) {
+          cb.checked = true;
+          count++;
+        }
+      });
+      selectAllBtn.textContent = '<%= t('plans.deselect_all') %>';
+    }
+
+    updateUI();
+  });
+
+  // Initialize - check if any plan is pre-selected
+  const checkedRadio = document.querySelector('input[name="plan_id"]:checked');
+  if (checkedRadio) {
+    const card = checkedRadio.closest('.plan-card');
+    card.classList.add('ring-2', 'ring-indigo-500', 'ring-offset-2');
+    card.querySelector('.plan-selected-indicator')?.classList.remove('hidden');
+    updateUI();
+  }
+});
+</script>

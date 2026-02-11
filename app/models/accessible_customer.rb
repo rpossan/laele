@@ -4,6 +4,8 @@ class AccessibleCustomer < ApplicationRecord
   validates :customer_id, presence: true
 
   scope :ordered, -> { order(:display_name) }
+  scope :active, -> { where(active: true) }
+  scope :inactive, -> { where(active: false) }
 
   def effective_display_name
     # Priority: custom_name > display_name > formatted customer_id
@@ -17,6 +19,14 @@ class AccessibleCustomer < ApplicationRecord
 
   def needs_name?
     custom_name.blank? && display_name.blank?
+  end
+
+  def activate!
+    update!(active: true)
+  end
+
+  def deactivate!
+    update!(active: false)
   end
 end
 

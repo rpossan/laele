@@ -16,6 +16,21 @@ en:
     back: "Back"
     language: "Language"
 
+  # User Settings Menu
+  user_settings:
+    title: "User settings"
+    settings: "Settings"
+    plan_section: "Plan"
+    billing: "Billing"
+    change_plan: "Change plan"
+    view_plans: "View plans"
+    google_section: "Google Ads"
+    connect_google: "Connect Google Ads"
+    disconnect_google: "Disconnect Google Ads"
+    account_section: "Account"
+    change_password: "Change password"
+    preferences: "Preferences"
+
   # Common
   common:
     loading: "Loading..."
@@ -93,8 +108,13 @@ en:
   google_ads:
     integration: "Google Ads Integration"
     choose_account: "Choose Google Ads Account"
-    found_accounts: "We found %{count} accessible account"
-    found_accounts_plural: "We found %{count} accessible accounts"
+    choose_account_description: "This account will be used as the main context to manage your leads"
+    choose_main_account: "Choose Main Account"
+    choose_main_account_description: "This will be the default account to manage your leads"
+    main_account_description: "The main account sets the initial context when accessing the platform. You can switch between active accounts at any time."
+    found_accounts:
+      one: "We found 1 accessible account"
+      other: "We found %{count} accessible accounts"
     selection_info: "About the selection"
     selection_info_item1: "The chosen account will be applied as global context until you switch."
     selection_info_item2: "You can connect new Google Ads accounts at any time."
@@ -372,29 +392,114 @@ en:
     switch_note: "Change plans anytime"
     per_month: "per month"
     custom: "On demand"
-    cards:
-      standard:
-        name: "Standard"
-        accounts: "Up to 10 accounts"
-        price_brl_amount: 100
-        price_usd_amount: 20
-        description: "Built for teams starting with Local Services Ads and validating capture plus feedback loops."
-        cta: "Start with Standard"
-      professional:
-        name: "Professional"
-        badge: "Most popular"
-        accounts: "Up to 50 accounts"
-        price_brl_amount: 150
-        price_usd_amount: 50
-        description: "For multi-location operations that need scale and consistent reporting."
-        cta: "Choose Professional"
-      enterprise:
-        name: "Enterprise"
-        accounts: "More than 40 accounts"
-        price_brl: "Custom values"
-        price_usd: "Custom pricing"
-        description: "When you need volume, dedicated SLA, and integrations aligned to your stack."
-        cta: "Talk to sales"
+    faq:
+      title: "Frequently Asked Questions"
+      what_is_subaccount:
+        question: "What is a subaccount?"
+        answer: "A subaccount is each individual Google Ads account you manage. If you have an MCC with 10 client accounts, you have 10 subaccounts."
+      can_change_plan:
+        question: "Can I change plans?"
+        answer: "Yes! You can upgrade or downgrade your plan anytime. The difference will be calculated proportionally."
+      payment_methods:
+        question: "What payment methods are accepted?"
+        answer: "We accept credit cards, bank transfer (for Brazil), and PIX. For Enterprise plans, we also offer invoicing."
+      trial:
+        question: "Is there a trial period?"
+        answer: "Yes, we offer a 14-day free trial so you can explore all platform features."
+
+  plans:
+    step_1: "Step 1 - Choose your plan"
+    step_2: "Step 2 - Choose the main account"
+    choose_plan_title: "Choose the ideal plan for you"
+    choose_plan_subtitle: "Based on the number of Google Ads accounts you connected, we recommend the most suitable plan for your operation."
+    accounts_found:
+      one: "1 account found"
+      other: "%{count} accounts found"
+    accounts_found_description: "These are the Google Ads accounts accessible with your credentials"
+    view_accounts: "View accounts"
+    hide_accounts: "Hide accounts"
+    recommended: "Recommended"
+    selected_plan: "Selected plan"
+    change_plan: "Change plan"
+    plan_selected: "Plan selected"
+    unlimited_accounts: "Unlimited subaccounts"
+    up_to_accounts:
+      one: "Up to 1 account"
+      other: "Up to %{count} accounts"
+    flexible_accounts: "Flexible accounts"
+    per_account: "Per subaccount"
+    per_subaccount: "subaccount"
+    accounts: "accounts"
+    your_estimate: "Your estimate"
+    continue_to_account_selection: "Continue to account selection"
+    start_now: "Start now"
+    warning_accounts_exceeded: "This plan doesn't support the number of accounts found"
+    warning_accounts_exceeded_description: "Choose a plan with a higher limit or the unlimited plan to continue."
+    features:
+      pay_only_used: "Pay only for what you use"
+      flexible_scaling: "Scale according to your needs"
+      up_to_accounts:
+        one: "Up to 1 account included"
+        other: "Up to %{count} accounts included"
+      fixed_monthly: "Fixed monthly price"
+      unlimited_accounts: "Unlimited subaccounts"
+      best_value: "Best value"
+      full_access: "Full access to all features"
+      support: "Support via chat and email"
+    per_account:
+      name: "Per Subaccount"
+      description: "Ideal for those starting out or with few accounts. Pay only for the number of subaccounts you manage."
+      cta: "Start with Per Subaccount"
+    unlimited_30:
+      name: "Unlimited up to 30"
+      description: "Perfect for agencies and professionals with medium-sized operations. Fixed price for up to 30 subaccounts."
+      cta: "Choose Unlimited 30"
+    unlimited:
+      name: "Unlimited"
+      description: "For large operations without limits. Manage as many subaccounts as you need for a fixed monthly price."
+      cta: "Choose Unlimited"
+    # Account selection page translations
+    step_select_accounts: "Step 2 - Select accounts"
+    step_3: "Step 3 - Main account"
+    select_accounts_title: "Select accounts to activate"
+    select_accounts_subtitle: "Choose which Google Ads accounts you want to activate in your plan. Only selected accounts will have full access to features."
+    accounts_selected: "Accounts selected"
+    estimated_monthly: "Estimated monthly"
+    available_accounts: "Available accounts"
+    select_all: "Select all"
+    deselect_all: "Deselect all"
+    will_be_activated: "Will be activated"
+    limit_reached_title: "Account limit reached"
+    limit_reached_description: "Your plan allows a maximum of %{count} accounts. Deselect an account to select another."
+    # New keys for integrated plan selection page
+    your_monthly_value: "Your monthly value"
+    select_accounts_to_activate: "Select accounts to activate"
+    select_accounts_description: "Check the accounts you want to include in your plan"
+    unlimited_info_title: "All accounts included"
+    unlimited_info_description: "The unlimited plan includes all your %{count} accounts automatically."
+    continue_to_main_account: "Continue to main account selection"
+    account_active: "Active"
+    account_inactive: "Inactive"
+    account_inactive_reason: "This account is not included in your current plan"
+    active_accounts_info: "Only active accounts can be selected as main account"
+    active_accounts_count:
+      one: "1 active account in your plan"
+      other: "%{count} active accounts in your plan"
+    # Change plan page translations
+    change_plan_header: "Change Plan"
+    change_plan_title: "Change your plan"
+    change_plan_subtitle: "Choose a new plan and select which accounts you want to activate. Changes will take effect immediately."
+    current_plan: "Current plan"
+    current: "Current"
+    current_monthly_value: "Current monthly value"
+    new_monthly_value: "New monthly value"
+    total_accessible_accounts:
+      one: "%{count} accessible account in total"
+      other: "%{count} accessible accounts in total"
+    save_plan_changes: "Save plan changes"
+    change_plan_button: "Change plan"
+    your_plan: "Your plan"
+    manage_plan: "Manage plan"
 
   # Messages
   messages:
@@ -527,6 +632,61 @@ en:
 
       <p class="text-sm text-slate-500">Last updated: November 13, 2025</p>
 
+  # Payments
+  payments:
+    plan_not_found: "Plan not found"
+    checkout_error: "Error starting checkout: %{error}"
+    no_subscription: "You don't have an active subscription"
+    portal_error: "Error accessing payment portal"
+    success_title: "Payment successful!"
+    success_message: "Your subscription has been activated. You can now enjoy all platform features."
+    session_id: "Session ID"
+    processing_note: "Your access will be granted automatically in a few seconds. If not redirected, please refresh the page."
+    go_to_dashboard: "Go to Dashboard"
+    cancel_title: "Payment cancelled"
+    cancel_message: "You cancelled the payment process. No charges were made."
+    view_plans: "View available plans"
+    subscribe_now: "Subscribe now"
+    manage_subscription: "Manage subscription"
+    confirm_title: "Confirm Subscription"
+    confirm_subtitle: "Review the details before proceeding to payment"
+    secure_checkout_note: "You will be redirected to a secure Stripe page to complete the payment. We do not store your card data."
+    proceed_to_payment: "Proceed to payment"
+    powered_by_stripe: "Secure payments via Stripe"
+
+  # Billing
+  billing:
+    title: "Billing"
+    subtitle: "Manage your subscription and payment history"
+    current_plan: "Current Plan"
+    status_active: "Active"
+    status_trial: "Trial"
+    status_past_due: "Past Due"
+    status_canceled: "Canceled"
+    status_pending: "Payment Pending"
+    accounts_count:
+      one: "1 active account"
+      other: "%{count} active accounts"
+    next_billing_date: "Next billing date"
+    change_plan: "Change plan"
+    manage_payment: "Manage payment"
+    recent_invoices: "Recent invoices"
+    invoice_date: "Date"
+    invoice_number: "Number"
+    invoice_amount: "Amount"
+    invoice_status: "Status"
+    invoice_actions: "Actions"
+    invoice_paid: "Paid"
+    invoice_open: "Open"
+    invoice_void: "Void"
+    no_subscription_title: "You don't have a subscription"
+    no_subscription_description: "Choose a plan to start using all platform features."
+    view_plans: "View plans"
+    payment_required_title: "Payment Pending"
+    payment_required_description: "Complete the payment to activate your subscription and get full access to the platform."
+    pay_now: "Pay Now"
+    secure_stripe_note: "You will be redirected to a secure Stripe page. We do not store card data."
+
   # Errors
   errors:
     server_error: "Server Error"
@@ -537,3 +697,6 @@ en:
     unknown_error: "Unknown Error"
     invalid_response: "Server response is not valid JSON"
     invalid_locale: "Invalid locale"
+    inactive_account: "The account %{account} is not active in your current plan. Activate it or select another account."
+    inactive_account_selection: "The account %{account} is not active in your plan. Activate it in settings or choose another account."
+    subscription_required: "You need an active subscription to access this feature."

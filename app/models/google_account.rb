@@ -2,6 +2,7 @@ class GoogleAccount < ApplicationRecord
   belongs_to :user
 
   has_many :accessible_customers, dependent: :destroy
+  has_many :active_accessible_customers, -> { active }, class_name: "AccessibleCustomer"
   has_many :lead_feedback_submissions, dependent: :delete_all
   has_one :active_customer_selection, dependent: :destroy
 
@@ -30,6 +31,22 @@ class GoogleAccount < ApplicationRecord
     first_accessible = accessible_customers.first
     if first_accessible
       update!(manager_customer_id: first_accessible.customer_id)
+    end
+  end
+
+  # Returns customers based on user's plan
+  # For allowed users: all customers (MVP/admin bypass)
+  # For unlimited plan: all customers
+  # For limited/per-account plans: only active customers
+  def plan_accessible_customers
+    # Users with allowed: true get full access to all accounts
+    return accessible_customers if user.allowed?
+
+    subscription = user.user_subscription
+    if subscription&.plan&.unlimited? && subscription.plan.max_accounts.nil?
+      accessible_customers
+    else
+      active_accessible_customers
     end
   end
 end

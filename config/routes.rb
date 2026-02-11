@@ -16,13 +16,31 @@ Rails.application.routes.draw do
   get "/privacy", to: "legal#privacy", as: :privacy
   get "/pending", to: "access#pending", as: :pending
 
+  # Payments (Stripe Checkout)
+  get "/billing", to: "payments#billing", as: :billing
+  get "/payments/confirm", to: "payments#confirm", as: :payments_confirm
+  post "/payments/checkout", to: "payments#checkout", as: :payments_checkout
+  get "/payments/success", to: "payments#success", as: :payments_success
+  get "/payments/cancel", to: "payments#cancel", as: :payments_cancel
+  post "/payments/portal", to: "payments#portal", as: :payments_portal
+
+  # Webhooks
+  post "/webhooks/stripe", to: "webhooks#stripe", as: :stripe_webhook
+
   namespace :google_ads do
     get "auth/start", to: "connections#start"
     get "auth/callback", to: "connections#callback"
+    get "auth/select_plan", to: "connections#select_plan", as: :select_plan
+    post "auth/select_plan", to: "connections#save_plan_selection", as: :save_plan
+    get "auth/select_accounts", to: "connections#select_active_accounts", as: :select_active_accounts
+    post "auth/select_accounts", to: "connections#save_active_accounts", as: :save_active_accounts
     get "auth/select", to: "connections#select_account", as: :select_account
     post "auth/select", to: "connections#save_account_selection"
     post "auth/switch_customer", to: "connections#switch_customer", as: :switch_customer
     delete "auth/disconnect/:id", to: "connections#destroy", as: :disconnect
+    # Plan management
+    get "plan/change", to: "connections#change_plan", as: :change_plan
+    post "plan/change", to: "connections#save_change_plan", as: :save_change_plan
   end
 
   namespace :api do
