@@ -85,10 +85,12 @@ module Api
     # Query AddressGeographicMapping with whitelist logic
     # Returns all matching instances from selected states
     def find_matching_locations(parsed, selected_states)
+      byebug
       query = AddressGeographicMapping.where(state: selected_states)
 
       # Apply filters based on parsed search terms (case-insensitive)
       if parsed[:zip_code].present?
+        byebug
         query = query.by_zip_code(parsed[:zip_code])
       end
       
