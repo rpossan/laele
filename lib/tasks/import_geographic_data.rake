@@ -141,20 +141,30 @@ namespace :geographic do
                       else "9"
                       end
         
-        zip_code = "#{state}#{location_name.parameterize[0..6]}#{type_suffix}".ljust(5, "0")[0..4]
-
-        # Find or initialize the record
-        mapping = AddressGeographicMapping.find_or_initialize_by(
-          zip_code: zip_code,
-          city: city,
-          county: county,
-          country_code: country_code
-        )
+        if target_type == "Postal Code"
+          zip_code = location_name
+          # For Postal Codes, use criteria_id as unique identifier to allow updates
+          mapping = AddressGeographicMapping.find_or_initialize_by(
+            criteria_id: criteria_id
+          )
+        else
+          zip_code = "#{state}#{location_name.parameterize[0..6]}#{type_suffix}".ljust(5, "0")[0..4]
+          # For other types, use zip_code, city, county as unique identifier
+          mapping = AddressGeographicMapping.find_or_initialize_by(
+            zip_code: zip_code,
+            city: city,
+            county: county,
+            country_code: country_code
+          )
+        end
 
         is_new = mapping.new_record?
 
-        # Assign attributes including criteria_id
+        # Assign attributes including criteria_id and zip_code
         mapping.assign_attributes(
+          zip_code: zip_code,
+          city: city,
+          county: county,
           state: state,
           country_code: country_code,
           criteria_id: criteria_id
