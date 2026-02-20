@@ -7,6 +7,9 @@ class WebhooksController < ApplicationController
     sig_header = request.env["HTTP_STRIPE_SIGNATURE"]
     endpoint_secret = ENV["STRIPE_WEBHOOK_SECRET"]
 
+    # Diagnostic logging
+    Rails.logger.info("[Webhook] Received request. Signature present: #{sig_header.present?}, Secret configured: #{endpoint_secret.present?}, Secret prefix: #{endpoint_secret&.first(10)}..., Payload size: #{payload.bytesize} bytes")
+
     # Log helpful diagnostic info when webhook secret is missing
     if endpoint_secret.blank? && !Rails.env.development?
       Rails.logger.error("[Webhook] ❌ STRIPE_WEBHOOK_SECRET is not configured! Webhook cannot be verified.")
@@ -27,7 +30,9 @@ class WebhooksController < ApplicationController
       head :bad_request
       return
     rescue Stripe::SignatureVerificationError => e
-      Rails.logger.error("[Webhook] Invalid signature: #{e.message}")
+      Rails.logger.error("[Webhook] ❌ Invalid signature: #{e.message}")
+      Rails.logger.error("[Webhook] Sig header: #{sig_header&.first(50)}...")
+      Rails.logger.error("[Webhook] Secret starts with: #{endpoint_secret&.first(10)}...")
       head :bad_request
       return
     end
