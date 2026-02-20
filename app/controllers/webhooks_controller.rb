@@ -7,6 +7,13 @@ class WebhooksController < ApplicationController
     sig_header = request.env["HTTP_STRIPE_SIGNATURE"]
     endpoint_secret = ENV["STRIPE_WEBHOOK_SECRET"]
 
+    # Log helpful diagnostic info when webhook secret is missing
+    if endpoint_secret.blank? && !Rails.env.development?
+      Rails.logger.error("[Webhook] ❌ STRIPE_WEBHOOK_SECRET is not configured! Webhook cannot be verified.")
+      head :bad_request
+      return
+    end
+
     begin
       # In development, allow bypassing signature verification for testing
       if Rails.env.development? && sig_header.blank?
