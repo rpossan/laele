@@ -29,13 +29,19 @@ class PaymentsController < ApplicationController
     end
   end
 
-  # Payment confirmation page before Stripe Checkout
+  # Payment confirmation page (legacy - kept for compatibility)
   def confirm
     @plan = Plan.find_by(id: params[:plan_id])
     @selected_accounts_count = params[:selected_accounts_count].to_i
 
     unless @plan
-      redirect_to pricing_path, alert: t("payments.plan_not_found")
+      redirect_to pricing_path, alert: "Plano não encontrado."
+      return
+    end
+
+    # If plan has a payment link, redirect directly to it
+    if @plan.stripe_payment_link.present?
+      redirect_to @plan.payment_link_url_for(current_user), allow_other_host: true
       return
     end
 
@@ -47,31 +53,32 @@ class PaymentsController < ApplicationController
     plan = Plan.active.find_by(id: params[:plan_id])
 
     unless plan
-      redirect_to pricing_path, alert: t("payments.plan_not_found")
+      redirect_to pricing_path, alert: "Plano não encontrado."
       return
     end
 
-    # Get selected accounts count from params or current subscription
+    # If plan has a Stripe Payment Link, redirect to it
+    if plan.stripe_payment_link.present?
+      redirect_to plan.payment_link_url_for(current_user), allow_other_host: true
+      return
+    end
+
+    # Legacy: Stripe Checkout Session flow (for plans without payment links)
     selected_accounts_count = params[:selected_accounts_count].to_i
     selected_accounts_count = 1 if selected_accounts_count < 1
 
-    # Calculate price based on plan and accounts
     currency = params[:currency] || "brl"
     stripe_price_id = currency == "usd" ? plan.stripe_price_id_usd : plan.stripe_price_id_brl
 
-    # For per-account plans, we need to handle quantity
     quantity = plan.per_account? ? selected_accounts_count : 1
 
-    # Create or retrieve Stripe customer
     stripe_customer = find_or_create_stripe_customer
 
-    # Build line items
     line_items = [ {
       price: stripe_price_id,
       quantity: quantity
     } ]
 
-    # Create Stripe Checkout Session
     session = Stripe::Checkout::Session.create({
       customer: stripe_customer.id,
       mode: "subscription",
@@ -93,23 +100,28 @@ class PaymentsController < ApplicationController
       }
     })
 
-    # Redirect to Stripe Checkout
     redirect_to session.url, allow_other_host: true
   rescue Stripe::StripeError => e
     Rails.logger.error("[PaymentsController] Stripe error: #{e.message}")
-    redirect_to pricing_path, alert: t("payments.checkout_error", error: e.message)
+    redirect_to pricing_path, alert: "Erro no checkout: #{e.message}"
   end
 
-  # Success page - only visual feedback, actual activation via webhook
+  # Success page - shown after returning from Stripe Payment Link or Checkout
+  # The actual subscription activation happens via webhook
   def success
+    @subscription = current_user.user_subscription
+    @plan = @subscription&.plan
+
+    # Try to retrieve checkout session if provided
     session_id = params[:session_id]
     if session_id.present?
-      @session = Stripe::Checkout::Session.retrieve(session_id)
+      begin
+        @session = Stripe::Checkout::Session.retrieve(session_id)
+      rescue Stripe::StripeError => e
+        Rails.logger.error("[PaymentsController] Error retrieving session: #{e.message}")
+        @session = nil
+      end
     end
-    # Don't activate subscription here - wait for webhook
-  rescue Stripe::StripeError => e
-    Rails.logger.error("[PaymentsController] Error retrieving session: #{e.message}")
-    @session = nil
   end
 
   # Cancel page
@@ -122,7 +134,7 @@ class PaymentsController < ApplicationController
     subscription = current_user.user_subscription
 
     unless subscription&.stripe_customer_id.present?
-      redirect_to dashboard_path, alert: t("payments.no_subscription")
+      redirect_to dashboard_path, alert: "Nenhuma assinatura encontrada."
       return
     end
 
@@ -134,7 +146,7 @@ class PaymentsController < ApplicationController
     redirect_to portal_session.url, allow_other_host: true
   rescue Stripe::StripeError => e
     Rails.logger.error("[PaymentsController] Portal error: #{e.message}")
-    redirect_to dashboard_path, alert: t("payments.portal_error")
+    redirect_to dashboard_path, alert: "Erro ao abrir portal de pagamentos."
   end
 
   private
@@ -143,10 +155,8 @@ class PaymentsController < ApplicationController
     subscription = current_user.user_subscription
 
     if subscription&.stripe_customer_id.present?
-      # Retrieve existing customer
       Stripe::Customer.retrieve(subscription.stripe_customer_id)
     else
-      # Create new customer
       Stripe::Customer.create({
         email: current_user.email,
         metadata: {

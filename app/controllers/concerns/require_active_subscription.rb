@@ -31,7 +31,7 @@ module RequireActiveSubscription
   end
 
   def public_path?
-    # Root, pricing, privacy, landing, locale, pending paths
+    # Root, pricing, privacy, landing, locale, pending, admin paths
     request.path == "/" ||
     request.path == "/pricing" ||
     request.path == "/privacy" ||
@@ -39,7 +39,8 @@ module RequireActiveSubscription
     request.path.start_with?("/locale") ||
     request.path.start_with?("/assets") ||
     request.path.start_with?("/rails") ||
-    request.path.start_with?("/up")
+    request.path.start_with?("/up") ||
+    request.path.start_with?("/admin")
   end
 
   def payment_path?

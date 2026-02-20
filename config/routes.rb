@@ -82,5 +82,19 @@ Rails.application.routes.draw do
     post "geo_targets/update", to: "geo_targets#update"
   end
 
+  # Admin area
+  namespace :admin do
+    root to: "dashboard#index"
+    resources :users, only: [ :index, :show ] do
+      member do
+        patch :toggle_admin
+        patch :toggle_allowed
+      end
+    end
+    resources :subscriptions, only: [ :index, :show ]
+    resources :activity_logs, only: [ :index ]
+    resources :plans, only: [ :index ]
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 end

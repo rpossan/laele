@@ -89,9 +89,8 @@ module GoogleAds
 
       # Check if user already has an active subscription
       existing_subscription = @user.user_subscription
-      if existing_subscription&.active? || existing_subscription&.pending?
-        # User already has a plan - skip plan selection, go directly to account selection
-        # Use only the active accounts from their existing subscription
+      if existing_subscription&.active?
+        # User already has an active plan - skip plan selection, go directly to account selection
         session[:selected_plan_id] = existing_subscription.plan_id
 
         # Get previously active customer IDs from accessible_customers
@@ -99,11 +98,11 @@ module GoogleAds
         if active_customer_ids.any?
           session[:selected_customer_ids] = active_customer_ids
         else
-          # If no active accounts stored yet, use all for unlimited or go to plan selection
-          if existing_subscription.plan.unlimited? && existing_subscription.plan.max_accounts.nil?
+          # If no active accounts stored yet, use all for unlimited or go to account selection
+          if existing_subscription.plan.unlimited?
             session[:selected_customer_ids] = customer_ids
           else
-            # Something is wrong, let them select accounts again within their plan limits
+            # Let them select accounts again within their plan limits
             redirect_to google_ads_select_plan_path, notice: "Reconectado! Por favor, confirme as contas ativas do seu plano."
             return
           end
@@ -111,7 +110,7 @@ module GoogleAds
 
         redirect_to google_ads_select_account_path, notice: "Reconectado! Selecione a conta principal para continuar."
       else
-        # No subscription - go to plan selection
+        # No active subscription - go to plan selection
         redirect_to google_ads_select_plan_path, notice: "Encontramos #{customer_ids.count} conta(s) acessível(is). Por favor, escolha um plano para continuar."
       end
     rescue Signet::AuthorizationError => e
@@ -140,7 +139,7 @@ module GoogleAds
       @customer_ids = customer_ids
       @accounts_count = customer_ids.count
 
-      # Fetch available plans
+      # Fetch available plans (new sub-account based plans)
       @plans = Plan.active.ordered
 
       # Fetch customer names for display
@@ -163,6 +162,7 @@ module GoogleAds
       end
 
       plan = Plan.active.find(plan_id)
+      google_account = current_user.google_accounts.find(google_account_id)
 
       # Validate selection
       if selected_ids.empty?
@@ -180,15 +180,29 @@ module GoogleAds
       session[:selected_plan_id] = plan.id
       session[:selected_customer_ids] = selected_ids
 
-      # Create or update user subscription with selected accounts count
+      # Create or update user subscription as pending
       subscription = current_user.user_subscription || current_user.build_user_subscription
       subscription.plan = plan
       subscription.selected_accounts_count = selected_ids.count
       subscription.status = "pending"
       subscription.save!
 
-      # Go directly to main account selection
-      redirect_to google_ads_select_account_path, notice: "#{selected_ids.count} conta(s) selecionada(s)! Agora escolha qual será sua conta principal."
+      # Mark selected accounts as active, others as inactive
+      customer_ids.each do |cid|
+        ac = google_account.accessible_customers.find_or_create_by(customer_id: cid)
+        ac.update!(active: selected_ids.include?(cid))
+      end
+
+      # Redirect to Stripe Payment Link for payment
+      if plan.stripe_payment_link.present?
+        payment_url = plan.payment_link_url_for(current_user)
+        redirect_to payment_url, allow_other_host: true
+      else
+        # No payment link configured - activate directly (dev mode)
+        subscription.update!(status: "active", started_at: Time.current)
+        current_user.update!(allowed: true)
+        redirect_to google_ads_select_account_path, notice: "Plano ativado! Agora escolha qual será sua conta principal."
+      end
     rescue ActiveRecord::RecordNotFound
       redirect_to google_ads_select_plan_path, alert: "Plano não encontrado."
     rescue ActiveRecord::RecordInvalid => e
@@ -274,17 +288,17 @@ module GoogleAds
         return
       end
 
-      # Check if plan was selected
-      unless session[:selected_plan_id].present?
+      # Check if plan was selected (skip for allowed users)
+      unless session[:selected_plan_id].present? || current_user.allowed?
         redirect_to google_ads_select_plan_path, alert: "Por favor, selecione um plano primeiro."
         return
       end
 
       @google_account = current_user.google_accounts.find(google_account_id)
-      @selected_plan = Plan.find(session[:selected_plan_id])
+      @selected_plan = session[:selected_plan_id] ? Plan.find(session[:selected_plan_id]) : nil
 
       # For unlimited plan with no max, all accounts are selectable
-      if @selected_plan.unlimited? && @selected_plan.max_accounts.nil?
+      if @selected_plan&.unlimited? || current_user.allowed?
         @customer_ids = customer_ids
         @active_customer_ids = customer_ids
       else
@@ -332,7 +346,7 @@ module GoogleAds
         # Update the account with the selected login_customer_id
         google_account.update!(login_customer_id: selected_customer_id)
       end
-      
+
       # ⚠️ IMPORTANTE: manager_customer_id é a conta RAIZ (root manager account)
       # Deve ser definido UMA VEZ e nunca alterado
       # login_customer_id é usado para requisições e pode ser a mesma coisa
@@ -365,8 +379,8 @@ module GoogleAds
         Rails.logger.info("[GoogleAds::ConnectionsController] Creating #{fetched_customer_ids.count} AccessibleCustomer records")
 
         # Determine which accounts should be active
-        active_ids = if plan&.unlimited? && plan.max_accounts.nil?
-          fetched_customer_ids # All active for unlimited plan
+        active_ids = if plan&.unlimited? || current_user.allowed?
+          fetched_customer_ids # All active for unlimited plan or allowed users
         else
           selected_customer_ids || []
         end
@@ -404,54 +418,24 @@ module GoogleAds
         request: request
       )
 
-      # Check if this is a new subscription or existing one
+      # Check subscription status
       subscription = current_user.user_subscription
 
-      # If subscription is already active (reconnection case), go directly to dashboard
-      if subscription&.active?
+      # If user is allowed or subscription is already active, go directly to dashboard
+      if current_user.allowed? || subscription&.active?
         # Clear session data
-        session.delete(:pending_google_account_id)
-        session.delete(:accessible_customer_ids)
-        session.delete(:selected_plan_id)
-        session.delete(:selected_customer_ids)
+        clear_plan_session_data
 
-        redirect_to leads_path, notice: "Conta Google Ads reconectada com sucesso!"
+        redirect_to leads_path, notice: "Conta Google Ads conectada com sucesso!"
         return
       end
 
-      # New subscription or pending - redirect to payment confirmation
+      # Pending subscription - should not normally reach here since payment happens before
+      # But handle it gracefully
       if subscription&.pending? && subscription.plan.present?
-        # Store data needed after Stripe callback
-        session[:stripe_pending_subscription] = {
-          google_account_id: google_account.id,
-          selected_customer_ids: selected_customer_ids,
-          plan_id: subscription.plan_id,
-          selected_accounts_count: subscription.selected_accounts_count
-        }
-
-        # Check if Stripe is configured
-        if ENV["STRIPE_SECRET_KEY"].present? && ENV["STRIPE_SECRET_KEY"] !~ /YOUR_SECRET_KEY/
-          # Redirect to payment confirmation page
-          redirect_to payments_confirm_path(
-            plan_id: subscription.plan_id,
-            selected_accounts_count: subscription.selected_accounts_count
-          )
-        else
-          # Stripe not configured - activate subscription directly (for development)
-          subscription.update!(status: "active", started_at: Time.current)
-          current_user.update!(allowed: true)
-
-          # Clear session data
-          session.delete(:pending_google_account_id)
-          session.delete(:accessible_customer_ids)
-          session.delete(:selected_plan_id)
-          session.delete(:selected_customer_ids)
-          session.delete(:stripe_pending_subscription)
-
-          redirect_to leads_path, notice: "Conta Google Ads conectada com sucesso! (Stripe não configurado - assinatura ativada automaticamente)"
-        end
+        clear_plan_session_data
+        redirect_to leads_path, notice: "Conta conectada! Aguardando confirmação do pagamento."
       else
-        # No subscription setup - something went wrong
         redirect_to google_ads_select_plan_path, alert: "Por favor, selecione um plano para continuar."
       end
     end
@@ -524,7 +508,16 @@ module GoogleAds
         end
       end
 
-      redirect_to dashboard_path, notice: "Plano alterado com sucesso! #{selected_ids.count} conta(s) ativa(s)."
+      # Redirect to Stripe Payment Link for payment
+      if plan.stripe_payment_link.present?
+        payment_url = plan.payment_link_url_for(current_user)
+        redirect_to payment_url, allow_other_host: true
+      else
+        # No payment link configured - activate directly (dev mode)
+        subscription.update!(status: "active", started_at: Time.current)
+        current_user.update!(allowed: true)
+        redirect_to dashboard_path, notice: "Plano alterado com sucesso! #{selected_ids.count} conta(s) ativa(s)."
+      end
     rescue ActiveRecord::RecordNotFound
       redirect_to google_ads_change_plan_path, alert: "Plano não encontrado."
     rescue ActiveRecord::RecordInvalid => e
@@ -555,7 +548,7 @@ module GoogleAds
       end
 
       google_account = current_user.google_accounts.find(google_account_id)
-      
+
       # Verifica se o customer_id é acessível
       accessible = google_account.accessible_customers.find_by(customer_id: new_customer_id)
       unless accessible
@@ -570,9 +563,9 @@ module GoogleAds
       if selection.save
         session[:active_customer_id] = selection.customer_id
         session[:active_google_account_id] = selection.google_account_id
-        
+
         Rails.logger.info("[GoogleAds::ConnectionsController] Switched to customer #{new_customer_id}")
-        
+
         render json: {
           success: true,
           customer_id: new_customer_id,
@@ -597,6 +590,15 @@ module GoogleAds
 
     def set_google_account
       @google_account = current_user.google_accounts.find(params[:id])
+    end
+
+    def clear_plan_session_data
+      session.delete(:pending_google_account_id)
+      session.delete(:accessible_customer_ids)
+      session.delete(:selected_plan_id)
+      session.delete(:selected_customer_ids)
+      session.delete(:skip_plan_selection)
+      session.delete(:stripe_pending_subscription)
     end
 
     def fetch_customer_names(google_account, customer_ids)

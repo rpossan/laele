@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= content_for(:title) || "Admin · LSA eScale" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <!-- Favicons -->
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/icon.png" type="image/png" sizes="64x64">
+    <meta name="theme-color" content="#1e293b">
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+
+    <style>
+      .admin-sidebar { transition: transform 0.2s ease-in-out; }
+      .admin-stat-card { transition: all 0.15s ease; }
+      .admin-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+      .admin-nav-link { transition: all 0.15s ease; }
+      .admin-nav-link:hover { background-color: rgba(255,255,255,0.1); }
+      .admin-nav-link.active { background-color: rgba(255,255,255,0.15); border-left: 3px solid #818cf8; }
+    </style>
+  </head>
+
+  <body class="bg-slate-100 text-slate-900 antialiased min-h-screen">
+    <div class="flex min-h-screen">
+      <!-- Sidebar -->
+      <aside class="admin-sidebar fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-white flex flex-col" id="admin-sidebar">
+        <!-- Logo -->
+        <div class="flex items-center gap-3 px-6 py-5 border-b border-slate-700/50">
+          <img src="/logo-icon.svg" alt="LSA eScale" class="h-9 w-9" />
+          <div>
+            <p class="text-sm font-bold text-white">LSA eScale</p>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-indigo-400">Admin Panel</p>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <%= admin_nav_link "Dashboard", admin_root_path, "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" %>
+
+          <div class="pt-4 pb-2 px-3">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Management</p>
+          </div>
+
+          <%= admin_nav_link "Users", admin_users_path, "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" %>
+          <%= admin_nav_link "Subscriptions", admin_subscriptions_path, "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" %>
+          <%= admin_nav_link "Plans", admin_plans_path, "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" %>
+
+          <div class="pt-4 pb-2 px-3">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Monitoring</p>
+          </div>
+
+          <%= admin_nav_link "Activity Logs", admin_activity_logs_path, "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" %>
+        </nav>
+
+        <!-- User Info / Back to App -->
+        <div class="border-t border-slate-700/50 px-4 py-4">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">
+              <%= current_user.email[0].upcase %>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-white truncate"><%= current_user.email %></p>
+              <p class="text-[10px] text-slate-400">Administrator</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <%= link_to dashboard_path, class: "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors" do %>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
+              </svg>
+              Back to App
+            <% end %>
+            <%= button_to destroy_user_session_path, method: :delete, class: "flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-800 rounded-lg hover:bg-rose-600 transition-colors" do %>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+            <% end %>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="flex-1 ml-64">
+        <!-- Top bar -->
+        <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-200 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <% if content_for?(:page_title) %>
+                <h1 class="text-lg font-bold text-slate-900"><%= yield :page_title %></h1>
+              <% end %>
+              <% if content_for?(:page_subtitle) %>
+                <p class="text-sm text-slate-500"><%= yield :page_subtitle %></p>
+              <% end %>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-slate-400"><%= Time.current.strftime("%b %d, %Y %H:%M") %></span>
+            </div>
+          </div>
+        </header>
+
+        <!-- Flash messages -->
+        <% if notice.present? || alert.present? %>
+          <div class="px-6 pt-4">
+            <% if notice.present? %>
+              <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 flex items-center gap-2">
+                <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <span><%= notice %></span>
+              </div>
+            <% end %>
+            <% if alert.present? %>
+              <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900 flex items-center gap-2">
+                <svg class="w-5 h-5 text-rose-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <span><%= alert %></span>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <!-- Page content -->
+        <main class="p-6">
+          <%= yield %>
+        </main>
+
+        <!-- Footer -->
+        <footer class="px-6 py-4 border-t border-slate-200 text-center">
+          <p class="text-xs text-slate-400">LSA eScale Admin · <%= Time.current.year %></p>
+        </footer>
+      </div>
+    </div>
+
+    <script>
+      // Mobile sidebar toggle (if needed in the future)
+      function toggleAdminSidebar() {
+        const sidebar = document.getElementById('admin-sidebar');
+        sidebar.classList.toggle('-translate-x-full');
+      }
+    </script>
+  </body>
+</html>

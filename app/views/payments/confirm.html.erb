@@ -2,8 +2,8 @@
   <div class="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
     <!-- Header -->
     <div class="bg-gradient-to-br from-indigo-600 to-indigo-700 px-8 py-6 text-white">
-      <h1 class="text-2xl font-bold"><%= t('payments.confirm_title') %></h1>
-      <p class="text-indigo-200 mt-1"><%= t('payments.confirm_subtitle') %></p>
+      <h1 class="text-2xl font-bold">Confirmar Assinatura</h1>
+      <p class="text-indigo-200 mt-1">Revise os detalhes antes de prosseguir com o pagamento</p>
     </div>
 
     <!-- Content -->
@@ -11,9 +11,9 @@
       <!-- Plan Summary -->
       <div class="bg-slate-50 rounded-xl p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-slate-900"><%= @plan.name %></h3>
+          <h3 class="text-lg font-semibold text-slate-900"><%= @plan.sub_account_label %></h3>
           <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
-            <%= t('plans.selected_plan') %>
+            Plano selecionado
           </span>
         </div>
 
@@ -21,41 +21,57 @@
 
         <div class="border-t border-slate-200 pt-4">
           <div class="flex items-center justify-between">
-            <span class="text-slate-600"><%= t('plans.accounts_selected') %>:</span>
-            <span class="font-semibold text-slate-900"><%= @selected_accounts_count %></span>
+            <span class="text-slate-600">Subcontas:</span>
+            <span class="font-semibold text-slate-900">
+              <% if @plan.unlimited? %>
+                Ilimitadas
+              <% else %>
+                Até <%= @plan.max_accounts %>
+              <% end %>
+            </span>
           </div>
 
           <div class="flex items-center justify-between mt-2">
-            <span class="text-slate-600"><%= t('plans.your_monthly_value') %>:</span>
+            <span class="text-slate-600">Valor mensal:</span>
             <span class="text-2xl font-bold text-indigo-600">
-              <%= number_to_currency(@calculated_price_brl, unit: "R$", separator: ",", delimiter: ".") %>
+              <%= number_to_currency(@plan.price_brl, unit: "R$", separator: ",", delimiter: ".") %>
             </span>
           </div>
         </div>
       </div>
 
       <!-- Payment Info -->
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
         <div class="flex items-start gap-3">
-          <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+          <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
           </svg>
-          <p class="text-sm text-amber-800"><%= t('payments.secure_checkout_note') %></p>
+          <p class="text-sm text-blue-800">Você será redirecionado para a página de pagamento seguro do Stripe para completar sua assinatura.</p>
         </div>
       </div>
 
       <!-- Action Buttons -->
       <div class="flex flex-col sm:flex-row gap-4">
-        <%= form_with url: payments_checkout_path, method: :post, local: true, class: "flex-1" do |f| %>
-          <%= f.hidden_field :plan_id, value: @plan.id %>
-          <%= f.hidden_field :selected_accounts_count, value: @selected_accounts_count %>
-          <%= f.hidden_field :currency, value: "brl" %>
-
-          <%= f.submit t('payments.proceed_to_payment'), class: "w-full inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors cursor-pointer" %>
+        <% if @plan.stripe_payment_link.present? %>
+          <%= link_to @plan.payment_link_url_for(current_user),
+              class: "flex-1 inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors gap-2",
+              data: { turbo: false } do %>
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+            </svg>
+            Ir para Pagamento
+          <% end %>
+        <% else %>
+          <%= form_with url: payments_checkout_path, method: :post, local: true, class: "flex-1" do |f| %>
+            <%= f.hidden_field :plan_id, value: @plan.id %>
+            <%= f.hidden_field :selected_accounts_count, value: @selected_accounts_count %>
+            <%= f.hidden_field :currency, value: "brl" %>
+            <%= f.submit "Ir para Pagamento", class: "w-full inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors cursor-pointer" %>
+          <% end %>
         <% end %>
 
-        <%= link_to google_ads_change_plan_path, class: "inline-flex items-center justify-center px-6 py-3 border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold rounded-xl transition-colors" do %>
-          <%= t('common.cancel') %>
+        <%= link_to dashboard_path, class: "inline-flex items-center justify-center px-6 py-3 border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold rounded-xl transition-colors" do %>
+          Cancelar
         <% end %>
       </div>
 
@@ -65,7 +81,7 @@
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
           </svg>
-          <%= t('payments.powered_by_stripe') %>
+          Pagamento seguro processado por Stripe
         </p>
       </div>
     </div>

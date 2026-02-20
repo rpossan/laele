@@ -143,6 +143,9 @@
                 <%= navigation_link_to t('navigation.dashboard'), dashboard_path %>
                 <%= navigation_link_to t('navigation.leads'), leads_path %>
                 <%= navigation_link_to t('navigation.pricing'), pricing_path %>
+                <% if current_user.admin? %>
+                  <%= link_to "Admin", admin_root_path, class: "px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-violet-100 text-violet-700 hover:bg-violet-200 shadow-sm" %>
+                <% end %>
               </nav>
 
               <% if active_customer_context.present? %>

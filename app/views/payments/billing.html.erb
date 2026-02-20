@@ -66,11 +66,20 @@
                 <h3 class="text-lg font-semibold text-orange-900"><%= t('billing.payment_required_title') %></h3>
                 <p class="text-sm text-orange-700 mt-1"><%= t('billing.payment_required_description') %></p>
               </div>
-              <%= button_to payments_checkout_path(plan_id: @subscription.plan_id, selected_accounts_count: @subscription.selected_accounts_count, currency: 'brl'), method: :post, class: "flex-shrink-0 inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-base font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all shadow-lg hover:shadow-xl" do %>
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                </svg>
-                <%= t('billing.pay_now') %>
+              <% if @plan&.stripe_payment_link.present? %>
+                <%= link_to @plan.payment_link_url_for(current_user), class: "flex-shrink-0 inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-base font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all shadow-lg hover:shadow-xl", data: { turbo: false } do %>
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                  </svg>
+                  <%= t('billing.pay_now') %>
+                <% end %>
+              <% else %>
+                <%= button_to payments_checkout_path(plan_id: @subscription.plan_id, selected_accounts_count: @subscription.selected_accounts_count, currency: 'brl'), method: :post, class: "flex-shrink-0 inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-base font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all shadow-lg hover:shadow-xl" do %>
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                  </svg>
+                  <%= t('billing.pay_now') %>
+                <% end %>
               <% end %>
             </div>
             <p class="text-xs text-orange-600 mt-3 flex items-center">
@@ -85,7 +94,7 @@
         <% if @plan.present? %>
           <div class="flex items-start justify-between">
             <div>
-              <h3 class="text-xl font-bold text-indigo-600"><%= @plan.name %></h3>
+              <h3 class="text-xl font-bold text-indigo-600"><%= @plan.sub_account_label %></h3>
               <p class="text-gray-600 mt-1"><%= @plan.description %></p>
 
               <div class="mt-4 space-y-2">
@@ -109,7 +118,7 @@
 
             <div class="text-right">
               <div class="text-3xl font-bold text-gray-900">
-                <%= t('pricing.currency.brl_unit') %> <%= number_with_precision(@subscription.calculated_price_brl / 100.0, precision: 2, delimiter: '.', separator: ',') %>
+                <%= t('pricing.currency.brl_unit') %> <%= number_with_precision(@subscription.calculated_price_brl, precision: 2, delimiter: '.', separator: ',') %>
               </div>
               <div class="text-sm text-gray-500"><%= t('pricing.per_month') %></div>
             </div>

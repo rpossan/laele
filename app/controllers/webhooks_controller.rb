@@ -44,45 +44,70 @@ class WebhooksController < ApplicationController
   def handle_checkout_session_completed(session)
     Rails.logger.info("[Webhook] Checkout session completed: #{session.id}")
 
-    user_id = session.metadata&.user_id || session.metadata&.[]("user_id")
-    plan_id = session.metadata&.plan_id || session.metadata&.[]("plan_id")
-    selected_accounts_count = session.metadata&.selected_accounts_count || session.metadata&.[]("selected_accounts_count")
+    # Payment Links use client_reference_id to identify the user
+    # Custom Checkout Sessions use metadata
+    user_id = session.client_reference_id ||
+              session.metadata&.[]("user_id") ||
+              session.metadata&.user_id
 
     user = User.find_by(id: user_id)
-    plan = Plan.find_by(id: plan_id)
 
-    unless user && plan
-      Rails.logger.error("[Webhook] User or Plan not found: user_id=#{user_id}, plan_id=#{plan_id}")
+    unless user
+      # Try to find user by email from the session
+      customer_email = session.customer_details&.email || session.customer_email
+      user = User.find_by(email: customer_email) if customer_email.present?
+    end
+
+    unless user
+      Rails.logger.error("[Webhook] User not found: client_reference_id=#{session.client_reference_id}, metadata=#{session.metadata.to_h}")
       return
     end
 
-    # Get or create user subscription
-    subscription = user.user_subscription || user.build_user_subscription
+    Rails.logger.info("[Webhook] Found user #{user.id} (#{user.email}) for checkout session")
 
-    # Update subscription with Stripe data
+    # Find the user's pending subscription (created when they selected a plan)
+    subscription = user.user_subscription
+
+    unless subscription
+      Rails.logger.error("[Webhook] No subscription found for user #{user.id}")
+      return
+    end
+
+    plan = subscription.plan
+
+    unless plan
+      Rails.logger.error("[Webhook] No plan found for subscription of user #{user.id}")
+      return
+    end
+
+    # Activate the subscription
     subscription.update!(
-      plan: plan,
       status: "active",
       stripe_customer_id: session.customer,
       stripe_subscription_id: session.subscription,
-      selected_accounts_count: selected_accounts_count.to_i,
-      calculated_price_cents_brl: plan.calculate_price_brl(selected_accounts_count.to_i),
-      calculated_price_cents_usd: plan.calculate_price_usd(selected_accounts_count.to_i),
+      calculated_price_cents_brl: plan.price_cents_brl,
+      calculated_price_cents_usd: plan.price_cents_usd,
       started_at: Time.current,
-      expires_at: nil, # Subscription-based, no fixed expiry
+      expires_at: nil,
       cancelled_at: nil
     )
 
-    # Update user allowed flag
+    # Grant access to the user
     user.update!(allowed: true)
 
-    Rails.logger.info("[Webhook] Subscription activated for user #{user.id}, plan #{plan.name}")
+    Rails.logger.info("[Webhook] ✅ Subscription activated for user #{user.id} (#{user.email}), plan: #{plan.name}, accounts: #{subscription.selected_accounts_count}")
   end
 
   def handle_subscription_updated(subscription_obj)
     Rails.logger.info("[Webhook] Subscription updated: #{subscription_obj.id}")
 
     user_subscription = UserSubscription.find_by(stripe_subscription_id: subscription_obj.id)
+
+    unless user_subscription
+      # Try to find by stripe_customer_id
+      user_subscription = UserSubscription.find_by(stripe_customer_id: subscription_obj.customer)
+    end
+
     return unless user_subscription
 
     status = case subscription_obj.status
@@ -95,6 +120,7 @@ class WebhooksController < ApplicationController
 
     user_subscription.update!(
       status: status,
+      stripe_subscription_id: subscription_obj.id,
       expires_at: subscription_obj.cancel_at ? Time.at(subscription_obj.cancel_at) : nil
     )
 
@@ -109,6 +135,11 @@ class WebhooksController < ApplicationController
     Rails.logger.info("[Webhook] Subscription deleted: #{subscription_obj.id}")
 
     user_subscription = UserSubscription.find_by(stripe_subscription_id: subscription_obj.id)
+
+    unless user_subscription
+      user_subscription = UserSubscription.find_by(stripe_customer_id: subscription_obj.customer)
+    end
+
     return unless user_subscription
 
     user_subscription.update!(
@@ -130,6 +161,11 @@ class WebhooksController < ApplicationController
     return unless subscription_id
 
     user_subscription = UserSubscription.find_by(stripe_subscription_id: subscription_id)
+
+    unless user_subscription
+      user_subscription = UserSubscription.find_by(stripe_customer_id: invoice.customer)
+    end
+
     return unless user_subscription
 
     # Ensure subscription is active
@@ -146,6 +182,11 @@ class WebhooksController < ApplicationController
     return unless subscription_id
 
     user_subscription = UserSubscription.find_by(stripe_subscription_id: subscription_id)
+
+    unless user_subscription
+      user_subscription = UserSubscription.find_by(stripe_customer_id: invoice.customer)
+    end
+
     return unless user_subscription
 
     # Mark as past_due, user can still access for a grace period

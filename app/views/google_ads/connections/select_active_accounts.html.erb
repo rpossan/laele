@@ -148,7 +148,7 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
   const checkboxes = document.querySelectorAll('.account-checkbox');
   const selectedCountEl = document.getElementById('selected-count');
   const estimatedPriceEl = document.getElementById('estimated-price');
@@ -179,25 +179,36 @@ document.addEventListener('DOMContentLoaded', function() {
       progressBar.style.width = percentage + '%';
 
       if (checkedCount >= maxAccounts) {
-        progressBar.classList.remove('bg-indigo-600');
-        progressBar.classList.add('bg-amber-500');
+        if (checkedCount > maxAccounts) {
+          progressBar.classList.remove('bg-indigo-600', 'bg-emerald-500');
+          progressBar.classList.add('bg-amber-500');
+        } else {
+          progressBar.classList.remove('bg-indigo-600', 'bg-amber-500');
+          progressBar.classList.add('bg-emerald-500');
+        }
       } else {
-        progressBar.classList.remove('bg-amber-500');
+        progressBar.classList.remove('bg-amber-500', 'bg-emerald-500');
         progressBar.classList.add('bg-indigo-600');
       }
     }
 
-    // Show/hide warning
+    // Handle limit logic
     if (hasLimit && checkedCount >= maxAccounts) {
-      limitWarning.classList.remove('hidden');
-
-      // Disable unchecked checkboxes
+      // Disable unchecked checkboxes when at or over limit
       checkboxes.forEach(cb => {
         if (!cb.checked) {
           cb.disabled = true;
           cb.closest('.account-item').classList.add('opacity-50');
         }
       });
+
+      if (checkedCount > maxAccounts) {
+        // Over limit: show warning
+        limitWarning.classList.remove('hidden');
+      } else {
+        // Exactly at limit: no warning
+        limitWarning.classList.add('hidden');
+      }
     } else {
       limitWarning.classList.add('hidden');
 
@@ -255,5 +266,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Initial UI update
   updateUI();
-});
+})();
 </script>

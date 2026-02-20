@@ -705,3 +705,11 @@ pt-BR:
     inactive_account: "A conta %{account} não está ativa no seu plano atual. Ative-a ou selecione outra conta."
     inactive_account_selection: "A conta %{account} não está ativa no seu plano. Ative-a nas configurações ou escolha outra conta."
     subscription_required: "Você precisa de uma assinatura ativa para acessar esta funcionalidade."
+
+  # Admin
+  admin:
+    access_denied: "Acesso negado. Privilégios de administrador necessários."
+    users:
+      cannot_modify_self: "Você não pode modificar seu próprio status de admin."
+      admin_toggled: "%{email} agora é %{status}."
+      allowed_toggled: "%{email} agora está %{status}."

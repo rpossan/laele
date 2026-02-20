@@ -700,3 +700,11 @@ en:
     inactive_account: "The account %{account} is not active in your current plan. Activate it or select another account."
     inactive_account_selection: "The account %{account} is not active in your plan. Activate it in settings or choose another account."
     subscription_required: "You need an active subscription to access this feature."
+
+  # Admin
+  admin:
+    access_denied: "Access denied. Admin privileges required."
+    users:
+      cannot_modify_self: "You cannot modify your own admin status."
+      admin_toggled: "%{email} is now %{status}."
+      allowed_toggled: "%{email} is now %{status}."

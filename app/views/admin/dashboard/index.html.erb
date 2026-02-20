@@ -1,0 +1,195 @@
+<% content_for(:page_title, "Dashboard") %>
+<% content_for(:page_subtitle, "Overview of your platform metrics and recent activity") %>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <%= admin_stat_card(
+    title: "Total Users",
+    value: @total_users,
+    subtitle: "#{@total_admins} admins",
+    icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
+    color: "indigo"
+  ) %>
+
+  <%= admin_stat_card(
+    title: "Active Subscriptions",
+    value: @active_subscriptions,
+    subtitle: "#{@pending_subscriptions} pending · #{@cancelled_subscriptions} cancelled",
+    icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z",
+    color: "emerald"
+  ) %>
+
+  <%= admin_stat_card(
+    title: "Monthly Revenue (BRL)",
+    value: admin_currency(@monthly_revenue_brl),
+    subtitle: admin_currency(@monthly_revenue_usd, "USD"),
+    icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+    color: "amber"
+  ) %>
+
+  <%= admin_stat_card(
+    title: "Google Accounts",
+    value: @users_with_google,
+    subtitle: "#{@active_accessible_customers}/#{@total_accessible_customers} active sub-accounts",
+    icon: "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1",
+    color: "blue"
+  ) %>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <!-- Plans Breakdown -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h3 class="text-sm font-bold text-slate-900">Plans Breakdown</h3>
+    </div>
+    <div class="p-5">
+      <% if @plans_breakdown.any? %>
+        <div class="space-y-4">
+          <% @plans_breakdown.each do |item| %>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-semibold text-slate-900"><%= item[:plan].name %></p>
+                <p class="text-xs text-slate-500"><%= item[:plan].display_price_brl %></p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-bold text-slate-900"><%= item[:active_subscriptions] %> <span class="text-xs font-normal text-slate-500">active</span></p>
+                <p class="text-xs text-slate-500"><%= item[:total_subscriptions] %> total</p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-sm text-slate-500 text-center py-4">No plans configured</p>
+      <% end %>
+      <div class="mt-4 pt-4 border-t border-slate-100">
+        <%= link_to "View all plans →", admin_plans_path, class: "text-sm font-medium text-indigo-600 hover:text-indigo-700" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscription Status -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h3 class="text-sm font-bold text-slate-900">Subscription Status</h3>
+    </div>
+    <div class="p-5">
+      <% if @subscription_statuses.any? %>
+        <div class="space-y-3">
+          <% @subscription_statuses.each do |status, count| %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <%= admin_status_badge(status) %>
+              </div>
+              <span class="text-sm font-bold text-slate-900"><%= count %></span>
+            </div>
+          <% end %>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+            <span class="text-xs font-semibold text-slate-500">No subscription</span>
+            <span class="text-sm font-bold text-slate-900"><%= @total_users - @users_with_subscription %></span>
+          </div>
+        </div>
+      <% else %>
+        <p class="text-sm text-slate-500 text-center py-4">No subscriptions yet</p>
+      <% end %>
+      <div class="mt-4 pt-4 border-t border-slate-100">
+        <%= link_to "View all subscriptions →", admin_subscriptions_path, class: "text-sm font-medium text-indigo-600 hover:text-indigo-700" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registrations Chart (simple bar chart) -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h3 class="text-sm font-bold text-slate-900">Registrations (Last 30 days)</h3>
+    </div>
+    <div class="p-5">
+      <% if @registrations_by_day.any? %>
+        <% max_val = [@registrations_by_day.map(&:last).max, 1].max %>
+        <div class="flex items-end gap-1 h-32">
+          <% 30.downto(0) do |i| %>
+            <% date = i.days.ago.to_date %>
+            <% count = @registrations_by_day.to_h[date] || 0 %>
+            <% height_pct = (count.to_f / max_val * 100).round %>
+            <div class="flex-1 group relative">
+              <div
+                class="bg-indigo-500 rounded-t hover:bg-indigo-600 transition-colors min-h-[2px]"
+                style="height: <%= [height_pct, 2].max %>%"
+                title="<%= date.strftime('%b %d') %>: <%= count %> user(s)"
+              ></div>
+            </div>
+          <% end %>
+        </div>
+        <div class="flex justify-between mt-2">
+          <span class="text-[10px] text-slate-400">30 days ago</span>
+          <span class="text-[10px] text-slate-400">Today</span>
+        </div>
+        <p class="text-center text-xs text-slate-500 mt-2">
+          Total: <strong><%= @registrations_by_day.values.sum %></strong> new users
+        </p>
+      <% else %>
+        <p class="text-sm text-slate-500 text-center py-8">No registrations in the last 30 days</p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- Recent Users -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="text-sm font-bold text-slate-900">Recent Users</h3>
+      <%= link_to "View all →", admin_users_path, class: "text-xs font-medium text-indigo-600 hover:text-indigo-700" %>
+    </div>
+    <div class="divide-y divide-slate-100">
+      <% @recent_users.each do |user| %>
+        <div class="px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 <%= user.admin? ? 'bg-violet-600' : 'bg-slate-400' %>">
+              <%= user.email[0].upcase %>
+            </div>
+            <div class="min-w-0">
+              <%= link_to user.email, admin_user_path(user), class: "text-sm font-medium text-slate-900 hover:text-indigo-600 truncate block" %>
+              <p class="text-[11px] text-slate-400"><%= user.created_at.strftime("%b %d, %Y at %H:%M") %></p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <% if user.user_subscription %>
+              <%= admin_status_badge(user.user_subscription.status) %>
+            <% else %>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200">No plan</span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="text-sm font-bold text-slate-900">Recent Activity</h3>
+      <%= link_to "View all →", admin_activity_logs_path, class: "text-xs font-medium text-indigo-600 hover:text-indigo-700" %>
+    </div>
+    <div class="divide-y divide-slate-100">
+      <% if @recent_activity.any? %>
+        <% @recent_activity.each do |log| %>
+          <div class="px-5 py-3 hover:bg-slate-50 transition-colors">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-sm text-slate-900"><%= log.formatted_action %></p>
+                <p class="text-xs text-slate-500 truncate"><%= log.formatted_description %></p>
+                <p class="text-[11px] text-slate-400 mt-0.5">
+                  by <strong><%= log.user&.email || "Unknown" %></strong> · <%= admin_time_ago(log.created_at) %>
+                </p>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="px-5 py-8 text-center">
+          <p class="text-sm text-slate-500">No activity recorded yet</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

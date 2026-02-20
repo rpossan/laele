@@ -65,6 +65,18 @@ class Plan < ApplicationRecord
     count <= max_accounts
   end
 
+  # Build the Stripe Payment Link URL with user identification params
+  def payment_link_url_for(user)
+    return nil unless stripe_payment_link.present?
+
+    uri = URI.parse(stripe_payment_link)
+    params = URI.decode_www_form(uri.query || "")
+    params << [ "client_reference_id", user.id.to_s ]
+    params << [ "prefilled_email", user.email ]
+    uri.query = URI.encode_www_form(params)
+    uri.to_s
+  end
+
   # Human-readable price display
   def display_price_brl(accounts_count = nil)
     if per_account?
@@ -79,6 +91,17 @@ class Plan < ApplicationRecord
       "USD #{format('%.2f', price_per_account_usd)} per account"
     else
       "USD #{format('%.2f', price_usd)}"
+    end
+  end
+
+  # Human-readable sub-account label
+  def sub_account_label
+    if unlimited?
+      "50+ / Ilimitadas"
+    elsif max_accounts == 1
+      "1 Subconta"
+    else
+      "#{max_accounts} Subcontas"
     end
   end
 end
