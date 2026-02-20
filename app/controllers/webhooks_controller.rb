@@ -8,7 +8,13 @@ class WebhooksController < ApplicationController
     endpoint_secret = ENV["STRIPE_WEBHOOK_SECRET"]
 
     begin
-      event = Stripe::Webhook.construct_event(payload, sig_header, endpoint_secret)
+      # In development, allow bypassing signature verification for testing
+      if Rails.env.development? && sig_header.blank?
+        Rails.logger.warn("[Webhook] ⚠️ DEV MODE: Skipping signature verification")
+        event = Stripe::Event.construct_from(JSON.parse(payload, symbolize_names: true))
+      else
+        event = Stripe::Webhook.construct_event(payload, sig_header, endpoint_secret)
+      end
     rescue JSON::ParserError => e
       Rails.logger.error("[Webhook] Invalid payload: #{e.message}")
       head :bad_request
