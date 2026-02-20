@@ -1,6 +1,63 @@
 class PaymentsController < ApplicationController
   before_action :authenticate_user!
 
+  # POST /payments/select_plan - User selects a plan from pricing page
+  # Creates a pending subscription and redirects to Stripe Payment Link
+  def select_plan
+    plan = Plan.active.find_by(id: params[:plan_id])
+
+    unless plan
+      redirect_to pricing_path, alert: "Plano não encontrado."
+      return
+    end
+
+    # Check if user already has an active subscription
+    if current_user.user_subscription&.active?
+      redirect_to dashboard_path, notice: "Você já possui uma assinatura ativa."
+      return
+    end
+
+    # Create or update user subscription as pending
+    subscription = current_user.user_subscription || current_user.build_user_subscription
+    subscription.plan = plan
+    subscription.selected_accounts_count = plan.max_accounts || 999
+    subscription.status = "pending"
+    subscription.save!
+
+    Rails.logger.info("[PaymentsController] Created pending subscription for user #{current_user.id}, plan: #{plan.slug}")
+
+    # Redirect to Stripe Payment Link
+    if plan.stripe_payment_link.present?
+      payment_url = plan.payment_link_url_for(current_user)
+      redirect_to payment_url, allow_other_host: true
+    else
+      # No payment link configured - redirect to checkout or activate directly in dev
+      if Rails.env.development?
+        subscription.update!(status: "active", started_at: Time.current)
+        current_user.update!(allowed: true)
+        redirect_to payments_success_path, notice: "Plano ativado (modo desenvolvimento)!"
+      else
+        redirect_to pricing_path, alert: "Pagamento não configurado para este plano."
+      end
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error("[PaymentsController] Error creating subscription: #{e.message}")
+    redirect_to pricing_path, alert: "Erro ao processar seleção: #{e.message}"
+  end
+
+  # GET /payments/status - Polling endpoint for subscription status (JSON)
+  def status
+    subscription = current_user.user_subscription
+
+    if subscription&.active?
+      render json: { status: "active", redirect_to: payments_success_path }
+    elsif subscription&.pending?
+      render json: { status: "pending" }
+    else
+      render json: { status: "none" }
+    end
+  end
+
   # Billing area - subscription status, invoices, manage
   def billing
     @subscription = current_user.user_subscription

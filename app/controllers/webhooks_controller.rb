@@ -65,12 +65,25 @@ class WebhooksController < ApplicationController
 
     Rails.logger.info("[Webhook] Found user #{user.id} (#{user.email}) for checkout session")
 
-    # Find the user's pending subscription (created when they selected a plan)
+    # Find the user's subscription (created when they selected a plan)
     subscription = user.user_subscription
 
+    # If no subscription exists, try to find the plan from the payment link
     unless subscription
-      Rails.logger.error("[Webhook] No subscription found for user #{user.id}")
-      return
+      plan = find_plan_from_session(session)
+
+      if plan
+        Rails.logger.info("[Webhook] Creating subscription from payment link for user #{user.id}, plan: #{plan.slug}")
+        subscription = user.build_user_subscription(
+          plan: plan,
+          selected_accounts_count: plan.max_accounts || 999,
+          status: "pending"
+        )
+        subscription.save!
+      else
+        Rails.logger.error("[Webhook] No subscription found and could not determine plan for user #{user.id}")
+        return
+      end
     end
 
     plan = subscription.plan
@@ -193,5 +206,29 @@ class WebhooksController < ApplicationController
     user_subscription.update!(status: "past_due")
 
     Rails.logger.info("[Webhook] Payment failed for user #{user_subscription.user_id}")
+  end
+
+  # Try to find the plan from a Stripe checkout session
+  # Payment Links include the payment link URL which we can match against our plans
+  def find_plan_from_session(session)
+    # Try metadata first
+    plan_id = session.metadata&.[]("plan_id") || session.metadata&.plan_id
+    return Plan.find_by(id: plan_id) if plan_id.present?
+
+    # Try to match by payment link ID
+    if session.respond_to?(:payment_link) && session.payment_link.present?
+      payment_link_id = session.payment_link.is_a?(String) ? session.payment_link : session.payment_link.id
+      plan = Plan.active.find_by("stripe_payment_link LIKE ?", "%#{payment_link_id}%")
+      return plan if plan
+    end
+
+    # Try to match by amount (last resort)
+    if session.amount_total.present?
+      amount_cents = session.amount_total
+      plan = Plan.active.find_by(price_cents_brl: amount_cents)
+      return plan if plan
+    end
+
+    nil
   end
 end

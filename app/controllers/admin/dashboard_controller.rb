@@ -39,6 +39,7 @@ module Admin
         .group("DATE(created_at)")
         .count
         .sort_by { |k, _| k }
+        .to_h
 
       # Subscription status breakdown
       @subscription_statuses = UserSubscription.group(:status).count

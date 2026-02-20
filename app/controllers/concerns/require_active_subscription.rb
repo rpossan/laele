@@ -26,7 +26,7 @@ module RequireActiveSubscription
     # Allow Devise paths
     return if devise_path?
 
-    # Redirect to pricing page
+    # Redirect to pricing page (handles both no-subscription and pending cases)
     redirect_to pricing_path, alert: t("errors.subscription_required")
   end
 

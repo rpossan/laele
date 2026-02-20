@@ -18,11 +18,13 @@ Rails.application.routes.draw do
 
   # Payments (Stripe Checkout)
   get "/billing", to: "payments#billing", as: :billing
+  post "/payments/select_plan", to: "payments#select_plan", as: :payments_select_plan
   get "/payments/confirm", to: "payments#confirm", as: :payments_confirm
   post "/payments/checkout", to: "payments#checkout", as: :payments_checkout
   get "/payments/success", to: "payments#success", as: :payments_success
   get "/payments/cancel", to: "payments#cancel", as: :payments_cancel
   post "/payments/portal", to: "payments#portal", as: :payments_portal
+  get "/payments/status", to: "payments#status", as: :payments_status
 
   # Webhooks
   post "/webhooks/stripe", to: "webhooks#stripe", as: :stripe_webhook

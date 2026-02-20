@@ -1,4 +1,39 @@
 <div class="max-w-7xl mx-auto space-y-10">
+  <% if user_signed_in? && @current_subscription&.pending? %>
+    <!-- Pending payment banner -->
+    <div class="rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 p-6 shadow-md">
+      <div class="flex flex-col sm:flex-row items-center gap-4">
+        <div class="flex-shrink-0">
+          <div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center">
+            <svg class="w-7 h-7 text-amber-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1 text-center sm:text-left">
+          <h3 class="text-lg font-bold text-amber-900">Pagamento pendente</h3>
+          <p class="text-sm text-amber-700 mt-1">
+            Você selecionou o plano <strong><%= @current_subscription.plan.sub_account_label %></strong>
+            (<%= number_to_currency(@current_subscription.plan.price_brl, unit: "R$", format: "%u %n", separator: ",", delimiter: ".", precision: 0) %>/mês).
+            Complete o pagamento para ativar sua assinatura.
+          </p>
+        </div>
+        <div class="flex-shrink-0">
+          <% if @current_subscription.plan.stripe_payment_link.present? %>
+            <%= link_to @current_subscription.plan.payment_link_url_for(current_user),
+                class: "inline-flex items-center px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all",
+                data: { turbo: false } do %>
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              </svg>
+              Completar pagamento
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
   <div class="text-center space-y-4">
     <div class="inline-flex items-center gap-2 rounded-full bg-indigo-50 text-indigo-700 px-4 py-2 text-xs font-semibold uppercase tracking-wider">
       <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white font-bold">✓</span>
@@ -92,9 +127,36 @@
           </ul>
 
           <!-- CTA -->
-          <%= link_to new_user_registration_path,
-              class: "inline-flex w-full justify-center rounded-xl #{is_recommended ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} px-4 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all mt-auto" do %>
-            <%= t('plans.start_now') %>
+          <% if user_signed_in? %>
+            <% if @current_subscription&.active? && @current_subscription&.plan_id == plan.id %>
+              <!-- Current plan -->
+              <div class="inline-flex w-full justify-center rounded-xl bg-slate-200 px-4 py-3 text-sm font-semibold text-slate-500 mt-auto cursor-default">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Plano atual
+              </div>
+            <% elsif @current_subscription&.active? %>
+              <!-- Already has different active plan -->
+              <%= link_to google_ads_change_plan_path,
+                  class: "inline-flex w-full justify-center rounded-xl #{is_recommended ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} px-4 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all mt-auto" do %>
+                Trocar para este plano
+              <% end %>
+            <% else %>
+              <!-- No active subscription - select plan and go to payment -->
+              <%= button_to payments_select_plan_path,
+                  params: { plan_id: plan.id },
+                  method: :post,
+                  class: "inline-flex w-full justify-center rounded-xl #{is_recommended ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} px-4 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all mt-auto cursor-pointer",
+                  data: { turbo: false } do %>
+                <%= t('plans.start_now') %>
+              <% end %>
+            <% end %>
+          <% else %>
+            <%= link_to new_user_registration_path,
+                class: "inline-flex w-full justify-center rounded-xl #{is_recommended ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} px-4 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all mt-auto" do %>
+              <%= t('plans.start_now') %>
+            <% end %>
           <% end %>
         </div>
       </div>
