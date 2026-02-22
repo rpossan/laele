@@ -3,7 +3,8 @@ class WebhooksController < ApplicationController
   skip_before_action :authenticate_user!, raise: false
 
   def stripe
-    payload = request.body.read
+    # payload = request.body.read
+    payload =  request.raw_post
     sig_header = request.env["HTTP_STRIPE_SIGNATURE"]
     endpoint_secret = ENV["STRIPE_WEBHOOK_SECRET"]
 
