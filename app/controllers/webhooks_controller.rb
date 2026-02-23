@@ -1,6 +1,7 @@
 class WebhooksController < ApplicationController
   skip_before_action :verify_authenticity_token
   skip_before_action :authenticate_user!, raise: false
+  protect_from_forgery except: :stripe
 
   def stripe
     # payload = request.body.read
@@ -9,7 +10,7 @@ class WebhooksController < ApplicationController
     # endpoint_secret = ENV["STRIPE_WEBHOOK_SECRET"]
 
     payload = request.body.read
-    sig_header = ENV["HTTP_STRIPE_SIGNATURE"]
+    sig_header = request.env['HTTP_STRIPE_SIGNATURE']
     endpoint_secret = ENV["STRIPE_SECRET_KEY"]
 
     # Diagnostic logging
