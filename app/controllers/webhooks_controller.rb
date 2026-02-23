@@ -4,12 +4,16 @@ class WebhooksController < ApplicationController
 
   def stripe
     # payload = request.body.read
-    payload =  request.raw_post
-    sig_header = request.env["HTTP_STRIPE_SIGNATURE"]
-    endpoint_secret = ENV["STRIPE_WEBHOOK_SECRET"]
+    # payload =  request.raw_post
+    # sig_header = request.env["HTTP_STRIPE_SIGNATURE"]
+    # endpoint_secret = ENV["STRIPE_WEBHOOK_SECRET"]
+
+    payload = request.body.read
+    sig_header = ENV["HTTP_STRIPE_SIGNATURE"]
+    endpoint_secret = ENV["STRIPE_SECRET_KEY"]
 
     # Diagnostic logging
-    Rails.logger.info("[Webhook] Received request. path=#{request.path}, ssl?=#{request.ssl?}, x_forwarded_proto=#{request.env['HTTP_X_FORWARDED_PROTO'].inspect}, Signature present: #{sig_header.present?}, Secret configured: #{endpoint_secret.present?}, Secret prefix: #{endpoint_secret&.first(10)}..., Payload size: #{payload.bytesize} bytes")
+    Rails.logger.info("[Webhook] Received request. Signature present: #{sig_header.present?}, Secret configured: #{endpoint_secret.present?}, Secret prefix: #{endpoint_secret&.first(10)}..., Payload size: #{payload.bytesize} bytes")
 
     # Log helpful diagnostic info when webhook secret is missing
     if endpoint_secret.blank? && !Rails.env.development?
