@@ -12,6 +12,9 @@ module EnsureActiveCustomer
     # Users with allowed: true bypass all account restrictions (MVP/admin users)
     return if current_user&.allowed?
 
+    # Must have active subscription
+    return unless current_user&.subscribed?
+
     selection = current_user&.active_customer_selection
     return unless selection
 
@@ -22,14 +25,16 @@ module EnsureActiveCustomer
 
     # If accessible customer exists but is not active, block the action
     if accessible_customer && !accessible_customer.active?
+      # Check if the plan is unlimited (unlimited plans have all accounts active)
+      plan = current_user.current_plan
+      return if plan&.unlimited?
+
       handle_inactive_customer(accessible_customer)
     end
   end
 
   def handle_inactive_customer(accessible_customer)
-    error_message = I18n.t("errors.inactive_account",
-      account: accessible_customer.effective_display_name,
-      default: "A conta #{accessible_customer.effective_display_name} não está ativa no seu plano atual. Ative-a ou selecione outra conta.")
+    error_message = "A conta #{accessible_customer.effective_display_name} não está ativa no seu plano atual. Selecione outra conta."
 
     respond_to do |format|
       format.html { redirect_to dashboard_path, alert: error_message }

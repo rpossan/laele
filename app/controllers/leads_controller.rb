@@ -1,5 +1,6 @@
 class LeadsController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_account_setup
   before_action :set_active_selection
 
   def index
@@ -54,6 +55,13 @@ class LeadsController < ApplicationController
   end
 
   private
+
+  def require_account_setup
+    unless current_user.account_setup_complete?
+      redirect_to dashboard_path, alert: "Complete a configuração da sua conta para acessar esta seção."
+      nil
+    end
+  end
 
   def set_active_selection
     @active_selection = current_user.active_customer_selection

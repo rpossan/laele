@@ -117,7 +117,7 @@ class WebhooksController < ApplicationController
       return
     end
 
-    # Activate the subscription
+    # Activate the subscription (access is via subscription.active?, not user.allowed)
     subscription.update!(
       status: "active",
       stripe_customer_id: session.customer,
@@ -128,9 +128,6 @@ class WebhooksController < ApplicationController
       expires_at: nil,
       cancelled_at: nil
     )
-
-    # Grant access to the user
-    user.update!(allowed: true)
 
     Rails.logger.info("[Webhook] ✅ Subscription activated for user #{user.id} (#{user.email}), plan: #{plan.name}, accounts: #{subscription.selected_accounts_count}")
   end
@@ -161,11 +158,7 @@ class WebhooksController < ApplicationController
       expires_at: subscription_obj.cancel_at ? Time.at(subscription_obj.cancel_at) : nil
     )
 
-    # Update user allowed flag based on status
-    user = user_subscription.user
-    user.update!(allowed: status == "active")
-
-    Rails.logger.info("[Webhook] Subscription status updated to #{status} for user #{user.id}")
+    Rails.logger.info("[Webhook] Subscription status updated to #{status} for user #{user_subscription.user_id}")
   end
 
   def handle_subscription_deleted(subscription_obj)
@@ -184,11 +177,7 @@ class WebhooksController < ApplicationController
       cancelled_at: Time.current
     )
 
-    # Revoke user access
-    user = user_subscription.user
-    user.update!(allowed: false)
-
-    Rails.logger.info("[Webhook] Subscription cancelled for user #{user.id}")
+    Rails.logger.info("[Webhook] Subscription cancelled for user #{user_subscription.user_id}")
   end
 
   def handle_invoice_payment_succeeded(invoice)
@@ -207,7 +196,6 @@ class WebhooksController < ApplicationController
 
     # Ensure subscription is active
     user_subscription.update!(status: "active")
-    user_subscription.user.update!(allowed: true)
 
     Rails.logger.info("[Webhook] Payment confirmed for user #{user_subscription.user_id}")
   end

@@ -34,7 +34,6 @@ class PaymentsController < ApplicationController
       # No payment link configured - redirect to checkout or activate directly in dev
       if Rails.env.development?
         subscription.update!(status: "active", started_at: Time.current)
-        current_user.update!(allowed: true)
         redirect_to payments_success_path, notice: "Plano ativado (modo desenvolvimento)!"
       else
         redirect_to pricing_path, alert: "Pagamento não configurado para este plano."

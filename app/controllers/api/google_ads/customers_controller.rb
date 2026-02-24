@@ -32,15 +32,22 @@ module Api
       def select
         customer_id = params[:customer_id] || request.params[:customer_id]
 
-        # Check if the customer is active before allowing selection
+        # STRICT: Use CustomerListService which enforces plan limits
         service = ::GoogleAds::CustomerListService.new(current_user)
         customer = service.find_customer(customer_id)
 
+        # Customer not found in plan-accessible accounts → block
+        unless customer
+          return render json: {
+            error: "Esta conta não está disponível no seu plano. Só é possível usar as contas selecionadas no plano.",
+            code: "ACCOUNT_NOT_IN_PLAN"
+          }, status: :forbidden
+        end
+
+        # Customer found but not active → block
         if customer && !customer.active?
           return render json: {
-            error: I18n.t("errors.inactive_account_selection",
-              account: customer.effective_display_name,
-              default: "A conta #{customer.effective_display_name} não está ativa no seu plano. Ative-a nas configurações ou escolha outra conta."),
+            error: "A conta #{customer.effective_display_name} não está ativa no seu plano. Só é possível usar as contas selecionadas no plano.",
             code: "INACTIVE_ACCOUNT"
           }, status: :forbidden
         end
@@ -48,7 +55,7 @@ module Api
         result = service.select_customer(customer_id)
 
         unless result[:success]
-          return render json: { error: result[:error] }, status: :not_found
+          return render json: { error: result[:error] }, status: :forbidden
         end
 
         # Update session

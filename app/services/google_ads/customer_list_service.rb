@@ -4,7 +4,8 @@ module GoogleAds
       @user = user
     end
 
-    # Get all customers for the user (respecting plan limits)
+    # Get all customers for the user (respecting plan limits strictly)
+    # ONLY returns accounts that are active in the user's plan (DB truth)
     def all_customers
       @user.google_accounts.includes(:accessible_customers).flat_map do |account|
         account.plan_accessible_customers.map do |customer|
@@ -21,20 +22,26 @@ module GoogleAds
       end
     end
 
-    # Find a customer by ID (only active ones based on plan)
+    # Find a customer by ID — ONLY from plan-accessible customers
+    # This prevents selecting accounts outside the plan
     def find_customer(customer_id)
       @user.google_accounts.flat_map(&:plan_accessible_customers)
            .find { |c| c.customer_id == customer_id }
     end
 
-    # Select a customer as active
+    # Select a customer as active — strictly enforces plan limits
     def select_customer(customer_id)
       customer = find_customer(customer_id)
-      return { success: false, error: "Conta não encontrada ou não disponível no seu plano" } unless customer
+      unless customer
+        return { success: false, error: "Conta não encontrada ou não disponível no seu plano." }
+      end
 
-      # Validate that the customer is active in the plan
+      # STRICT: Must be active in the plan (DB truth)
       unless customer.active?
-        return { success: false, error: "Esta conta não está ativa no seu plano atual. Faça upgrade do plano ou ative esta conta." }
+        return {
+          success: false,
+          error: "Esta conta não está ativa no seu plano atual. Só é possível usar as contas selecionadas no plano."
+        }
       end
 
       previous_customer_id = @user.active_customer_selection&.customer_id
@@ -51,6 +58,7 @@ module GoogleAds
         message: "Conta ativa atualizada",
         customer_id: selection.customer_id,
         display_name: customer.reload.display_name,
+        google_account_id: selection.google_account_id,
         previous_customer_id: previous_customer_id
       }
     end

@@ -1,4 +1,5 @@
 <% all_customers = (@google_accounts || []).flat_map(&:plan_accessible_customers) %>
+<% setup_complete = current_user.account_setup_complete? %>
 
 <div class="space-y-6">
   <!-- Tabs Navigation -->
@@ -26,29 +27,55 @@
           <span><%= t('navigation.account') %></span>
         </div>
       </button>
-      <button
-        id="tab-leads"
-        class="tab-button <%= current_page?(leads_path) ? 'active border-b-2 border-indigo-600 text-indigo-600' : 'border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' %> py-4 px-1 text-sm font-semibold transition-colors"
-        onclick="switchTab('leads')">
-        <div class="flex items-center gap-2">
+      <% if setup_complete %>
+        <button
+          id="tab-leads"
+          class="tab-button <%= current_page?(leads_path) ? 'active border-b-2 border-indigo-600 text-indigo-600' : 'border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' %> py-4 px-1 text-sm font-semibold transition-colors"
+          onclick="switchTab('leads')">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span><%= t('navigation.leads') %></span>
+          </div>
+        </button>
+        <button
+          id="tab-campaigns"
+          class="tab-button border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 py-4 px-1 text-sm font-semibold transition-colors"
+          onclick="switchTab('campaigns')">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span><%= t('navigation.campaigns') %></span>
+          </div>
+        </button>
+      <% else %>
+        <span
+          class="inline-flex items-center gap-2 py-4 px-1 text-sm font-semibold text-slate-300 cursor-not-allowed border-b-2 border-transparent"
+          title="Complete a configuração da conta para acessar Leads">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
           <span><%= t('navigation.leads') %></span>
-        </div>
-      </button>
-      <button
-        id="tab-campaigns"
-        class="tab-button border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 py-4 px-1 text-sm font-semibold transition-colors"
-        onclick="switchTab('campaigns')">
-        <div class="flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </span>
+        <span
+          class="inline-flex items-center gap-2 py-4 px-1 text-sm font-semibold text-slate-300 cursor-not-allowed border-b-2 border-transparent"
+          title="Complete a configuração da conta para acessar Campanhas">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
           <span><%= t('navigation.campaigns') %></span>
-        </div>
-      </button>
+          <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </span>
+      <% end %>
     </nav>
   </div>
 
@@ -62,14 +89,18 @@
     <%= render partial: 'dashboard/account_tab' %>
   </div>
 
-  <!-- Tab Content: Leads -->
-  <div id="content-leads" class="tab-content <%= current_page?(dashboard_path) ? 'hidden' : '' %>">
-    <%= render partial: 'dashboard/leads_section' %>
-  </div>
+  <!-- Tab Content: Leads (only rendered when setup is complete) -->
+  <% if setup_complete %>
+    <div id="content-leads" class="tab-content <%= current_page?(dashboard_path) ? 'hidden' : '' %>">
+      <%= render partial: 'dashboard/leads_section' %>
+    </div>
 
-  <!-- Tab Content: Campaigns -->
-  <div id="content-campaigns" class="tab-content hidden">
-    <%= render partial: 'dashboard/campaigns_section' %>
+    <!-- Tab Content: Campaigns -->
+    <div id="content-campaigns" class="tab-content hidden">
+      <%= render partial: 'dashboard/campaigns_section' %>
+    </div>
+  <% end %>
+  <div style="display:none" id="setup-complete-flag" data-complete="<%= setup_complete %>"></div>
   </div>
 </div>
 
@@ -83,7 +114,13 @@
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-2xl font-bold text-white" id="modal-title"><%= t('account.switch_account') %></h3>
-            <p class="mt-1 text-indigo-100"><%= t('account.switch_description') %></p>
+            <p class="mt-1 text-indigo-100">
+              <%= t('account.switch_description') %>
+              <% plan = current_user.current_plan %>
+              <% if plan && !plan.unlimited? && plan.max_accounts %>
+                <br><span class="text-indigo-200 text-xs">Seu plano permite até <%= plan.max_accounts %> conta(s). Apenas contas do plano são exibidas.</span>
+              <% end %>
+            </p>
           </div>
           <button onclick="closeAccountSwitcherModal()" class="text-indigo-200 hover:text-white transition">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,6 +225,14 @@
 
   // Tab switching with content refresh
   window.switchTab = async function(tabName) {
+    // Block leads/campaigns tabs if setup is not complete
+    var setupFlag = document.getElementById('setup-complete-flag');
+    var isSetupComplete = setupFlag && setupFlag.dataset.complete === 'true';
+    if ((tabName === 'leads' || tabName === 'campaigns') && !isSetupComplete) {
+      showInfo('Complete a configuração da sua conta para acessar esta seção.');
+      return;
+    }
+
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(content => {
       content.classList.add('hidden');
@@ -252,7 +297,7 @@
           if (typeof autoFetchCampaigns === 'function') {
             autoFetchCampaigns();
           }
-          
+
           // Reinitialize Select2 for campaigns tab if campaigns are already loaded
           if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
             const campaignSelect = document.getElementById('campaign-select');

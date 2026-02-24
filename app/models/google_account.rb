@@ -27,26 +27,37 @@ class GoogleAccount < ApplicationRecord
   # Ensure manager_customer_id is set (should be set once and never change)
   def ensure_manager_customer_id!
     return if manager_customer_id.present?
-    
+
     first_accessible = accessible_customers.first
     if first_accessible
       update!(manager_customer_id: first_accessible.customer_id)
     end
   end
 
-  # Returns customers based on user's plan
-  # For allowed users: all customers (MVP/admin bypass)
-  # For unlimited plan: all customers
-  # For limited/per-account plans: only active customers
+  # Returns customers based on user's plan — STRICT enforcement
+  # DB `active` column is the SINGLE SOURCE OF TRUTH for what's in the plan
+  #
+  # For unlimited plan or allowed (MVP) users: all customers
+  # For limited plans: ONLY active customers (selected at plan selection time)
   def plan_accessible_customers
-    # Users with allowed: true get full access to all accounts
-    return accessible_customers if user.allowed?
-
     subscription = user.user_subscription
-    if subscription&.plan&.unlimited? && subscription.plan.max_accounts.nil?
-      accessible_customers
-    else
-      active_accessible_customers
+
+    # Allowed (MVP) users without limited plan: all accounts
+    if user.allowed? && !(subscription&.active? && subscription&.plan&.max_accounts.present?)
+      return accessible_customers
     end
+
+    # Active subscription with unlimited plan: all accounts
+    if subscription&.active? && subscription&.plan&.unlimited?
+      return accessible_customers
+    end
+
+    # Active subscription with limited plan: ONLY active accounts (DB truth)
+    if subscription&.active? && subscription&.plan&.max_accounts.present?
+      return active_accessible_customers
+    end
+
+    # No active subscription: only active accounts (shouldn't normally reach here)
+    active_accessible_customers
   end
 end

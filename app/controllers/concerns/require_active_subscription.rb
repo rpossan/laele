@@ -11,7 +11,7 @@ module RequireActiveSubscription
   def ensure_active_subscription
     return unless user_signed_in?
 
-    # Skip if user has an active subscription
+    # Skip if user has an active subscription (or is allowed/MVP)
     return if current_user.subscribed?
 
     # Allow access to public pages
@@ -20,13 +20,14 @@ module RequireActiveSubscription
     # Allow access to payment-related paths
     return if payment_path?
 
-    # Allow access to Google Ads connection flow (needed to select plan)
-    return if google_ads_connection_path?
-
     # Allow Devise paths
     return if devise_path?
 
-    # Redirect to pricing page (handles both no-subscription and pending cases)
+    # Allow Google Ads onboarding paths ONLY after user has active subscription
+    # (subscribed? check above already handles this, so if we reach here the user
+    #  does NOT have an active sub — block everything including Google Ads)
+
+    # Redirect to pricing: sem pagamento concluído o usuário não pode fazer nada (nem conectar Google)
     redirect_to pricing_path, alert: t("errors.subscription_required")
   end
 
@@ -47,11 +48,6 @@ module RequireActiveSubscription
     request.path == "/billing" ||
     request.path.start_with?("/payments") ||
     request.path.start_with?("/webhooks")
-  end
-
-  def google_ads_connection_path?
-    request.path.start_with?("/google_ads/auth") ||
-    request.path.start_with?("/google_ads/plan")
   end
 
   def devise_path?

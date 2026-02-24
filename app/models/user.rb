@@ -51,6 +51,14 @@ class User < ApplicationRecord
     google_accounts.any?
   end
 
+  # Returns true when the user has completed the full onboarding:
+  # subscription active + Google connected + primary account selected
+  def account_setup_complete?
+    return false unless subscribed?
+    return false unless google_connected?
+    active_customer_selection.present?
+  end
+
   def total_accessible_customers
     google_accounts.joins(:accessible_customers).count
   end
