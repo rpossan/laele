@@ -194,7 +194,7 @@ class WebhooksController < ApplicationController
   def handle_invoice_payment_succeeded(invoice)
     Rails.logger.info("[Webhook] Invoice payment succeeded: #{invoice.id}")
 
-    subscription_id = invoice.subscription
+    subscription_id = invoice.parent&.subscription_details&.subscription
     return unless subscription_id
 
     user_subscription = UserSubscription.find_by(stripe_subscription_id: subscription_id)
@@ -215,7 +215,7 @@ class WebhooksController < ApplicationController
   def handle_invoice_payment_failed(invoice)
     Rails.logger.info("[Webhook] Invoice payment failed: #{invoice.id}")
 
-    subscription_id = invoice.subscription
+    subscription_id = invoice.parent&.subscription_details&.subscription
     return unless subscription_id
 
     user_subscription = UserSubscription.find_by(stripe_subscription_id: subscription_id)
