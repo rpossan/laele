@@ -211,4 +211,194 @@ RSpec.describe LeadsMetricsService, type: :service do
       expect(result[0][:lead_id]).to eq("2")
     end
   end
+
+  # Property-Based Tests
+
+  describe 'Property 1: Lead Count Consistency' do
+    # **Validates: Requirements 1.1, 1.2**
+    # For any set of leads retrieved from the API, the total lead count should equal
+    # the sum of leads grouped by service type.
+
+    it 'total count equals sum of service type counts' do
+      service = LeadsMetricsService.new
+
+      # Test with multiple random dataset sizes (property-based approach)
+      [0, 1, 5, 10, 50, 100].each do |count|
+        service_types = ["roofing", "plumbing", "electrical", "hvac", "landscaping"]
+        leads = count.times.map do |i|
+          {
+            lead_id: "lead_#{i}",
+            service_type: service_types[i % service_types.length],
+            status: "booked"
+          }
+        end
+
+        total_count = service.total_leads_count(leads)
+        by_service_type = service.leads_by_service_type(leads)
+        sum_by_service_type = by_service_type.values.sum
+
+        expect(total_count).to eq(sum_by_service_type),
+          "For #{count} leads: total_count (#{total_count}) should equal sum of service types (#{sum_by_service_type})"
+      end
+    end
+
+    it 'total count equals sum of status counts' do
+      service = LeadsMetricsService.new
+
+      # Test with multiple random dataset sizes
+      [0, 1, 5, 10, 50, 100].each do |count|
+        statuses = ["booked", "contacted", "pending", "not_yet_contacted"]
+        leads = count.times.map do |i|
+          {
+            lead_id: "lead_#{i}",
+            service_type: "roofing",
+            status: statuses[i % statuses.length]
+          }
+        end
+
+        total_count = service.total_leads_count(leads)
+        by_status = service.leads_by_status(leads)
+        sum_by_status = by_status.values.sum
+
+        expect(total_count).to eq(sum_by_status),
+          "For #{count} leads: total_count (#{total_count}) should equal sum of statuses (#{sum_by_status})"
+      end
+    end
+  end
+
+  describe 'Property 6: Time Period Filtering Idempotence' do
+    # **Validates: Requirements 1.4, 2.4, 3.4, 4.3**
+    # For any set of leads and a given time period, filtering by that time period
+    # twice should produce the same result as filtering once.
+
+    it 'filtering twice produces same result as filtering once' do
+      service = LeadsMetricsService.new
+
+      # Test with multiple time periods and dataset sizes
+      [0, 1, 5, 10, 50].each do |count|
+        start_date = Date.today - 10.days
+        end_date = Date.today
+
+        leads = count.times.map do |i|
+          {
+            lead_id: "lead_#{i}",
+            creation_time: start_date + (i % 11).days,
+            service_type: "roofing"
+          }
+        end
+
+        # Filter once
+        filtered_once = service.filter_by_creation_time(leads, start_date, end_date)
+
+        # Filter twice
+        filtered_twice = service.filter_by_creation_time(filtered_once, start_date, end_date)
+
+        expect(filtered_twice).to eq(filtered_once),
+          "For #{count} leads: filtering twice should produce same result as filtering once"
+      end
+    end
+
+    it 'filtering with different date ranges is consistent' do
+      service = LeadsMetricsService.new
+
+      today = Date.today
+      leads = 20.times.map do |i|
+        {
+          lead_id: "lead_#{i}",
+          creation_time: today - (20 - i).days,
+          service_type: "roofing"
+        }
+      end
+
+      # Filter to a specific range
+      start_date = today - 5.days
+      end_date = today
+
+      filtered_once = service.filter_by_creation_time(leads, start_date, end_date)
+      filtered_twice = service.filter_by_creation_time(filtered_once, start_date, end_date)
+
+      expect(filtered_twice.length).to eq(filtered_once.length)
+      expect(filtered_twice.map { |l| l[:lead_id] }).to eq(filtered_once.map { |l| l[:lead_id] })
+    end
+  end
+
+  describe 'Property 7: API Data Round Trip' do
+    # **Validates: Requirements 5.2, 6.2**
+    # For any lead data retrieved from the Google Ads API, parsing and formatting
+    # the data should preserve all required fields (lead_id, service_type, status, creation_time).
+
+    it 'preserves all required fields through aggregation operations' do
+      service = LeadsMetricsService.new
+
+      # Test with multiple dataset sizes
+      [1, 5, 10, 50].each do |count|
+        required_fields = [:lead_id, :service_type, :status, :creation_time]
+        leads = count.times.map do |i|
+          {
+            lead_id: "lead_#{i}",
+            service_type: "roofing",
+            status: "booked",
+            creation_time: Date.today,
+            name: "Customer #{i}",
+            phone_number: "555-0100"
+          }
+        end
+
+        # Verify all required fields are present in original data
+        leads.each do |lead|
+          required_fields.each do |field|
+            expect(lead).to have_key(field),
+              "Lead should have required field #{field}"
+          end
+        end
+
+        # Perform aggregation operations
+        total_count = service.total_leads_count(leads)
+        by_service_type = service.leads_by_service_type(leads)
+        by_status = service.leads_by_status(leads)
+        filtered = service.filter_by_creation_time(leads, Date.today, Date.today)
+
+        # Verify required fields are preserved in filtered data
+        filtered.each do |lead|
+          required_fields.each do |field|
+            expect(lead).to have_key(field),
+              "Filtered lead should preserve required field #{field}"
+          end
+        end
+
+        # Verify aggregation counts are consistent
+        expect(total_count).to eq(count)
+        expect(by_service_type["roofing"]).to eq(count)
+        expect(by_status["booked"]).to eq(count)
+      end
+    end
+
+    it 'handles both symbol and string keys consistently' do
+      service = LeadsMetricsService.new
+
+      # Create leads with mixed key types
+      leads_with_symbols = [
+        { lead_id: "1", service_type: "roofing", status: "booked", creation_time: Date.today },
+        { lead_id: "2", service_type: "plumbing", status: "contacted", creation_time: Date.today }
+      ]
+
+      leads_with_strings = [
+        { "lead_id" => "1", "service_type" => "roofing", "status" => "booked", "creation_time" => Date.today },
+        { "lead_id" => "2", "service_type" => "plumbing", "status" => "contacted", "creation_time" => Date.today }
+      ]
+
+      # Both should produce same aggregation results
+      count_symbols = service.total_leads_count(leads_with_symbols)
+      count_strings = service.total_leads_count(leads_with_strings)
+      expect(count_symbols).to eq(count_strings)
+
+      by_service_symbols = service.leads_by_service_type(leads_with_symbols)
+      by_service_strings = service.leads_by_service_type(leads_with_strings)
+      expect(by_service_symbols).to eq(by_service_strings)
+
+      by_status_symbols = service.leads_by_status(leads_with_symbols)
+      by_status_strings = service.leads_by_status(leads_with_strings)
+      expect(by_status_symbols).to eq(by_status_strings)
+    end
+  end
 end
