@@ -41,7 +41,7 @@ The implementation follows a layered approach, starting with service layer compo
   - **Property 9: External Leads Feedback Isolation**
   - **Validates: Requirements 3.6**
 
-- [-] 3. Implement LeadsMetricsService for lead data aggregation
+- [x] 3. Implement LeadsMetricsService for lead data aggregation
   - Implement `fetch_leads_for_period(google_account, customer_id, start_date, end_date)` method
   - Implement `total_leads_count(leads)` method
   - Implement `leads_by_service_type(leads)` method
@@ -49,15 +49,15 @@ The implementation follows a layered approach, starting with service layer compo
   - Implement `filter_by_creation_time(leads, start_date, end_date)` method
   - _Requirements: 1.1, 1.2, 1.3, 5.1, 5.2, 5.4, 10.1_
 
-- [ ] 3.1 Write property test for lead count consistency
+- [x] 3.1 Write property test for lead count consistency
   - **Property 1: Lead Count Consistency**
   - **Validates: Requirements 1.1, 1.2**
 
-- [ ] 3.2 Write property test for time period filtering idempotence
+- [x] 3.2 Write property test for time period filtering idempotence
   - **Property 6: Time Period Filtering Idempotence**
   - **Validates: Requirements 1.4, 2.4, 3.4, 4.3**
 
-- [ ] 3.3 Write property test for API data round trip
+- [x] 3.3 Write property test for API data round trip
   - **Property 7: API Data Round Trip**
   - **Validates: Requirements 5.2, 6.2**
 
