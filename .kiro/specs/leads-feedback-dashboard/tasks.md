@@ -16,7 +16,7 @@ The implementation follows a layered approach, starting with service layer compo
   - Test service initialization and method availability
   - _Requirements: 1.1, 2.1, 3.1, 4.1_
 
-- [ ] 2. Implement LeadsFeedbackService for database queries
+- [x] 2. Implement LeadsFeedbackService for database queries
   - Implement `fetch_feedback_for_period(customer_id, start_date, end_date)` method
   - Implement `satisfaction_distribution(feedback_records)` method
   - Implement `satisfaction_reasons_summary(feedback_records)` method
@@ -25,23 +25,23 @@ The implementation follows a layered approach, starting with service layer compo
   - Implement `external_leads_feedback_count(customer_id, start_date, end_date)` method
   - _Requirements: 3.1, 3.2, 3.3, 4.1, 4.2, 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 2.1 Write property test for satisfaction distribution completeness
+- [x] 2.1 Write property test for satisfaction distribution completeness
   - **Property 4: Satisfaction Distribution Completeness**
   - **Validates: Requirements 3.1**
 
-- [ ] 2.2 Write property test for credit decision rate completeness
+- [x] 2.2 Write property test for credit decision rate completeness
   - **Property 5: Credit Decision Rate Completeness**
   - **Validates: Requirements 4.1, 4.2**
 
-- [ ] 2.3 Write property test for feedback reason aggregation accuracy
+- [x] 2.3 Write property test for feedback reason aggregation accuracy
   - **Property 8: Feedback Reason Aggregation Accuracy**
   - **Validates: Requirements 3.2, 3.3**
 
-- [ ] 2.4 Write property test for external leads feedback isolation
+- [x] 2.4 Write property test for external leads feedback isolation
   - **Property 9: External Leads Feedback Isolation**
   - **Validates: Requirements 3.6**
 
-- [ ] 3. Implement LeadsMetricsService for lead data aggregation
+- [-] 3. Implement LeadsMetricsService for lead data aggregation
   - Implement `fetch_leads_for_period(google_account, customer_id, start_date, end_date)` method
   - Implement `total_leads_count(leads)` method
   - Implement `leads_by_service_type(leads)` method
