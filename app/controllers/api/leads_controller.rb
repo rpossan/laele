@@ -6,12 +6,6 @@ module Api
       selection = current_user.active_customer_selection
       return render_error("Selecione uma conta antes de consultar os leads") unless selection
 
-      # Check if states are selected for geographic validation
-      state_selector = StateSelector.new(session)
-      unless state_selector.any_selected?
-        return render_error(GeographicValidatorService.new.blocking_message, :unprocessable_content)
-      end
-
       service = ::GoogleAds::LeadService.new(
         google_account: selection.google_account,
         customer_id: selection.customer_id
@@ -26,9 +20,12 @@ module Api
       # Override feedback status from local table so "Com feedback" shows immediately (Google API can lag)
       leads = merge_local_feedback_status(result[:leads], selection.google_account_id)
 
-      # Add validation results to each lead
-      validator = GeographicValidatorService.new(state_selector.selected_states)
-      leads = add_validation_results(leads, validator)
+      # Add validation results to each lead (only if states are selected)
+      state_selector = StateSelector.new(session)
+      if state_selector.any_selected?
+        validator = GeographicValidatorService.new(state_selector.selected_states)
+        leads = add_validation_results(leads, validator)
+      end
 
       render json: {
         leads: leads,
