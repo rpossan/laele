@@ -10,7 +10,7 @@ class WebhooksController < ApplicationController
     # endpoint_secret = ENV["STRIPE_WEBHOOK_SECRET"]
 
     payload = request.body.read
-    sig_header = request.env['HTTP_STRIPE_SIGNATURE']
+    sig_header = request.env["HTTP_STRIPE_SIGNATURE"]
     endpoint_secret = ENV["STRIPE_SECRET_KEY"]
 
     # Diagnostic logging
@@ -122,12 +122,20 @@ class WebhooksController < ApplicationController
       status: "active",
       stripe_customer_id: session.customer,
       stripe_subscription_id: session.subscription,
-      calculated_price_cents_brl: plan.price_cents_brl,
-      calculated_price_cents_usd: plan.price_cents_usd,
+      calculated_price_cents_brl: plan.calculate_price_brl(subscription.selected_accounts_count || 0),
+      calculated_price_cents_usd: plan.calculate_price_usd(subscription.selected_accounts_count || 0),
       started_at: Time.current,
       expires_at: nil,
       cancelled_at: nil
     )
+
+    # ENFORCE ACCOUNT LIMITS: If user already has a Google account connected,
+    # deactivate all accessible_customers for limited plans so the dashboard
+    # forces the user through select_active_accounts to pick which accounts
+    # belong to this plan. Without this, a user who previously had all accounts
+    # active (e.g., from a prior subscription or allowed status) would retain
+    # access to ALL accounts even after subscribing to a limited plan.
+    enforce_account_limits(user, plan)
 
     Rails.logger.info("[Webhook] ✅ Subscription activated for user #{user.id} (#{user.email}), plan: #{plan.name}, accounts: #{subscription.selected_accounts_count}")
   end
@@ -218,6 +226,40 @@ class WebhooksController < ApplicationController
     user_subscription.update!(status: "past_due")
 
     Rails.logger.info("[Webhook] Payment failed for user #{user_subscription.user_id}")
+  end
+
+  # Enforce account limits after subscription activation.
+  # For limited plans: deactivate all accessible_customers so the user
+  # is forced to re-select which accounts belong to the plan.
+  # For unlimited plans: activate all accessible_customers automatically.
+  # This mirrors the logic in GoogleAds::ConnectionsController#callback.
+  def enforce_account_limits(user, plan)
+    return unless user.google_connected?
+
+    user.google_accounts.each do |google_account|
+      next unless google_account.accessible_customers.any?
+
+      if plan.unlimited?
+        # Unlimited plan: all accounts are available
+        google_account.accessible_customers.update_all(active: true)
+        Rails.logger.info("[Webhook] Unlimited plan — activated all #{google_account.accessible_customers.count} accounts for user #{user.id}")
+      elsif plan.max_accounts.present?
+        active_count = google_account.accessible_customers.where(active: true).count
+
+        if active_count > plan.max_accounts
+          # User has MORE active accounts than the plan allows → reset all to inactive
+          # Dashboard will redirect them to select_active_accounts to pick again
+          google_account.accessible_customers.update_all(active: false)
+          Rails.logger.info("[Webhook] Limited plan (max #{plan.max_accounts}) — deactivated all accounts for user #{user.id} (had #{active_count} active, exceeds limit). User must re-select.")
+        elsif active_count == 0
+          # No accounts selected yet — dashboard will handle redirection
+          Rails.logger.info("[Webhook] Limited plan (max #{plan.max_accounts}) — no active accounts for user #{user.id}. Dashboard will prompt selection.")
+        else
+          # User already has a valid number of active accounts within the limit
+          Rails.logger.info("[Webhook] Limited plan (max #{plan.max_accounts}) — user #{user.id} has #{active_count} active accounts (within limit). No changes needed.")
+        end
+      end
+    end
   end
 
   # Try to find the plan from a Stripe checkout session
