@@ -61,7 +61,7 @@ The implementation follows a layered approach, starting with service layer compo
   - **Property 7: API Data Round Trip**
   - **Validates: Requirements 5.2, 6.2**
 
-- [ ] 4. Implement CallMetricsService for call data aggregation
+- [x] 4. Implement CallMetricsService for call data aggregation
   - Implement `fetch_call_metrics_for_leads(google_account, customer_id, lead_ids)` method
   - Implement `total_answered_calls(call_metrics)` method
   - Implement `total_missed_calls(call_metrics)` method
@@ -69,11 +69,11 @@ The implementation follows a layered approach, starting with service layer compo
   - Implement `filter_by_call_time(call_metrics, start_date, end_date)` method
   - _Requirements: 2.1, 2.2, 2.3, 6.1, 6.2, 6.4, 10.2_
 
-- [ ] 4.1 Write property test for call metrics sum invariant
+- [x] 4.1 Write property test for call metrics sum invariant
   - **Property 2: Call Metrics Sum Invariant**
   - **Validates: Requirements 2.1, 2.2**
 
-- [ ] 4.2 Write property test for average call duration bounds
+- [x] 4.2 Write property test for average call duration bounds
   - **Property 3: Average Call Duration Bounds**
   - **Validates: Requirements 2.3**
 

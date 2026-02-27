@@ -219,4 +219,220 @@ RSpec.describe CallMetricsService, type: :service do
       expect(result[0][:lead_id]).to eq("2")
     end
   end
+
+  # Property-Based Tests
+
+  describe 'Property 2: Call Metrics Sum Invariant' do
+    # **Validates: Requirements 2.1, 2.2**
+    # For any set of call metrics, the sum of answered calls and missed calls
+    # should equal the total number of calls with recorded status.
+
+    it 'answered calls + missed calls equals total calls with status' do
+      service = CallMetricsService.new
+
+      # Test with multiple random dataset sizes (property-based approach)
+      [0, 1, 5, 10, 50, 100].each do |count|
+        call_metrics = count.times.map do |i|
+          status = i % 2 == 0 ? "answered" : "missed"
+          {
+            lead_id: "lead_#{i}",
+            call_status: status,
+            call_duration: rand(30..300),
+            call_time: Date.today
+          }
+        end
+
+        answered = service.total_answered_calls(call_metrics)
+        missed = service.total_missed_calls(call_metrics)
+        total_with_status = call_metrics.count { |m| m[:call_status].present? }
+
+        expect(answered + missed).to eq(total_with_status),
+          "For #{count} calls: answered (#{answered}) + missed (#{missed}) should equal total with status (#{total_with_status})"
+      end
+    end
+
+    it 'sum invariant holds with various call status distributions' do
+      service = CallMetricsService.new
+
+      # Test with different distributions of answered vs missed
+      distributions = [
+        { answered: 100, missed: 0 },
+        { answered: 0, missed: 100 },
+        { answered: 50, missed: 50 },
+        { answered: 75, missed: 25 },
+        { answered: 25, missed: 75 }
+      ]
+
+      distributions.each do |dist|
+        call_metrics = []
+        dist[:answered].times do |i|
+          call_metrics << {
+            lead_id: "lead_#{i}",
+            call_status: "answered",
+            call_duration: rand(30..300),
+            call_time: Date.today
+          }
+        end
+
+        dist[:missed].times do |i|
+          call_metrics << {
+            lead_id: "lead_answered_#{dist[:answered] + i}",
+            call_status: "missed",
+            call_duration: 0,
+            call_time: Date.today
+          }
+        end
+
+        answered = service.total_answered_calls(call_metrics)
+        missed = service.total_missed_calls(call_metrics)
+        total = answered + missed
+
+        expect(total).to eq(dist[:answered] + dist[:missed]),
+          "For distribution #{dist}: sum should equal total calls"
+      end
+    end
+
+    it 'sum invariant holds with case-insensitive status values' do
+      service = CallMetricsService.new
+
+      call_metrics = [
+        { lead_id: "1", call_status: "ANSWERED", call_duration: 60, call_time: Date.today },
+        { lead_id: "2", call_status: "Answered", call_duration: 120, call_time: Date.today },
+        { lead_id: "3", call_status: "answered", call_duration: 90, call_time: Date.today },
+        { lead_id: "4", call_status: "MISSED", call_duration: 0, call_time: Date.today },
+        { lead_id: "5", call_status: "Missed", call_duration: 0, call_time: Date.today },
+        { lead_id: "6", call_status: "missed", call_duration: 0, call_time: Date.today }
+      ]
+
+      answered = service.total_answered_calls(call_metrics)
+      missed = service.total_missed_calls(call_metrics)
+
+      expect(answered).to eq(3)
+      expect(missed).to eq(3)
+      expect(answered + missed).to eq(6)
+    end
+  end
+
+  describe 'Property 3: Average Call Duration Bounds' do
+    # **Validates: Requirements 2.3**
+    # For any set of answered calls with valid durations, the calculated average
+    # call duration should be greater than or equal to zero and less than or equal
+    # to the maximum individual call duration.
+
+    it 'average duration is within bounds [0, max]' do
+      service = CallMetricsService.new
+
+      # Test with multiple random dataset sizes
+      [1, 5, 10, 50, 100].each do |count|
+        call_metrics = count.times.map do |i|
+          {
+            lead_id: "lead_#{i}",
+            call_status: "answered",
+            call_duration: rand(30..600),
+            call_time: Date.today
+          }
+        end
+
+        average = service.average_call_duration(call_metrics)
+        max_duration = call_metrics.map { |m| m[:call_duration] }.max
+
+        expect(average).to be >= 0,
+          "Average duration should be >= 0, got #{average}"
+        expect(average).to be <= max_duration,
+          "Average duration (#{average}) should be <= max duration (#{max_duration})"
+      end
+    end
+
+    it 'average equals max when all calls have same duration' do
+      service = CallMetricsService.new
+
+      # Test with various uniform durations
+      [30, 60, 120, 300, 600].each do |duration|
+        call_metrics = 10.times.map do |i|
+          {
+            lead_id: "lead_#{i}",
+            call_status: "answered",
+            call_duration: duration,
+            call_time: Date.today
+          }
+        end
+
+        average = service.average_call_duration(call_metrics)
+        expect(average).to eq(duration.to_f),
+          "When all calls have duration #{duration}, average should be #{duration}"
+      end
+    end
+
+    it 'average is between min and max for varied durations' do
+      service = CallMetricsService.new
+
+      # Test with various duration ranges
+      [
+        [30, 60, 90, 120],
+        [10, 50, 100, 200, 300],
+        [1, 100, 500, 1000]
+      ].each do |durations|
+        call_metrics = durations.map.with_index do |duration, i|
+          {
+            lead_id: "lead_#{i}",
+            call_status: "answered",
+            call_duration: duration,
+            call_time: Date.today
+          }
+        end
+
+        average = service.average_call_duration(call_metrics)
+        min_duration = durations.min
+        max_duration = durations.max
+
+        expect(average).to be >= min_duration,
+          "Average (#{average}) should be >= min (#{min_duration})"
+        expect(average).to be <= max_duration,
+          "Average (#{average}) should be <= max (#{max_duration})"
+      end
+    end
+
+    it 'average is zero when no answered calls exist' do
+      service = CallMetricsService.new
+
+      # Test with only missed calls
+      call_metrics = 10.times.map do |i|
+        {
+          lead_id: "lead_#{i}",
+          call_status: "missed",
+          call_duration: 0,
+          call_time: Date.today
+        }
+      end
+
+      average = service.average_call_duration(call_metrics)
+      expect(average).to eq(0.0),
+        "Average should be 0.0 when no answered calls exist"
+    end
+
+    it 'average is zero for empty call metrics' do
+      service = CallMetricsService.new
+      average = service.average_call_duration([])
+      expect(average).to eq(0.0),
+        "Average should be 0.0 for empty call metrics"
+    end
+
+    it 'average only considers answered calls' do
+      service = CallMetricsService.new
+
+      call_metrics = [
+        { lead_id: "1", call_status: "answered", call_duration: 100, call_time: Date.today },
+        { lead_id: "2", call_status: "missed", call_duration: 0, call_time: Date.today },
+        { lead_id: "3", call_status: "answered", call_duration: 200, call_time: Date.today },
+        { lead_id: "4", call_status: "missed", call_duration: 0, call_time: Date.today },
+        { lead_id: "5", call_status: "answered", call_duration: 300, call_time: Date.today }
+      ]
+
+      average = service.average_call_duration(call_metrics)
+      expected_average = (100 + 200 + 300) / 3.0
+
+      expect(average).to eq(expected_average),
+        "Average should only include answered calls: #{expected_average}"
+    end
+  end
 end
