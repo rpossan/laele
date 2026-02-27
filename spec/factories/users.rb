@@ -26,3 +26,14 @@ FactoryBot.define do
     sequence(:customer_id) { |n| (1000000000 + n).to_s }
   end
 end
+
+
+FactoryBot.define do
+  factory :lead_feedback_submission do
+    google_account
+    sequence(:lead_id) { |n| "lead_#{n}" }
+    survey_answer { "VERY_SATISFIED" }
+    reason { "BOOKED_CUSTOMER" }
+    credit_issuance_decision { "SUCCESS_REACHED_THRESHOLD" }
+  end
+end
