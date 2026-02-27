@@ -5,7 +5,7 @@ class LeadsFeedbackService
   # Provides methods to fetch, filter, and calculate metrics on feedback submissions
 
   def initialize
-    # Service initialization
+    @logger = Rails.logger
   end
 
   # Fetch all feedback submissions for a given customer within a time period
@@ -18,15 +18,24 @@ class LeadsFeedbackService
     raise ArgumentError, "start_date cannot be nil" if start_date.nil?
     raise ArgumentError, "end_date cannot be nil" if end_date.nil?
 
-    # Find google accounts that have access to this customer
-    google_accounts = GoogleAccount.joins(:accessible_customers)
-      .where(accessible_customers: { customer_id: customer_id })
-      .distinct
+    begin
+      # Find google accounts that have access to this customer
+      google_accounts = GoogleAccount.joins(:accessible_customers)
+        .where(accessible_customers: { customer_id: customer_id })
+        .distinct
 
-    LeadFeedbackSubmission
-      .where(google_account: google_accounts)
-      .where("created_at >= ? AND created_at <= ?", start_date, end_date)
-      .to_a
+      feedback = LeadFeedbackSubmission
+        .where(google_account: google_accounts)
+        .where("created_at >= ? AND created_at <= ?", start_date, end_date)
+        .to_a
+
+      # Validate feedback records
+      feedback.select { |record| valid_feedback?(record) }
+    rescue StandardError => e
+      @logger.error("Error fetching feedback for customer #{customer_id}: #{e.message}")
+      @logger.debug(e.backtrace.join("\n"))
+      []
+    end
   end
 
   # Calculate the distribution of satisfaction levels
@@ -35,18 +44,29 @@ class LeadsFeedbackService
   def satisfaction_distribution(feedback_records)
     raise ArgumentError, "feedback_records cannot be nil" if feedback_records.nil?
 
-    distribution = {
-      "VERY_SATISFIED" => 0,
-      "SATISFIED" => 0,
-      "DISSATISFIED" => 0
-    }
+    begin
+      distribution = {
+        "VERY_SATISFIED" => 0,
+        "SATISFIED" => 0,
+        "DISSATISFIED" => 0
+      }
 
-    feedback_records.each do |record|
-      answer = record.survey_answer.to_s.upcase
-      distribution[answer] += 1 if distribution.key?(answer)
+      feedback_records.each do |record|
+        next unless valid_feedback?(record)
+        
+        answer = record.survey_answer.to_s.upcase
+        distribution[answer] += 1 if distribution.key?(answer)
+      end
+
+      distribution
+    rescue StandardError => e
+      @logger.error("Error calculating satisfaction distribution: #{e.message}")
+      {
+        "VERY_SATISFIED" => 0,
+        "SATISFIED" => 0,
+        "DISSATISFIED" => 0
+      }
     end
-
-    distribution
   end
 
   # Summarize the most common satisfaction reasons
@@ -55,16 +75,22 @@ class LeadsFeedbackService
   def satisfaction_reasons_summary(feedback_records)
     raise ArgumentError, "feedback_records cannot be nil" if feedback_records.nil?
 
-    reasons = {}
-    feedback_records.each do |record|
-      next if record.survey_answer.to_s.upcase != "VERY_SATISFIED" && record.survey_answer.to_s.upcase != "SATISFIED"
-      next if record.reason.blank?
+    begin
+      reasons = {}
+      feedback_records.each do |record|
+        next unless valid_feedback?(record)
+        next if record.survey_answer.to_s.upcase != "VERY_SATISFIED" && record.survey_answer.to_s.upcase != "SATISFIED"
+        next if record.reason.blank?
 
-      reason = record.reason.to_s
-      reasons[reason] = (reasons[reason] || 0) + 1
+        reason = record.reason.to_s
+        reasons[reason] = (reasons[reason] || 0) + 1
+      end
+
+      reasons
+    rescue StandardError => e
+      @logger.error("Error calculating satisfaction reasons summary: #{e.message}")
+      {}
     end
-
-    reasons
   end
 
   # Summarize the most common dissatisfaction reasons
@@ -73,16 +99,22 @@ class LeadsFeedbackService
   def dissatisfaction_reasons_summary(feedback_records)
     raise ArgumentError, "feedback_records cannot be nil" if feedback_records.nil?
 
-    reasons = {}
-    feedback_records.each do |record|
-      next if record.survey_answer.to_s.upcase != "DISSATISFIED"
-      next if record.reason.blank?
+    begin
+      reasons = {}
+      feedback_records.each do |record|
+        next unless valid_feedback?(record)
+        next if record.survey_answer.to_s.upcase != "DISSATISFIED"
+        next if record.reason.blank?
 
-      reason = record.reason.to_s
-      reasons[reason] = (reasons[reason] || 0) + 1
+        reason = record.reason.to_s
+        reasons[reason] = (reasons[reason] || 0) + 1
+      end
+
+      reasons
+    rescue StandardError => e
+      @logger.error("Error calculating dissatisfaction reasons summary: #{e.message}")
+      {}
     end
-
-    reasons
   end
 
   # Calculate credit decision rates (success and failure percentages)
@@ -91,20 +123,26 @@ class LeadsFeedbackService
   def credit_decision_rates(feedback_records)
     raise ArgumentError, "feedback_records cannot be nil" if feedback_records.nil?
 
-    total = feedback_records.length
-    return { success_percentage: 0.0, failure_percentage: 0.0 } if total.zero?
+    begin
+      valid_records = feedback_records.select { |record| valid_feedback?(record) }
+      total = valid_records.length
+      return { success_percentage: 0.0, failure_percentage: 0.0 } if total.zero?
 
-    success_count = feedback_records.count do |record|
-      decision = record.credit_issuance_decision.to_s.upcase
-      decision.start_with?("SUCCESS")
+      success_count = valid_records.count do |record|
+        decision = record.credit_issuance_decision.to_s.upcase
+        decision.start_with?("SUCCESS")
+      end
+
+      failure_count = total - success_count
+
+      {
+        success_percentage: (success_count.to_f / total * 100).round(2),
+        failure_percentage: (failure_count.to_f / total * 100).round(2)
+      }
+    rescue StandardError => e
+      @logger.error("Error calculating credit decision rates: #{e.message}")
+      { success_percentage: 0.0, failure_percentage: 0.0 }
     end
-
-    failure_count = total - success_count
-
-    {
-      success_percentage: (success_count.to_f / total * 100).round(2),
-      failure_percentage: (failure_count.to_f / total * 100).round(2)
-    }
   end
 
   # Count feedback submissions for leads created outside the platform
@@ -117,13 +155,35 @@ class LeadsFeedbackService
     raise ArgumentError, "start_date cannot be nil" if start_date.nil?
     raise ArgumentError, "end_date cannot be nil" if end_date.nil?
 
-    # Find google accounts that have access to this customer
-    google_accounts = GoogleAccount.joins(:accessible_customers)
-      .where(accessible_customers: { customer_id: customer_id })
-      .distinct
+    begin
+      # Find google accounts that have access to this customer
+      google_accounts = GoogleAccount.joins(:accessible_customers)
+        .where(accessible_customers: { customer_id: customer_id })
+        .distinct
 
-    # For now, return 0 as we need to determine how to identify external leads
-    # This will be implemented based on business logic
-    0
+      # For now, return 0 as we need to determine how to identify external leads
+      # This will be implemented based on business logic
+      0
+    rescue StandardError => e
+      @logger.error("Error counting external leads feedback for customer #{customer_id}: #{e.message}")
+      0
+    end
+  end
+
+  private
+
+  # Validate that a feedback record has required fields
+  # @param record [LeadFeedbackSubmission] Feedback record
+  # @return [Boolean] True if record is valid, false otherwise
+  def valid_feedback?(record)
+    return false unless record.is_a?(LeadFeedbackSubmission)
+    
+    # Check for required fields
+    return false if record.survey_answer.nil? || record.survey_answer.to_s.strip.empty?
+    
+    true
+  rescue StandardError => e
+    @logger.warn("Error validating feedback record: #{e.message}")
+    false
   end
 end

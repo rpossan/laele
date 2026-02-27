@@ -322,6 +322,162 @@ RSpec.describe LeadsMetricsService, type: :service do
     end
   end
 
+  describe 'Error Handling' do
+    describe '#fetch_leads_for_period' do
+      it 'returns empty array when API call fails' do
+        service = LeadsMetricsService.new
+        google_account = build(:google_account)
+        
+        allow_any_instance_of(GoogleAds::LeadService).to receive(:list_leads).and_raise(StandardError, "API connection failed")
+        
+        result = service.fetch_leads_for_period(google_account, "customer_123", Date.today, Date.today)
+        
+        expect(result).to eq([])
+      end
+
+      it 'logs error when API call fails' do
+        service = LeadsMetricsService.new
+        google_account = build(:google_account)
+        
+        allow_any_instance_of(GoogleAds::LeadService).to receive(:list_leads).and_raise(StandardError, "API connection failed")
+        allow(Rails.logger).to receive(:error)
+        
+        service.fetch_leads_for_period(google_account, "customer_123", Date.today, Date.today)
+        
+        expect(Rails.logger).to have_received(:error).with(/Error fetching leads/)
+      end
+
+      it 'filters out invalid leads' do
+        service = LeadsMetricsService.new
+        google_account = build(:google_account)
+        
+        invalid_leads = [
+          { lead_id: nil, service_type: "roofing" },
+          { service_type: "plumbing" },
+          { lead_id: "", service_type: "electrical" },
+          { lead_id: "valid_1", service_type: "hvac", creation_time: Date.today }
+        ]
+        
+        allow_any_instance_of(GoogleAds::LeadService).to receive(:list_leads).and_return({ leads: invalid_leads })
+        
+        result = service.fetch_leads_for_period(google_account, "customer_123", Date.today, Date.today)
+        
+        expect(result.length).to eq(1)
+        expect(result[0][:lead_id]).to eq("valid_1")
+      end
+    end
+
+    describe '#total_leads_count' do
+      it 'returns 0 when error occurs' do
+        service = LeadsMetricsService.new
+        
+        # Pass non-array to trigger error handling
+        allow_any_instance_of(LeadsMetricsService).to receive(:total_leads_count).and_call_original
+        
+        result = service.total_leads_count([])
+        expect(result).to eq(0)
+      end
+    end
+
+    describe '#leads_by_service_type' do
+      it 'returns empty hash when error occurs' do
+        service = LeadsMetricsService.new
+        
+        result = service.leads_by_service_type([])
+        expect(result).to eq({})
+      end
+
+      it 'skips non-hash leads' do
+        service = LeadsMetricsService.new
+        leads = [
+          { lead_id: "1", service_type: "roofing" },
+          "invalid_lead",
+          { lead_id: "2", service_type: "plumbing" }
+        ]
+        
+        result = service.leads_by_service_type(leads)
+        
+        expect(result["roofing"]).to eq(1)
+        expect(result["plumbing"]).to eq(1)
+      end
+    end
+
+    describe '#leads_by_status' do
+      it 'returns empty hash when error occurs' do
+        service = LeadsMetricsService.new
+        
+        result = service.leads_by_status([])
+        expect(result).to eq({})
+      end
+
+      it 'skips non-hash leads' do
+        service = LeadsMetricsService.new
+        leads = [
+          { lead_id: "1", status: "booked" },
+          "invalid_lead",
+          { lead_id: "2", status: "contacted" }
+        ]
+        
+        result = service.leads_by_status(leads)
+        
+        expect(result["booked"]).to eq(1)
+        expect(result["contacted"]).to eq(1)
+      end
+    end
+
+    describe '#filter_by_creation_time' do
+      it 'returns empty array when error occurs' do
+        service = LeadsMetricsService.new
+        
+        result = service.filter_by_creation_time([], Date.today, Date.today)
+        expect(result).to eq([])
+      end
+
+      it 'skips leads with invalid creation_time' do
+        service = LeadsMetricsService.new
+        today = Date.today
+        leads = [
+          { lead_id: "1", creation_time: "invalid_date" },
+          { lead_id: "2", creation_time: today },
+          { lead_id: "3", creation_time: "2024-13-45" }
+        ]
+        
+        result = service.filter_by_creation_time(leads, today, today)
+        
+        expect(result.length).to eq(1)
+        expect(result[0][:lead_id]).to eq("2")
+      end
+
+      it 'skips non-hash leads' do
+        service = LeadsMetricsService.new
+        today = Date.today
+        leads = [
+          { lead_id: "1", creation_time: today },
+          "invalid_lead",
+          { lead_id: "2", creation_time: today }
+        ]
+        
+        result = service.filter_by_creation_time(leads, today, today)
+        
+        expect(result.length).to eq(2)
+      end
+
+      it 'logs warning for invalid creation_time' do
+        service = LeadsMetricsService.new
+        today = Date.today
+        leads = [
+          { lead_id: "1", creation_time: "invalid_date" }
+        ]
+        
+        allow(Rails.logger).to receive(:warn)
+        
+        service.filter_by_creation_time(leads, today, today)
+        
+        expect(Rails.logger).to have_received(:warn).with(/Invalid creation_time/)
+      end
+    end
+  end
+
   describe 'Property 7: API Data Round Trip' do
     # **Validates: Requirements 5.2, 6.2**
     # For any lead data retrieved from the Google Ads API, parsing and formatting

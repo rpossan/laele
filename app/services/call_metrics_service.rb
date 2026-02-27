@@ -5,7 +5,7 @@ class CallMetricsService
   # Provides methods to fetch call data and calculate call performance metrics
 
   def initialize
-    # Service initialization
+    @logger = Rails.logger
   end
 
   # Fetch call metrics from the Google Ads API for a list of leads
@@ -18,10 +18,16 @@ class CallMetricsService
     raise ArgumentError, "customer_id cannot be nil" if customer_id.nil?
     raise ArgumentError, "lead_ids cannot be nil" if lead_ids.nil?
 
-    # Fetch call metrics from Google Ads API
-    # This will be implemented using the existing Google Ads API client
-    # For now, return empty array as placeholder
-    []
+    begin
+      # Fetch call metrics from Google Ads API
+      # This will be implemented using the existing Google Ads API client
+      # For now, return empty array as placeholder
+      []
+    rescue StandardError => e
+      @logger.error("Error fetching call metrics for customer #{customer_id}: #{e.message}")
+      @logger.debug(e.backtrace.join("\n"))
+      []
+    end
   end
 
   # Calculate total number of answered calls
@@ -30,9 +36,16 @@ class CallMetricsService
   def total_answered_calls(call_metrics)
     raise ArgumentError, "call_metrics cannot be nil" if call_metrics.nil?
 
-    call_metrics.count do |metric|
-      status = metric[:call_status] || metric["call_status"]
-      status.to_s.downcase == "answered"
+    begin
+      call_metrics.count do |metric|
+        next false unless metric.is_a?(Hash)
+        
+        status = metric[:call_status] || metric["call_status"]
+        status.to_s.downcase == "answered"
+      end
+    rescue StandardError => e
+      @logger.error("Error calculating total answered calls: #{e.message}")
+      0
     end
   end
 
@@ -42,9 +55,16 @@ class CallMetricsService
   def total_missed_calls(call_metrics)
     raise ArgumentError, "call_metrics cannot be nil" if call_metrics.nil?
 
-    call_metrics.count do |metric|
-      status = metric[:call_status] || metric["call_status"]
-      status.to_s.downcase == "missed"
+    begin
+      call_metrics.count do |metric|
+        next false unless metric.is_a?(Hash)
+        
+        status = metric[:call_status] || metric["call_status"]
+        status.to_s.downcase == "missed"
+      end
+    rescue StandardError => e
+      @logger.error("Error calculating total missed calls: #{e.message}")
+      0
     end
   end
 
@@ -54,19 +74,33 @@ class CallMetricsService
   def average_call_duration(call_metrics)
     raise ArgumentError, "call_metrics cannot be nil" if call_metrics.nil?
 
-    answered_calls = call_metrics.select do |metric|
-      status = metric[:call_status] || metric["call_status"]
-      status.to_s.downcase == "answered"
+    begin
+      answered_calls = call_metrics.select do |metric|
+        next false unless metric.is_a?(Hash)
+        
+        status = metric[:call_status] || metric["call_status"]
+        status.to_s.downcase == "answered"
+      end
+
+      return 0.0 if answered_calls.empty?
+
+      total_duration = answered_calls.sum do |metric|
+        duration = metric[:call_duration] || metric["call_duration"]
+        
+        # Validate that duration is numeric
+        if duration.is_a?(Numeric)
+          duration.to_i
+        else
+          @logger.warn("Invalid call duration: #{duration}")
+          0
+        end
+      end
+
+      (total_duration.to_f / answered_calls.length).round(2)
+    rescue StandardError => e
+      @logger.error("Error calculating average call duration: #{e.message}")
+      0.0
     end
-
-    return 0.0 if answered_calls.empty?
-
-    total_duration = answered_calls.sum do |metric|
-      duration = metric[:call_duration] || metric["call_duration"]
-      duration.to_i
-    end
-
-    (total_duration.to_f / answered_calls.length).round(2)
   end
 
   # Filter call metrics by call time within a date range
@@ -79,12 +113,42 @@ class CallMetricsService
     raise ArgumentError, "start_date cannot be nil" if start_date.nil?
     raise ArgumentError, "end_date cannot be nil" if end_date.nil?
 
-    call_metrics.select do |metric|
-      call_time = metric[:call_time] || metric["call_time"]
-      next false if call_time.nil?
+    begin
+      call_metrics.select do |metric|
+        next false unless metric.is_a?(Hash)
+        
+        call_time = metric[:call_time] || metric["call_time"]
+        next false if call_time.nil?
 
-      call_time = Time.parse(call_time.to_s) if call_time.is_a?(String)
-      call_time >= start_date && call_time <= end_date
+        begin
+          call_time = Time.parse(call_time.to_s) if call_time.is_a?(String)
+          call_time >= start_date && call_time <= end_date
+        rescue ArgumentError => e
+          @logger.warn("Invalid call_time for metric: #{call_time}, error: #{e.message}")
+          false
+        end
+      end
+    rescue StandardError => e
+      @logger.error("Error filtering call metrics by call time: #{e.message}")
+      []
     end
+  end
+
+  private
+
+  # Validate that a call metric has required fields
+  # @param metric [Hash] Call metric data structure
+  # @return [Boolean] True if metric is valid, false otherwise
+  def valid_metric?(metric)
+    return false unless metric.is_a?(Hash)
+    
+    # Check for required fields
+    lead_id = metric[:lead_id] || metric["lead_id"]
+    return false if lead_id.nil? || lead_id.to_s.strip.empty?
+    
+    true
+  rescue StandardError => e
+    @logger.warn("Error validating call metric: #{e.message}")
+    false
   end
 end

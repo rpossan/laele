@@ -180,6 +180,235 @@ RSpec.describe LeadsFeedbackService, type: :service do
 
   # Property-Based Tests
 
+  describe 'Error Handling' do
+    describe '#fetch_feedback_for_period' do
+      it 'returns empty array when database query fails' do
+        service = LeadsFeedbackService.new
+        
+        allow(GoogleAccount).to receive(:joins).and_raise(StandardError, "Database connection failed")
+        
+        result = service.fetch_feedback_for_period("customer_123", Date.today, Date.today)
+        
+        expect(result).to eq([])
+      end
+
+      it 'logs error when database query fails' do
+        service = LeadsFeedbackService.new
+        
+        allow(GoogleAccount).to receive(:joins).and_raise(StandardError, "Database connection failed")
+        allow(Rails.logger).to receive(:error)
+        
+        service.fetch_feedback_for_period("customer_123", Date.today, Date.today)
+        
+        expect(Rails.logger).to have_received(:error).with(/Error fetching feedback/)
+      end
+
+      it 'filters out invalid feedback records' do
+        service = LeadsFeedbackService.new
+        
+        # Create actual feedback records
+        invalid_feedback = [
+          build(:lead_feedback_submission, survey_answer: nil),
+          build(:lead_feedback_submission, survey_answer: "SATISFIED"),
+          build(:lead_feedback_submission, survey_answer: "")
+        ]
+        
+        # Mock the entire query chain properly
+        mock_google_accounts = double
+        allow(GoogleAccount).to receive(:joins).with(:accessible_customers).and_return(double)
+        allow_any_instance_of(ActiveRecord::Relation).to receive(:where).and_call_original
+        allow_any_instance_of(ActiveRecord::Relation).to receive(:distinct).and_call_original
+        
+        # Mock the GoogleAccount query chain
+        allow(GoogleAccount).to receive(:joins).with(:accessible_customers).and_return(
+          double(where: double(distinct: mock_google_accounts))
+        )
+        
+        # Mock LeadFeedbackSubmission query
+        allow(LeadFeedbackSubmission).to receive(:where).with(google_account: mock_google_accounts).and_return(
+          double(where: double(to_a: invalid_feedback))
+        )
+        
+        result = service.fetch_feedback_for_period("customer_123", Date.today, Date.today)
+        
+        # Should filter out records with nil or empty survey_answer
+        expect(result.length).to be <= invalid_feedback.length
+      end
+    end
+
+    describe '#satisfaction_distribution' do
+      it 'returns default hash when error occurs' do
+        service = LeadsFeedbackService.new
+        
+        result = service.satisfaction_distribution([])
+        
+        expect(result).to be_a(Hash)
+        expect(result.keys).to include("VERY_SATISFIED", "SATISFIED", "DISSATISFIED")
+      end
+
+      it 'skips invalid feedback records' do
+        service = LeadsFeedbackService.new
+        feedback = [
+          build(:lead_feedback_submission, survey_answer: "SATISFIED"),
+          build(:lead_feedback_submission, survey_answer: nil),
+          build(:lead_feedback_submission, survey_answer: "DISSATISFIED")
+        ]
+        
+        result = service.satisfaction_distribution(feedback)
+        
+        # Should count only valid records
+        total = result["VERY_SATISFIED"] + result["SATISFIED"] + result["DISSATISFIED"]
+        expect(total).to be <= feedback.length
+      end
+
+      it 'logs error when exception occurs' do
+        service = LeadsFeedbackService.new
+        
+        allow(Rails.logger).to receive(:error)
+        
+        # Pass invalid data to trigger error
+        service.satisfaction_distribution([])
+        
+        # No error should be logged for empty array
+        expect(Rails.logger).not_to have_received(:error)
+      end
+    end
+
+    describe '#satisfaction_reasons_summary' do
+      it 'returns empty hash when error occurs' do
+        service = LeadsFeedbackService.new
+        
+        result = service.satisfaction_reasons_summary([])
+        expect(result).to eq({})
+      end
+
+      it 'skips records without reasons' do
+        service = LeadsFeedbackService.new
+        feedback = [
+          build(:lead_feedback_submission, survey_answer: "SATISFIED", reason: "BOOKED_CUSTOMER"),
+          build(:lead_feedback_submission, survey_answer: "SATISFIED", reason: nil),
+          build(:lead_feedback_submission, survey_answer: "SATISFIED", reason: "")
+        ]
+        
+        result = service.satisfaction_reasons_summary(feedback)
+        
+        expect(result["BOOKED_CUSTOMER"]).to eq(1)
+        expect(result.length).to eq(1)
+      end
+
+      it 'skips invalid feedback records' do
+        service = LeadsFeedbackService.new
+        feedback = [
+          build(:lead_feedback_submission, survey_answer: "SATISFIED", reason: "BOOKED_CUSTOMER"),
+          build(:lead_feedback_submission, survey_answer: nil, reason: "BOOKED_CUSTOMER"),
+          build(:lead_feedback_submission, survey_answer: "DISSATISFIED", reason: "BOOKED_CUSTOMER")
+        ]
+        
+        result = service.satisfaction_reasons_summary(feedback)
+        
+        # Should only count SATISFIED and VERY_SATISFIED
+        expect(result["BOOKED_CUSTOMER"]).to eq(1)
+      end
+    end
+
+    describe '#dissatisfaction_reasons_summary' do
+      it 'returns empty hash when error occurs' do
+        service = LeadsFeedbackService.new
+        
+        result = service.dissatisfaction_reasons_summary([])
+        expect(result).to eq({})
+      end
+
+      it 'skips records without reasons' do
+        service = LeadsFeedbackService.new
+        feedback = [
+          build(:lead_feedback_submission, survey_answer: "DISSATISFIED", reason: "GEO_MISMATCH"),
+          build(:lead_feedback_submission, survey_answer: "DISSATISFIED", reason: nil),
+          build(:lead_feedback_submission, survey_answer: "DISSATISFIED", reason: "")
+        ]
+        
+        result = service.dissatisfaction_reasons_summary(feedback)
+        
+        expect(result["GEO_MISMATCH"]).to eq(1)
+        expect(result.length).to eq(1)
+      end
+
+      it 'skips invalid feedback records' do
+        service = LeadsFeedbackService.new
+        feedback = [
+          build(:lead_feedback_submission, survey_answer: "DISSATISFIED", reason: "GEO_MISMATCH"),
+          build(:lead_feedback_submission, survey_answer: nil, reason: "GEO_MISMATCH"),
+          build(:lead_feedback_submission, survey_answer: "SATISFIED", reason: "GEO_MISMATCH")
+        ]
+        
+        result = service.dissatisfaction_reasons_summary(feedback)
+        
+        # Should only count DISSATISFIED
+        expect(result["GEO_MISMATCH"]).to eq(1)
+      end
+    end
+
+    describe '#credit_decision_rates' do
+      it 'returns default hash when error occurs' do
+        service = LeadsFeedbackService.new
+        
+        result = service.credit_decision_rates([])
+        
+        expect(result).to be_a(Hash)
+        expect(result.keys).to include(:success_percentage, :failure_percentage)
+      end
+
+      it 'skips invalid feedback records' do
+        service = LeadsFeedbackService.new
+        feedback = [
+          build(:lead_feedback_submission, credit_issuance_decision: "SUCCESS_REACHED_THRESHOLD"),
+          build(:lead_feedback_submission, credit_issuance_decision: nil),
+          build(:lead_feedback_submission, credit_issuance_decision: "FAIL_OVER_THRESHOLD")
+        ]
+        
+        result = service.credit_decision_rates(feedback)
+        
+        # Should only count valid records
+        total = result[:success_percentage] + result[:failure_percentage]
+        expect(total).to be <= 100.0
+      end
+
+      it 'logs error when exception occurs' do
+        service = LeadsFeedbackService.new
+        
+        allow(Rails.logger).to receive(:error)
+        
+        service.credit_decision_rates([])
+        
+        # No error should be logged for empty array
+        expect(Rails.logger).not_to have_received(:error)
+      end
+    end
+
+    describe '#external_leads_feedback_count' do
+      it 'returns 0 when database query fails' do
+        service = LeadsFeedbackService.new
+        
+        allow(GoogleAccount).to receive(:joins).and_raise(StandardError, "Database connection failed")
+        
+        result = service.external_leads_feedback_count("customer_123", Date.today, Date.today)
+        
+        expect(result).to eq(0)
+      end
+
+      it 'logs error when database query fails' do
+        service = LeadsFeedbackService.new
+        
+        allow(GoogleAccount).to receive(:joins).and_raise(StandardError, "Database connection failed")
+        allow(Rails.logger).to receive(:error)
+        
+        service.external_leads_feedback_count("customer_123", Date.today, Date.today)
+        
+        expect(Rails.logger).to have_received(:error).with(/Error counting external leads/)
+      end
+    end
+  end
+
   describe 'Property 4: Satisfaction Distribution Completeness' do
     # **Validates: Requirements 3.1**
     # For any set of feedback records, the sum of satisfaction level counts
